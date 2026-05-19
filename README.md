@@ -1,0 +1,167 @@
+# Claude-Style Learning Agent
+
+这是一个参考 Claude Code 设计思想实现的学习型 agent。它不复刻任何非公开源码，只把公开 API 上能实现的核心架构做成一个可运行、可阅读的小项目。
+
+当前版本：`0.3.0`
+
+项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
+
+文档必须跟随项目变化及时更新：代码、功能、架构、配置、测试或规划发生变化后，都要检查并同步对应文档。
+
+长期文档入口：
+
+- [Architecture](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/architecture.md): 当前架构和模块职责
+- [Current Features](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/current-features.md): 当前功能清单
+- [Roadmap](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/roadmap.md): 下一步工作和优先级
+- [Versioning](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/versioning.md): 版本规则和学习阶段
+- [Learning Q&A](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/learning-qa.md): 技术疑问和解答沉淀
+
+核心闭环：
+
+```text
+user message -> model -> tool_use -> permission check -> local tool -> tool_result -> model
+```
+
+## 已实现的 Claude Code 设计点
+
+- **对话循环**：`AgentRuntime.run_user_turn()` 管理多轮 `tool_use / tool_result`
+- **Task/Todo 状态**：`mini_agent/tasks.py` 保存多步骤任务进度，并通过工具更新
+- **意图识别 / 工具门控**：`mini_agent/intent.py` 先判断用户输入，再决定是否暴露工具
+- **Diff 预览和 patch 工具**：`preview_edit` 先看差异，`apply_edit` 应用修改并返回 diff
+- **模型适配层**：`mini_agent/llm.py` 把不同 LLM API 转成统一的 agent 内部格式
+- **reasoning 续传**：OpenAI-compatible provider 的 `reasoning_content` 会被保留并传回下一轮
+- **工具系统**：`Tool` + `build_tool()` 提供统一 schema、执行、只读/并发/危险标记
+- **安全默认值**：工具默认不是只读、不可并发，接近 fail-closed 思路
+- **权限模式**：支持 `default`、`plan`、`acceptEdits`、`bypassPermissions`、`dontAsk`
+- **权限规则**：可用 `agent_settings.json` 配置 allow/deny/ask
+- **只读并发**：多个只读且 concurrency-safe 的工具调用会并发执行
+- **工作区边界**：文件工具不能逃出当前 workspace
+- **上下文压缩**：历史过大时会摘要旧消息，保留最近消息继续任务
+- **模型降级**：主模型失败时可切 fallback model
+
+版本记录见 [CHANGELOG.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/CHANGELOG.md)。
+
+## 安装
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+cp agent_settings.example.json agent_settings.json
+```
+
+然后编辑 `.env`，填入你的 LLM 配置。
+
+当前项目默认支持 OpenAI-compatible `/v1` 接口：
+
+```bash
+LLM_PROVIDER=openai-compatible
+LLM_BASE_URL=https://example.com/v1
+LLM_API_KEY=your-api-key
+LLM_MODEL_NAME=your-model-name
+```
+
+也保留 Anthropic provider，方便对照 Claude API 的 tool use 形状：
+
+```bash
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_MODEL=claude-sonnet-4-20250514
+```
+
+## 运行
+
+```bash
+python agent.py
+```
+
+常用参数：
+
+```bash
+python agent.py --permission-mode plan
+python agent.py --permission-mode acceptEdits
+python agent.py --provider openai-compatible --model mimo-v2-omni
+```
+
+## 测试
+
+项目有一组轻量测试，用来保护学习版 agent 的核心边界：
+
+- 意图分类和工具门控
+- 权限规则和权限模式
+- 工作区路径不能逃逸
+- OpenAI-compatible provider 适配层的消息转换
+
+运行：
+
+```bash
+.venv/bin/python -m pytest
+```
+
+或者只跑某一组：
+
+```bash
+.venv/bin/python -m pytest tests/test_permissions.py
+```
+
+权限模式建议：
+
+- `plan`: 学习/观察模式，只读工具自动允许，写入会确认
+- `default`: 非只读操作需要确认
+- `acceptEdits`: 工作区文件编辑自动允许，Shell 仍会确认
+- `dontAsk`: 需要确认的操作直接拒绝，适合非交互环境
+- `bypassPermissions`: 学习时不建议，除非你非常清楚模型会做什么
+
+## 试试这些任务
+
+```text
+列出当前目录文件，读取 README.md，然后总结这个项目结构
+```
+
+```text
+搜索 AgentRuntime 在哪里定义，并解释对话循环
+```
+
+```text
+创建 hello.py，内容是打印 hello agent，然后运行它
+```
+
+## 代码结构
+
+- `agent.py`: CLI 入口，加载配置并启动 runtime
+- `mini_agent/llm.py`: LLM provider 适配层，把 Anthropic / OpenAI-compatible API 转成统一格式
+- `mini_agent/runtime.py`: 对话状态、模型调用、工具调度、上下文压缩
+- `mini_agent/tasks.py`: Task/Todo 状态模块
+- `mini_agent/tools.py`: 工具接口、builder、内置工具
+- `mini_agent/permissions.py`: 权限模式、规则匹配、决策管线
+- `mini_agent/settings.py`: 从 `agent_settings.json` 加载权限规则
+- `mini_agent/workspace.py`: 工作区路径边界
+- `references/Claude-Code-Source-Study`: Claude Code 源码分析参考仓库
+
+## 对照阅读路线
+
+建议先读：
+
+1. `references/Claude-Code-Source-Study/docs/05-对话循环.md`
+2. `references/Claude-Code-Source-Study/docs/09-工具系统设计.md`
+3. `references/Claude-Code-Source-Study/docs/16-权限系统.md`
+4. `references/Claude-Code-Source-Study/docs/06-上下文管理.md`
+5. `references/Claude-Code-Source-Study/docs/12-Agent-系统.md`
+
+对照本项目：
+
+- `queryLoop` 思想对应 `AgentRuntime.run_user_turn()`
+- `queryModelWithStreaming` 的边界思想对应 `mini_agent.llm.LLMClient`
+- `buildTool()` 思想对应 `mini_agent.tools.build_tool()`
+- `Permission Pipeline` 思想对应 `mini_agent.permissions.decide_permission()`
+- `ToolUseContext / State` 思想对应 `AgentState` 和 `AgentConfig`
+
+## 下一步可扩展
+
+- 加入流式输出
+- 加入 diff 预览和 apply patch 工具
+- 加入 task/todo 状态
+- 加入 Git 专用工具
+- 加入 MCP 工具注册
+- 加入多 agent：explore / plan / implement / verify

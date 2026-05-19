@@ -1,0 +1,39 @@
+from mini_agent.intent import Intent, classify_intent, intent_prompt
+
+
+def test_classifies_greeting_as_casual_without_tools():
+    decision = classify_intent("你好")
+
+    assert decision.intent == Intent.CASUAL_CHAT
+    assert not decision.allow_tools
+
+
+def test_classifies_general_learning_without_tools():
+    decision = classify_intent("我想学习 Python")
+
+    assert decision.intent == Intent.GENERAL_LEARNING
+    assert not decision.allow_tools
+
+
+def test_classifies_project_question_with_tools():
+    decision = classify_intent("解释这个项目架构")
+
+    assert decision.intent == Intent.PROJECT_QUESTION
+    assert decision.allow_tools
+
+
+def test_classifies_coding_task_with_tools():
+    decision = classify_intent("帮我修改代码并运行测试")
+
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools
+
+
+def test_intent_prompt_includes_tool_guidance():
+    decision = classify_intent("我想学习 Python")
+
+    prompt = intent_prompt(decision)
+
+    assert "general_learning" in prompt
+    assert "Do not use tools" in prompt
+

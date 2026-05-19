@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "list_files",
+      "read_file",
+      "preview_edit",
+      "search_text",
+      "list_tasks",
+      "run_shell(git status*)"
+    ],
+    "deny": [
+      "run_shell(rm*)",
+      "run_shell(curl*)"
+    ],
+    "ask": [
+      "write_file",
+      "edit_file",
+      "apply_edit",
+      "set_tasks",
+      "update_task",
+      "run_shell(*)"
+    ]
+  }
+}
