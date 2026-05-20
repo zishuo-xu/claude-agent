@@ -15,7 +15,7 @@ MAJOR.MINOR.PATCH
 例如：
 
 ```text
-0.3.0
+0.6.2
 ```
 
 ## 版本含义
@@ -141,7 +141,7 @@ VERSION
 当前版本：
 
 ```text
-0.3.0
+0.6.2
 ```
 
 当前版本的既有特性已在 `CHANGELOG.md` 中按以下类别归档：
@@ -215,8 +215,77 @@ VERSION
 
 ### `0.4.0`: 流式输出
 
-计划目标：
+目标：
 
 - 支持模型 token 级输出
 - 学习 agent 如何处理 streaming event
 - 为更接近 Claude Code 的交互体验打基础
+
+### `0.4.1`: 流式输出稳定性修复
+
+目标：
+
+- 跳过 OpenAI-compatible provider 的空 `choices` chunk
+- 避免 usage/统计/结束事件导致 streaming 崩溃
+
+### `0.4.2`: 工具系统架构整理
+
+目标：
+
+- 拆出 `tool_core`
+- 拆出 `builtin_tools`
+- 新增 `ToolRegistry`
+- 新增 `tool_policy`
+- 保持现有工具行为不变
+
+说明：这是工具系统内部的小特性 / 架构整理，不单独作为新的学习阶段。它的价值是为后续 Git 专用工具、MCP 工具注册、多 agent 工具集打基础。
+
+### `0.5.0`: 上下文 micro-compact
+
+目标：
+
+- 新增上下文管理模块
+- 在 full compact 前先清理旧工具结果
+- 保留最近关键工具结果
+- 普通用户消息和 assistant 文本不被误清理
+- full compact 仍作为兜底
+
+说明：这是上下文管理的大特性。它让项目开始学习 Claude Code 的分层上下文压缩思想：不是等上下文爆了才总结，而是先清理低价值的旧工具输出。
+
+### `0.6.0`: Explore / Plan 只读子 Agent
+
+目标：
+
+- 新增 `mini_agent.subagent`
+- 定义 `AgentDefinition`
+- 内置 Explore / Plan 两个角色
+- 将子 Agent 暴露为 AgentTool 风格工具
+- 子 Agent 使用独立 runtime 和状态
+- 子 Agent 只暴露只读工具
+- 主 Agent 只接收最终总结
+
+说明：这是多 Agent 架构的大特性。它学习 Claude Code 的 AgentTool / built-in agent 思想，但先保留最小可运行版本，不引入自定义 Agent、插件 Agent、后台并行和 worktree 隔离。
+
+### `0.6.1`: Verification 只读验证子 Agent
+
+目标：
+
+- 新增 `VERIFY_AGENT`
+- 新增 `verify_agent`
+- 复用 `mini_agent.subagent` 的 AgentTool 架构
+- Verification 子 Agent 只暴露只读工具
+- Verification prompt 强调检查问题、缺失测试、回归和证据不足
+- Verification 结果以 `passed`、`failed` 或 `inconclusive` 结论收尾
+
+说明：这是多 Agent 架构内的小特性。它没有引入新的底层模块，而是在现有 Explore / Plan 子 Agent 架构上补充 Claude Code 内置 Agent 中很重要的“验证者”角色。
+
+### `0.6.2`: 子 Agent 输出结构化
+
+目标：
+
+- Explore 输出固定小模板
+- Plan 输出固定小模板
+- Verification 输出固定小模板
+- 不新增模块，不引入复杂解析
+
+说明：这是 prompt contract 小特性，用最小改动让子 Agent 的汇报更稳定。

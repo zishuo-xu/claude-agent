@@ -6,6 +6,8 @@
 
 本项目不是复刻 Claude Code，而是把 Claude Code 的核心设计拆成初学者能理解、能运行、能逐步扩展的小系统。
 
+架构设计原则：实现可以简化，但架构分层和概念边界应参考 Claude Code。每个重要模块都应尽量说明它对应 Claude Code 的哪个概念，以及本项目做了哪些学习型简化。
+
 当前主线：
 
 ```text
@@ -19,9 +21,14 @@ agent.py
   -> mini_agent.config
   -> mini_agent.intent
   -> mini_agent.llm
+  -> mini_agent.context
   -> mini_agent.runtime
+  -> mini_agent.subagent
   -> mini_agent.tasks
-  -> mini_agent.tools
+  -> mini_agent.tool_core
+  -> mini_agent.builtin_tools
+  -> mini_agent.tool_registry
+  -> mini_agent.tool_policy
   -> mini_agent.permissions
   -> mini_agent.settings
   -> mini_agent.workspace
@@ -53,13 +60,15 @@ agent 主循环。
 - 保存对话历史 `AgentState`
 - 保存当前用户意图 `current_intent`
 - 持有共享任务状态 `TaskState`
+- 持有工具注册表 `ToolRegistry`
 - 调用模型
-- 根据 intent 决定是否暴露工具 schema
+- 流式消费模型 text delta
+- 通过工具策略根据 intent 决定是否暴露工具 schema
 - 将当前任务状态注入 system prompt
 - 识别模型返回的 `tool_use`
 - 调度本地工具
 - 把 `tool_result` 回传给模型
-- 在上下文过大时触发摘要压缩
+- 在上下文过大时先触发 micro-compact，再用 full compact 兜底
 
 对应 Claude Code 概念：
 
@@ -67,7 +76,59 @@ agent 主循环。
 - 对话状态 `State`
 - 工具调用后的 follow-up turn
 - 上下文 compact
+- micro-compact
 - task/todo 状态注入
+- streaming event 消费
+
+### `mini_agent.context`
+
+上下文管理模块。
+
+职责：
+
+- 统计消息历史字符预算
+- 识别可压缩工具结果
+- 保留最近 N 个工具结果
+- 将更早的工具结果替换为短占位文本
+- 避免误清理普通用户消息和 assistant 文本
+
+对应 Claude Code 概念：
+
+- Microcompact
+- 工具结果清理
+- full compact 之前的轻量上下文减压
+
+### `mini_agent.subagent`
+
+内置子 Agent 和 AgentTool 风格工具。
+
+职责：
+
+- 定义 `AgentDefinition`
+- 定义内置 `EXPLORE_AGENT`、`PLAN_AGENT` 和 `VERIFY_AGENT`
+- 将子 Agent 包装成 `explore_agent` / `plan_agent` / `verify_agent` 工具
+- 为子 Agent 创建独立 `AgentRuntime`
+- 为子 Agent 创建独立 `AgentState` 和 `TaskState`
+- 只向子 Agent 暴露只读工具
+- 只把最终总结返回主 Agent，不把内部工具历史塞回主 Agent
+
+对应 Claude Code 概念：
+
+- `AgentTool`
+- Built-in Agents
+- Explore Agent
+- Plan Agent
+- Verification Agent
+- `runAgent()`
+- 子 Agent context 隔离
+
+当前简化：
+
+- 不支持自定义 `.claude/agents/*.md`
+- 不支持 plugin agent
+- 不支持后台并行
+- 不支持每个子 Agent 单独选择模型
+- 不支持 worktree / remote 隔离
 
 ### `mini_agent.intent`
 
@@ -95,6 +156,7 @@ LLM provider 适配层。
 - 适配 Anthropic Messages API
 - 适配 OpenAI-compatible `/v1/chat/completions`
 - 在 provider 边界转换工具调用格式
+- 提供统一流式事件接口
 - 保留并续传 `reasoning_content`
 
 对应 Claude Code 概念：
@@ -102,18 +164,36 @@ LLM provider 适配层。
 - API 调用边界
 - provider 细节隔离
 - runtime 不直接依赖某个 SDK 的返回格式
+- streaming 和非 streaming 在适配层统一
 
-### `mini_agent.tools`
+### `mini_agent.tool_core`
 
-工具系统。
+工具核心类型。
 
 职责：
 
 - 定义 `Tool`
 - 提供 `build_tool()` builder
 - 暴露工具 schema 给模型
-- 执行本地工具
+- 封装工具执行和结果长度截断
 - 标记工具是否只读、是否可并发、是否危险
+
+对应 Claude Code 概念：
+
+- `buildTool()`
+- 工具统一接口
+- fail-closed 默认值
+
+### `mini_agent.builtin_tools`
+
+内置工具集合。
+
+职责：
+
+- 构造项目内置工具
+- 维护文件、搜索、shell、task 工具的具体实现
+- 复用 `Workspace` 限制文件路径
+- 为每个工具声明只读、并发、安全风险元信息
 
 当前内置工具：
 
@@ -131,11 +211,43 @@ LLM provider 适配层。
 
 对应 Claude Code 概念：
 
-- `buildTool()`
-- 工具统一接口
-- fail-closed 默认值
+- 内置 Tool 实现
 - 只读工具可并发
 - diff/patch 风格的可审查文件编辑
+
+### `mini_agent.tool_registry`
+
+工具注册表。
+
+职责：
+
+- 保存当前 runtime 可用的工具集合
+- 支持按名称查询工具
+- 为模型生成当前可见工具 schema
+- 隔离 runtime 和具体工具分组
+
+学习重点：runtime 不应该知道“哪些工具来自内置、Git、MCP 或多 agent 子系统”。它只通过注册表拿到“当前能用什么”。
+
+### `mini_agent.tool_policy`
+
+工具暴露策略。
+
+职责：
+
+- 根据 `IntentDecision` 决定当前是否暴露工具
+- 把“工具存在”和“工具对模型可见”分开
+
+当前策略仍很简单：`casual_chat`、`general_learning`、`dangerous_request` 等不允许工具的 intent 会隐藏全部工具。后续可以扩展成更细的只读工具集、Git 工具集或 MCP 工具集。
+
+### `mini_agent.tools`
+
+兼容入口。
+
+职责：
+
+- 继续导出 `Tool`、`build_tool()`、`default_tools()` 等旧接口
+- 让已有测试和简单调用方不用一次性迁移
+- 新代码优先使用 `tool_core`、`builtin_tools`、`tool_registry`、`tool_policy`
 
 ### `mini_agent.tasks`
 
@@ -211,15 +323,18 @@ deny -> allow -> ask -> mode fallback
 User
   -> AgentRuntime.run_user_turn()
   -> classify_intent()
-  -> filter available tools
+  -> ToolRegistry.api_specs_for_intent()
+  -> tool_policy filters available tools
   -> inject task state
-  -> LLMClient.complete()
-  -> model returns ToolUseBlock
+  -> LLMClient.stream_complete()
+  -> stream text deltas to terminal
+  -> final LLMResponse
+  -> model may return ToolUseBlock
   -> decide_permission()
   -> Tool.run()
   -> tool_result
   -> append to messages
-  -> LLMClient.complete()
+  -> LLMClient.stream_complete()
   -> final assistant answer
 ```
 
@@ -262,14 +377,70 @@ list_tasks
 
 学习重点：较大任务需要显式进度状态。Task/Todo 让 agent 不只是在调用工具，也在维护“当前做到哪一步”。
 
+## 工具注册数据流
+
+```text
+ToolRegistry.with_builtin_tools()
+  -> build_builtin_tools()
+  -> Tool objects
+  -> Runtime asks api_specs_for_intent()
+  -> tool_policy hides or exposes tools
+  -> LLM sees only current allowed schemas
+```
+
+学习重点：工具系统分成三层会更容易扩展。工具定义回答“这个工具怎么执行”，工具注册表回答“当前有哪些工具”，工具策略回答“这次模型能看到哪些工具”。
+
+## 上下文压缩数据流
+
+```text
+AgentRuntime._compact_if_needed()
+  -> count_message_chars()
+  -> if over budget: micro_compact_messages()
+  -> clear old compactable tool_result content
+  -> if under budget: continue without model summary
+  -> if still over budget: full compact with LLM summary
+  -> keep recent 4 raw messages
+```
+
+学习重点：micro-compact 和 full compact 是两层不同力度的上下文管理。micro-compact 不调用模型，只替换旧工具结果；full compact 调用模型总结旧历史，压缩力度更强，但成本更高。
+
+## 子 Agent 数据流
+
+```text
+Main Agent
+  -> model calls explore_agent / plan_agent / verify_agent
+  -> subagent tool creates isolated AgentRuntime
+  -> subagent gets read-only ToolRegistry
+  -> subagent runs its own observe-think-act loop
+  -> subagent internal messages stay isolated
+  -> final text summary returns as tool_result
+  -> Main Agent continues with compact summary only
+```
+
+学习重点：子 Agent 的价值不是“多一个函数调用”，而是上下文隔离和角色隔离。Explore / Plan / Verification 可以产生大量搜索、阅读、分析和验证中间过程，但主 Agent 只拿到最终总结。
+
+## 流式输出数据流
+
+```text
+LLMClient.stream_complete()
+  -> TextDeltaEvent
+  -> Runtime prints text immediately
+  -> FinalResponseEvent
+  -> Runtime appends assistant message
+  -> Runtime executes tool_use if present
+```
+
+学习重点：流式输出改变的是模型调用主路径。用户不必等完整回复生成完，runtime 可以边收到 text delta 边展示，同时保留最终结构化响应供工具循环使用。
+
 ## 当前简化点
 
 为了保持学习友好，当前没有实现：
 
-- streaming token 输出
+- 流中提前执行工具
 - stop hooks
 - 多层 settings 合并
 - MCP 工具发现
-- 多 agent 编排
+- 自定义 / 插件 agent
+- 多 agent 后台并行
 - 自动 retry/backoff
 - token 级精确预算

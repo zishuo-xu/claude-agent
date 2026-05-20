@@ -1,4 +1,6 @@
-from mini_agent.llm import OpenAICompatibleLLM
+from types import SimpleNamespace
+
+from mini_agent.llm import FinalResponseEvent, OpenAICompatibleLLM, OpenAIStreamAccumulator, TextDeltaEvent
 
 
 def test_openai_adapter_converts_tool_use_and_tool_result_messages():
@@ -68,3 +70,57 @@ def test_openai_adapter_converts_anthropic_tool_schema_to_function_schema():
     assert converted[0]["type"] == "function"
     assert converted[0]["function"]["name"] == "read_file"
     assert converted[0]["function"]["parameters"]["required"] == ["path"]
+
+
+def test_openai_stream_accumulator_rebuilds_text_and_tool_call():
+    accumulator = OpenAIStreamAccumulator()
+
+    accumulator.add_text("hel")
+    accumulator.add_text("lo")
+    accumulator.add_reasoning("think")
+    accumulator.add_tool_call_delta(
+        SimpleNamespace(
+            index=0,
+            id="call_1",
+            function=SimpleNamespace(name="read_file", arguments='{"path"'),
+        )
+    )
+    accumulator.add_tool_call_delta(
+        SimpleNamespace(
+            index=0,
+            id=None,
+            function=SimpleNamespace(name=None, arguments=':"README.md"}'),
+        )
+    )
+
+    response = accumulator.to_response()
+
+    assert response.content[0].type == "reasoning"
+    assert response.content[1].text == "hello"
+    assert response.content[2].name == "read_file"
+    assert response.content[2].input == {"path": "README.md"}
+
+
+def test_streaming_code_should_ignore_empty_choices_chunks():
+    class FakeCompletions:
+        def create(self, **_kwargs):
+            yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="hi"))])
+            yield SimpleNamespace(choices=[])
+
+    llm = OpenAICompatibleLLM(api_key="test", base_url="https://example.com/v1")
+    llm.client = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
+
+    events = list(
+        llm.stream_complete(
+            model="fake",
+            max_tokens=10,
+            system="system",
+            messages=[{"role": "user", "content": "hi"}],
+            tools=[],
+        )
+    )
+
+    assert isinstance(events[0], TextDeltaEvent)
+    assert events[0].text == "hi"
+    assert isinstance(events[-1], FinalResponseEvent)
+    assert events[-1].response.content[0].text == "hi"

@@ -13,8 +13,9 @@ from mini_agent.llm import AnthropicLLM, LLMClient, OpenAICompatibleLLM
 from mini_agent.permissions import PermissionMode
 from mini_agent.runtime import AgentRuntime
 from mini_agent.settings import load_permission_rules
+from mini_agent.subagent import build_subagent_tools
 from mini_agent.tasks import TaskState
-from mini_agent.tools import default_tools
+from mini_agent.tool_registry import ToolRegistry
 
 
 ROOT = Path.cwd().resolve()
@@ -76,10 +77,14 @@ def main() -> int:
         context_char_budget=args.context_char_budget,
     )
     task_state = TaskState()
+    tool_registry = ToolRegistry.with_builtin_tools(ROOT, task_state)
+    subagent_base_registry = ToolRegistry(dict(tool_registry.all()))
+    for tool in build_subagent_tools(client=client, config=config, tool_registry=subagent_base_registry).values():
+        tool_registry.register(tool)
     runtime = AgentRuntime(
         client=client,
         config=config,
-        tools=default_tools(ROOT, task_state),
+        tools=tool_registry,
         task_state=task_state,
         permission_rules=load_permission_rules(ROOT / "agent_settings.json"),
     )

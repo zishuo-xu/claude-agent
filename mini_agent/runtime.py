@@ -5,11 +5,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .config import AgentConfig
+from .context import count_message_chars, micro_compact_messages
 from .intent import IntentDecision, classify_intent, intent_prompt
-from .llm import LLMClient
+from .llm import FinalResponseEvent, LLMClient
 from .permissions import PermissionBehavior, PermissionContext, PermissionRule, decide_permission
 from .tasks import TaskState
-from .tools import Tool
+from .tool_core import Tool
+from .tool_registry import ToolRegistry
 
 
 SYSTEM_PROMPT = """You are a Claude Code inspired learning agent.
@@ -43,19 +45,22 @@ class AgentRuntime:
         *,
         client: LLMClient,
         config: AgentConfig,
-        tools: dict[str, Tool],
+        tools: dict[str, Tool] | ToolRegistry,
         task_state: TaskState | None = None,
         permission_rules: list[PermissionRule] | None = None,
+        system_prompt: str = SYSTEM_PROMPT,
     ):
         self.client = client
         self.config = config
-        self.tools = tools
+        self.system_prompt = system_prompt
+        self.tool_registry = tools if isinstance(tools, ToolRegistry) else ToolRegistry(tools)
+        self.tools = self.tool_registry.all()
         self.task_state = task_state or TaskState()
         self.state = AgentState()
         self.permission_context = PermissionContext(mode=config.permission_mode, rules=permission_rules or [])
 
-    def run_user_turn(self, user_input: str) -> None:
-        self.state.current_intent = classify_intent(user_input)
+    def run_user_turn(self, user_input: str, intent_override: IntentDecision | None = None) -> str:
+        self.state.current_intent = intent_override or classify_intent(user_input)
         self.state.messages.append({"role": "user", "content": user_input})
         for _ in range(self.config.max_turns):
             self.state.turn_count += 1
@@ -67,22 +72,24 @@ class AgentRuntime:
                     "content": [self._block_to_dict(block) for block in response.content],
                 }
             )
-            self._print_text(response.content)
+            if not self._has_text(response.content):
+                self._print_text(response.content)
 
             tool_uses = [block for block in response.content if getattr(block, "type", None) == "tool_use"]
             if not tool_uses:
                 print()
-                return
+                return self._content_text(response.content)
 
             tool_results = self._execute_tool_uses(tool_uses)
             self.state.messages.append({"role": "user", "content": tool_results})
 
         print(f"\nStopped after {self.config.max_turns} turns.")
+        return ""
 
     def _call_model(self, model: str) -> Any:
         tools = self._available_tool_specs()
         try:
-            return self.client.complete(
+            return self._stream_model_call(
                 model=model,
                 max_tokens=4096,
                 system=self._system_prompt(),
@@ -93,7 +100,7 @@ class AgentRuntime:
             if not self.config.fallback_model or self.config.fallback_model == model:
                 raise
             print(f"\n[model] {model} failed; retrying with {self.config.fallback_model}\n")
-            return self.client.complete(
+            return self._stream_model_call(
                 model=self.config.fallback_model,
                 max_tokens=4096,
                 system=self._system_prompt(),
@@ -101,20 +108,54 @@ class AgentRuntime:
                 tools=tools,
             )
 
+    def _stream_model_call(
+        self,
+        *,
+        model: str,
+        max_tokens: int,
+        system: str,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+    ) -> Any:
+        final_response = None
+        for event in self.client.stream_complete(
+            model=model,
+            max_tokens=max_tokens,
+            system=system,
+            messages=messages,
+            tools=tools,
+        ):
+            if event.type == "text_delta":
+                print(event.text, end="", flush=True)
+            elif isinstance(event, FinalResponseEvent):
+                final_response = event.response
+        if final_response is None:
+            raise RuntimeError("stream completed without final response")
+        return final_response
+
     def _system_prompt(self) -> str:
         summary = f"\nConversation summary so far:\n{self.state.summary}\n" if self.state.summary else ""
         intent = f"\n{intent_prompt(self.state.current_intent)}\n" if self.state.current_intent else ""
         tasks = f"\n{self.task_state.prompt_summary()}\n"
-        return f"{SYSTEM_PROMPT}\nWorkspace root: {self.config.workspace}\n{intent}{tasks}{summary}"
+        return f"{self.system_prompt}\nWorkspace root: {self.config.workspace}\n{intent}{tasks}{summary}"
 
     def _available_tool_specs(self) -> list[dict[str, Any]]:
-        if self.state.current_intent and not self.state.current_intent.allow_tools:
-            return []
-        return [tool.api_spec() for tool in self.tools.values()]
+        return self.tool_registry.api_specs_for_intent(self.state.current_intent)
 
     def _compact_if_needed(self) -> None:
-        total_chars = sum(len(str(message.get("content", ""))) for message in self.state.messages)
-        if total_chars <= self.config.context_char_budget or len(self.state.messages) < 8:
+        total_chars = count_message_chars(self.state.messages)
+        if total_chars <= self.config.context_char_budget:
+            return
+
+        micro_result = micro_compact_messages(self.state.messages)
+        if micro_result.changed:
+            self.state.messages = micro_result.messages
+            print(f"\n[context] micro-compacted {micro_result.compacted_count} old tool result(s)\n")
+            total_chars = count_message_chars(self.state.messages)
+            if total_chars <= self.config.context_char_budget:
+                return
+
+        if len(self.state.messages) < 8:
             return
 
         old_messages = self.state.messages[:-4]
@@ -211,3 +252,11 @@ class AgentRuntime:
         for block in content_blocks:
             if getattr(block, "type", None) == "text":
                 print(block.text, end="")
+
+    @staticmethod
+    def _has_text(content_blocks: list[Any]) -> bool:
+        return any(getattr(block, "type", None) == "text" for block in content_blocks)
+
+    @staticmethod
+    def _content_text(content_blocks: list[Any]) -> str:
+        return "\n".join(block.text for block in content_blocks if getattr(block, "type", None) == "text")

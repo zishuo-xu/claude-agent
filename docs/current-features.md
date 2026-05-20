@@ -2,7 +2,7 @@
 
 这份文档记录项目当前已经具备的功能。它应该在每次新增、删除、修改功能后同步更新。
 
-当前版本：`0.3.0`
+当前版本：`0.6.2`
 
 ## 运行方式
 
@@ -40,17 +40,117 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 普通寒暄和闲聊应短回答，不主动展开项目架构
 - 泛学习咨询应短回答或询问水平，不主动读取工作区或介绍本项目
 - 模型返回工具调用
+- 主模型调用支持流式文本输出
 - 本地执行工具
 - 工具结果回传模型
 - 当前任务状态注入 system prompt
 - 最大轮次限制
-- 简单上下文摘要压缩
+- 上下文 micro-compact
+- full compact 摘要压缩兜底
+- Explore / Plan / Verification 只读子 Agent
 
 相关文件：
 
 - `mini_agent/runtime.py`
+- `mini_agent/subagent.py`
+- `mini_agent/context.py`
 - `mini_agent/intent.py`
 - `mini_agent/tasks.py`
+- `mini_agent/tool_registry.py`
+- `mini_agent/tool_policy.py`
+
+## 上下文管理
+
+已支持：
+
+- 当消息历史超过 `context_char_budget` 时触发上下文管理
+- 先执行 micro-compact，清理旧工具结果
+- micro-compact 默认保留最近 6 个可压缩工具结果
+- 更早的可压缩工具结果会替换为短占位文本
+- 普通用户消息和 assistant 文本不会被 micro-compact 清理
+- 如果 micro-compact 后仍超过预算，再执行 full compact
+- full compact 会让模型总结旧消息，并只保留最近 4 条原始消息
+
+当前可压缩工具结果：
+
+- `list_files`
+- `read_file`
+- `write_file`
+- `edit_file`
+- `preview_edit`
+- `apply_edit`
+- `search_text`
+- `run_shell`
+
+当前不压缩 task/todo 工具结果，因为它们承载当前任务状态，信息密度较高。
+
+相关文件：
+
+- `mini_agent/context.py`
+- `mini_agent/runtime.py`
+- `tests/test_context.py`
+- `tests/test_runtime_intent.py`
+
+## Explore / Plan / Verification 子 Agent
+
+已支持：
+
+- `AgentDefinition`: 描述内置子 Agent 的类型
+- `EXPLORE_AGENT`: 只读探索角色
+- `PLAN_AGENT`: 只读规划角色
+- `VERIFY_AGENT`: 只读验证角色
+- `explore_agent`: 主 Agent 可调用的 AgentTool 风格工具
+- `plan_agent`: 主 Agent 可调用的 AgentTool 风格工具
+- `verify_agent`: 主 Agent 可调用的 AgentTool 风格工具
+- 子 Agent 使用独立 `AgentRuntime`
+- 子 Agent 使用独立 `AgentState`
+- 子 Agent 使用独立 `TaskState`
+- 子 Agent 只暴露只读工具
+- 子 Agent 内部工具调用历史不会进入主 Agent messages
+- 主 Agent 只接收子 Agent 最终总结
+- Verification 子 Agent 专门检查问题、缺失测试、回归和证据不足
+- Explore 子 Agent 输出 `Findings / Relevant files / Open questions`
+- Plan 子 Agent 输出 `Goal / Steps / Critical files / Risks`
+- Verification 子 Agent 输出 `Result / Checks / Evidence / Risks`
+
+当前简化：
+
+- 不支持自定义 Agent markdown
+- 不支持插件 Agent
+- 不支持后台并行
+- 不支持子 Agent 独立模型配置
+- 不支持 worktree / remote 隔离
+- Verification 当前不允许写临时测试脚本
+
+相关文件：
+
+- `mini_agent/subagent.py`
+- `mini_agent/runtime.py`
+- `mini_agent/tool_registry.py`
+- `tests/test_subagent.py`
+
+## 流式输出
+
+已支持：
+
+- LLM 适配层统一流式事件接口
+- OpenAI-compatible provider 使用 streaming chat completions
+- Runtime 边接收 `text_delta` 边打印
+- 流式结束后仍返回统一 `LLMResponse`
+- 工具调用仍在流结束后统一执行
+- 会跳过 provider 返回的空 `choices` chunk，避免 usage/结束事件导致崩溃
+
+当前简化：
+
+- 暂不做“流中提前执行工具”
+- Anthropic provider 当前用非流式 fallback 包装成流式事件
+
+相关文件：
+
+- `mini_agent/llm.py`
+- `mini_agent/runtime.py`
+- `tests/test_llm_adapter.py`
+- `tests/test_runtime_intent.py`
 
 ## Task/Todo 状态
 
@@ -122,9 +222,23 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 
 `preview_edit` 是只读工具，适合在修改前查看 diff；`apply_edit` 会写文件，适合在确认修改后应用。
 
+当前工具系统分层：
+
+- `mini_agent/tool_core.py`: `Tool` 类型和 `build_tool()`
+- `mini_agent/builtin_tools.py`: 内置工具实现和构造
+- `mini_agent/tool_registry.py`: 工具注册、按名称查询、生成可暴露 schema
+- `mini_agent/tool_policy.py`: 根据 intent 决定当前模型能看到哪些工具
+- `mini_agent/tools.py`: 兼容旧入口，保留 `default_tools()`
+
+这次分层不会改变工具行为，主要让后续新增 Git 工具、MCP 工具或多 agent 工具集时不用继续膨胀 runtime。
+
 相关文件：
 
 - `mini_agent/tools.py`
+- `mini_agent/tool_core.py`
+- `mini_agent/builtin_tools.py`
+- `mini_agent/tool_registry.py`
+- `mini_agent/tool_policy.py`
 
 ## 权限系统
 
@@ -184,7 +298,13 @@ OpenAI-compatible provider 如果返回 `reasoning_content`，项目会保存为
 - intent 分类和 runtime 工具过滤
 - shell 只读命令分类
 - diff/patch 工具行为
+- tool registry 和 tool policy 边界
+- 上下文 micro-compact
+- full compact 兜底
+- Explore / Plan / Verification 只读子 Agent
+- 子 Agent 输出结构化 prompt contract
 - task/todo 状态和工具共享状态
+- streaming text delta 和最终响应重建
 - system prompt 的泛学习请求约束
 - 工作区路径边界
 - LLM provider 适配层转换
@@ -199,7 +319,7 @@ OpenAI-compatible provider 如果返回 `reasoning_content`，项目会保存为
 当前测试数量：
 
 ```text
-29 tests
+44 tests
 ```
 
 相关文件：
@@ -207,6 +327,9 @@ OpenAI-compatible provider 如果返回 `reasoning_content`，项目会保存为
 - `tests/test_permissions.py`
 - `tests/test_workspace.py`
 - `tests/test_llm_adapter.py`
+- `tests/test_tool_registry.py`
+- `tests/test_context.py`
+- `tests/test_subagent.py`
 
 ## 文档体系
 
@@ -224,14 +347,14 @@ OpenAI-compatible provider 如果返回 `reasoning_content`，项目会保存为
 
 ## 版本归档
 
-当前版本 `0.3.0` 已按特性级别归档：
+当前版本 `0.6.2` 已按特性级别归档：
 
-- 大特性：Task/Todo 状态管理
-- 工具：`set_tasks`、`update_task`、`list_tasks`
-- 文档与测试：changelog、roadmap、当前功能、29 个测试
+- 小特性：子 Agent 输出结构化
+- 架构：不新增模块，只补 prompt contract
+- 文档与测试：changelog、当前功能、44 个测试
 
 详细记录见 `CHANGELOG.md`。
 
 ## 推荐下一步
 
-下一步建议实现 **流式输出**，作为候选 `0.4.0` 大特性。详细规划见 `docs/roadmap.md`。
+当前建议保持简洁，暂停继续堆功能。后续候选方向见 `docs/roadmap.md`。

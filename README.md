@@ -2,7 +2,7 @@
 
 这是一个参考 Claude Code 设计思想实现的学习型 agent。它不复刻任何非公开源码，只把公开 API 上能实现的核心架构做成一个可运行、可阅读的小项目。
 
-当前版本：`0.3.0`
+当前版本：`0.6.2`
 
 项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
@@ -25,18 +25,23 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 ## 已实现的 Claude Code 设计点
 
 - **对话循环**：`AgentRuntime.run_user_turn()` 管理多轮 `tool_use / tool_result`
+- **流式输出**：主模型调用支持 text delta 边到边打印
 - **Task/Todo 状态**：`mini_agent/tasks.py` 保存多步骤任务进度，并通过工具更新
 - **意图识别 / 工具门控**：`mini_agent/intent.py` 先判断用户输入，再决定是否暴露工具
 - **Diff 预览和 patch 工具**：`preview_edit` 先看差异，`apply_edit` 应用修改并返回 diff
 - **模型适配层**：`mini_agent/llm.py` 把不同 LLM API 转成统一的 agent 内部格式
 - **reasoning 续传**：OpenAI-compatible provider 的 `reasoning_content` 会被保留并传回下一轮
 - **工具系统**：`Tool` + `build_tool()` 提供统一 schema、执行、只读/并发/危险标记
+- **工具注册表 / 策略边界**：`ToolRegistry` 统一管理工具集合，`tool_policy` 决定当前 intent 能看到哪些工具
+- **上下文 micro-compact**：上下文过大时先清理旧工具结果，再用 full compact 兜底
+- **Explore / Plan / Verification 子 Agent**：以 AgentTool 形式运行只读子 Agent，隔离探索、规划和验证上下文
+- **子 Agent 输出结构化**：Explore / Plan / Verification 按固定小模板汇报结果
 - **安全默认值**：工具默认不是只读、不可并发，接近 fail-closed 思路
 - **权限模式**：支持 `default`、`plan`、`acceptEdits`、`bypassPermissions`、`dontAsk`
 - **权限规则**：可用 `agent_settings.json` 配置 allow/deny/ask
 - **只读并发**：多个只读且 concurrency-safe 的工具调用会并发执行
 - **工作区边界**：文件工具不能逃出当前 workspace
-- **上下文压缩**：历史过大时会摘要旧消息，保留最近消息继续任务
+- **上下文压缩**：历史过大时先 micro-compact，仍超预算再摘要旧消息
 - **模型降级**：主模型失败时可切 fallback model
 
 版本记录见 [CHANGELOG.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/CHANGELOG.md)。
@@ -131,9 +136,15 @@ python agent.py --provider openai-compatible --model mimo-v2-omni
 
 - `agent.py`: CLI 入口，加载配置并启动 runtime
 - `mini_agent/llm.py`: LLM provider 适配层，把 Anthropic / OpenAI-compatible API 转成统一格式
+- `mini_agent/context.py`: 上下文 micro-compact 和消息字符预算辅助函数
 - `mini_agent/runtime.py`: 对话状态、模型调用、工具调度、上下文压缩
+- `mini_agent/subagent.py`: Explore / Plan / Verification 只读子 Agent 定义、运行和工具包装
 - `mini_agent/tasks.py`: Task/Todo 状态模块
-- `mini_agent/tools.py`: 工具接口、builder、内置工具
+- `mini_agent/tool_core.py`: 工具核心类型和 `build_tool()`
+- `mini_agent/builtin_tools.py`: 内置工具构造
+- `mini_agent/tool_registry.py`: 工具注册、查询和对模型暴露 schema
+- `mini_agent/tool_policy.py`: 根据 intent 决定哪些工具可见
+- `mini_agent/tools.py`: 兼容入口，保留 `default_tools()` 等旧调用方式
 - `mini_agent/permissions.py`: 权限模式、规则匹配、决策管线
 - `mini_agent/settings.py`: 从 `agent_settings.json` 加载权限规则
 - `mini_agent/workspace.py`: 工作区路径边界
@@ -153,15 +164,11 @@ python agent.py --provider openai-compatible --model mimo-v2-omni
 
 - `queryLoop` 思想对应 `AgentRuntime.run_user_turn()`
 - `queryModelWithStreaming` 的边界思想对应 `mini_agent.llm.LLMClient`
-- `buildTool()` 思想对应 `mini_agent.tools.build_tool()`
+- `buildTool()` 思想对应 `mini_agent.tool_core.build_tool()`
 - `Permission Pipeline` 思想对应 `mini_agent.permissions.decide_permission()`
 - `ToolUseContext / State` 思想对应 `AgentState` 和 `AgentConfig`
+- `AgentTool / Built-in Agent` 思想对应 `mini_agent.subagent`
 
-## 下一步可扩展
+## 后续方向
 
-- 加入流式输出
-- 加入 diff 预览和 apply patch 工具
-- 加入 task/todo 状态
-- 加入 Git 专用工具
-- 加入 MCP 工具注册
-- 加入多 agent：explore / plan / implement / verify
+当前先保持简洁，不急着加功能。候选方向见 `docs/roadmap.md`。

@@ -8,6 +8,147 @@
 
 ## 2026-05-20
 
+### Q: Verification 只读验证子 Agent 的作用是什么？
+
+Verification 子 Agent 可以理解成一个只读验收员。
+
+主 Agent 负责理解需求、规划和执行；Verification 子 Agent 负责检查结果是否可靠，尝试发现问题、缺失测试、回归或证据不足。它只读，不负责修代码，也不能修改项目。
+
+这种拆分对应 Claude Code 的内置 Verification Agent 思想：验证者的价值不是替执行者补丁，而是站在独立角度检查“这件事真的靠谱吗”。
+
+本项目 `0.6.1` 的实现方式：
+
+```text
+主 Agent
+  -> 调用 verify_agent
+  -> Verification 子 Agent 在独立 runtime 中检查
+  -> 只暴露只读工具
+  -> 内部检查过程不污染主 Agent 上下文
+  -> 最后返回 passed / failed / inconclusive 风格总结
+```
+
+当前简化：
+
+- 不允许写临时测试脚本
+- 不做浏览器/UI 验证流程编排
+- 不自动解析结构化验证结果
+
+对应代码：
+
+- `mini_agent/subagent.py`: `VERIFY_AGENT` 和 `verify_agent`
+- `tests/test_subagent.py`: Verification prompt 和只读工具注册测试
+- 版本：`0.6.1`
+
+### Q: Explore / Plan 只读子 Agent 有什么作用，怎么和 Claude 架构对应？
+
+Explore / Plan 子 Agent 的核心作用是上下文隔离和角色隔离。
+
+如果只有一个主 Agent，它在复杂任务里会同时负责搜索、阅读、规划、修改和验证。搜索和阅读会产生大量 `read_file`、`search_text` 等工具结果，这些中间过程会污染主 Agent 的上下文。
+
+子 Agent 的做法是：
+
+```text
+主 Agent
+  -> 调用 explore_agent / plan_agent
+  -> 子 Agent 在独立 runtime 里搜索、阅读、分析
+  -> 子 Agent 内部工具历史留在子 Agent 上下文
+  -> 主 Agent 只收到最终总结
+```
+
+这对应 Claude Code 的 `AgentTool` 和 built-in agents 设计。Claude 有 Explore、Plan、Verification 等角色，本项目 `0.6.0` 先实现最小可学习版本：
+
+- `AgentDefinition`: 子 Agent 定义
+- `EXPLORE_AGENT`: 只读探索角色
+- `PLAN_AGENT`: 只读规划角色
+- `explore_agent` / `plan_agent`: AgentTool 风格工具
+- 子 Agent 独立 `AgentRuntime`
+- 子 Agent 只暴露只读工具
+
+本项目的简化：
+
+- 不支持自定义 markdown Agent
+- 不支持插件 Agent
+- 不支持后台并行
+- 不支持独立模型选择
+- 不支持 worktree / remote 隔离
+
+对应代码：
+
+- `mini_agent/subagent.py`: 子 Agent 定义、运行和工具包装
+- `agent.py`: 注册 `explore_agent` / `plan_agent`
+- `tests/test_subagent.py`: 子 Agent 边界测试
+- 版本：`0.6.0`
+
+### Q: full compact 和 micro-compact 分别怎么处理？
+
+full compact 是强压缩：当上下文太大时，把较早的消息交给 LLM 总结，然后只保留总结和最近几条原始消息。它压缩力度强，但需要额外模型调用，也可能丢一些细节。
+
+micro-compact 是轻量压缩：不调用模型，只清理旧的 `tool_result` 内容。它保留最近 N 个工具结果，把更早的可压缩工具结果替换成短占位文本，普通用户消息和 assistant 文本不动。
+
+本项目 `0.5.0` 的处理顺序是：
+
+```text
+上下文超过预算
+  -> 先 micro-compact 清理旧工具结果
+  -> 如果已经降到预算内，继续正常运行
+  -> 如果仍然超预算，再 full compact 总结旧历史
+```
+
+这样做是为了学习 Claude Code 的分层上下文管理思想：不是等上下文爆了才总结，而是先清理低价值的大段工具输出。
+
+对应代码：
+
+- `mini_agent/context.py`: `micro_compact_messages()`、`count_message_chars()`
+- `mini_agent/runtime.py`: `AgentRuntime._compact_if_needed()`
+- `tests/test_context.py`: micro-compact 行为测试
+- `tests/test_runtime_intent.py`: runtime 集成测试
+- 版本：`0.5.0`
+
+### Q: 为什么流式输出已经打印完答案，最后还因为 `IndexError: list index out of range` 崩溃？
+
+原因是 OpenAI-compatible provider 在 streaming 模式下，可能会发送不包含 `choices` 的 chunk。
+
+正常文本 chunk 类似：
+
+```text
+choices[0].delta.content = "..."
+```
+
+但有些 provider 还会发送 usage、统计或结束类 chunk，这类 chunk 可能是：
+
+```text
+choices = []
+```
+
+之前代码直接访问：
+
+```python
+delta = chunk.choices[0].delta
+```
+
+当 `choices` 是空列表时，就会触发：
+
+```text
+IndexError: list index out of range
+```
+
+所以你看到的现象是：答案已经流式打印出来了，但最后处理结束 chunk 时崩溃。
+
+修复方式是在 streaming 循环里先判断：
+
+```python
+if not getattr(chunk, "choices", None):
+    continue
+```
+
+也就是说，空 `choices` chunk 不参与文本和工具调用重建，直接跳过。
+
+对应代码：
+
+- `mini_agent/llm.py`: `OpenAICompatibleLLM.stream_complete()`
+- `tests/test_llm_adapter.py`: 空 `choices` chunk 回归测试
+- 版本：`0.4.1`
+
 ### Q: Diff 预览和 patch 工具有什么作用？
 
 Diff 预览和 patch 工具的核心作用是：**让 agent 的代码修改变得可见、可审查、可控制**。
