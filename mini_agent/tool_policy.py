@@ -7,5 +7,7 @@ from .tool_core import Tool
 def tools_for_intent(tools: dict[str, Tool], decision: IntentDecision | None) -> dict[str, Tool]:
     if decision and not decision.allow_tools:
         return {}
+    if decision and decision.requested_tool:
+        tool = tools.get(decision.requested_tool)
+        return {decision.requested_tool: tool} if tool else {}
     return tools
-

@@ -17,6 +17,7 @@ class IntentDecision:
     intent: Intent
     reason: str
     allow_tools: bool
+    requested_tool: str | None = None
 
 
 CASUAL_PHRASES = {
@@ -48,6 +49,12 @@ PROJECT_KEYWORDS = {
     "architecture",
     "current features",
     "roadmap",
+}
+
+AGENT_TOOL_NAMES = {
+    "explore_agent",
+    "plan_agent",
+    "verify_agent",
 }
 
 CODING_KEYWORDS = {
@@ -90,6 +97,15 @@ def classify_intent(user_input: str) -> IntentDecision:
     if any(keyword in lowered for keyword in DANGEROUS_KEYWORDS):
         return IntentDecision(Intent.DANGEROUS_REQUEST, "potentially destructive request", allow_tools=False)
 
+    for tool_name in AGENT_TOOL_NAMES:
+        if tool_name in lowered:
+            return IntentDecision(
+                Intent.PROJECT_QUESTION,
+                "explicit subagent tool requested",
+                allow_tools=True,
+                requested_tool=tool_name,
+            )
+
     mentions_project = any(keyword in lowered for keyword in PROJECT_KEYWORDS)
     asks_to_use_project = any(phrase in lowered for phrase in ["用这个项目", "结合当前代码", "结合这个项目", "use this project"])
 
@@ -116,4 +132,3 @@ def intent_prompt(decision: IntentDecision) -> str:
         Intent.DANGEROUS_REQUEST: "Do not use tools. Explain the safety concern and ask for a safer, more specific goal.",
     }[decision.intent]
     return f"Current user intent: {decision.intent.value}. Reason: {decision.reason}. Tool guidance: {guidance}"
-

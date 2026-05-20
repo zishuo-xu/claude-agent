@@ -2,7 +2,7 @@
 
 这份文档记录项目当前已经具备的功能。它应该在每次新增、删除、修改功能后同步更新。
 
-当前版本：`0.6.2`
+当前版本：`0.6.3`
 
 ## 运行方式
 
@@ -41,7 +41,10 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 泛学习咨询应短回答或询问水平，不主动读取工作区或介绍本项目
 - 模型返回工具调用
 - 主模型调用支持流式文本输出
+- XML/JSON 简单伪工具调用标记会被转换成内部 `tool_use`
+- provider 最终响应为空但 stream delta 有文本时，会用累计文本补回最终响应
 - 本地执行工具
+- 工具输入校验
 - 工具结果回传模型
 - 当前任务状态注入 system prompt
 - 最大轮次限制
@@ -95,23 +98,14 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 
 已支持：
 
-- `AgentDefinition`: 描述内置子 Agent 的类型
-- `EXPLORE_AGENT`: 只读探索角色
-- `PLAN_AGENT`: 只读规划角色
-- `VERIFY_AGENT`: 只读验证角色
-- `explore_agent`: 主 Agent 可调用的 AgentTool 风格工具
-- `plan_agent`: 主 Agent 可调用的 AgentTool 风格工具
-- `verify_agent`: 主 Agent 可调用的 AgentTool 风格工具
-- 子 Agent 使用独立 `AgentRuntime`
-- 子 Agent 使用独立 `AgentState`
-- 子 Agent 使用独立 `TaskState`
-- 子 Agent 只暴露只读工具
-- 子 Agent 内部工具调用历史不会进入主 Agent messages
-- 主 Agent 只接收子 Agent 最终总结
-- Verification 子 Agent 专门检查问题、缺失测试、回归和证据不足
-- Explore 子 Agent 输出 `Findings / Relevant files / Open questions`
-- Plan 子 Agent 输出 `Goal / Steps / Critical files / Risks`
-- Verification 子 Agent 输出 `Result / Checks / Evidence / Risks`
+- 内置 `EXPLORE_AGENT`、`PLAN_AGENT`、`VERIFY_AGENT`
+- 主 Agent 可通过 `explore_agent`、`plan_agent`、`verify_agent` 调用子 Agent
+- 子 Agent 使用独立 `AgentRuntime`、`AgentState`、`TaskState`
+- 子 Agent 只暴露只读工具，内部工具历史不会进入主 Agent messages
+- 子 Agent 按固定小模板返回最终总结
+- 子 Agent 默认最多 3 次工具调用，`max_turns=4`
+- 到达轮次上限时追加一次无工具 finalization，把捕获 transcript 压成最终答案
+- 显式子 Agent 请求在目标工具执行一次后关闭工具暴露，避免重复调用
 
 当前简化：
 
@@ -121,6 +115,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 不支持子 Agent 独立模型配置
 - 不支持 worktree / remote 隔离
 - Verification 当前不允许写临时测试脚本
+- Verification prompt 会避免组合 shell、管道和重定向
 
 相关文件：
 
@@ -135,10 +130,12 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 
 - LLM 适配层统一流式事件接口
 - OpenAI-compatible provider 使用 streaming chat completions
-- Runtime 边接收 `text_delta` 边打印
+- Runtime 接收并累计 `text_delta`
+- 普通文本在确认不是伪工具调用后输出
 - 流式结束后仍返回统一 `LLMResponse`
 - 工具调用仍在流结束后统一执行
 - 会跳过 provider 返回的空 `choices` chunk，避免 usage/结束事件导致崩溃
+- 会抑制 XML/JSON 伪工具调用文本，避免把内部调用格式展示给用户
 
 当前简化：
 
@@ -185,6 +182,8 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - `coding_task`: 可以进入工具循环
 - `dangerous_request`: 不暴露工具，提示安全风险
 
+显式提到 `explore_agent`、`plan_agent` 或 `verify_agent` 的请求会被视为项目问题，并且只暴露被点名的子 Agent 工具。
+
 当前实现是规则分类器，适合学习和测试。后续可以升级为更细的策略层。
 
 相关文件：
@@ -213,12 +212,17 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 已支持工具元信息：
 
 - JSON schema
+- 输入校验函数
 - 是否只读
 - 是否可并发
 - 是否危险
 - 最大结果长度截断
 
+`list_files` 默认隐藏 `.env`、`.venv`、`__pycache__` 等常见噪音，避免普通架构探索时泄露敏感文件名或刷屏；需要查看时可传 `include_hidden=true`。
+
 `run_shell` 对常见只读命令有保守分类，例如 `pwd`、`ls`、`git status`。包含 `&&`、`;`、管道、重定向等组合操作的 shell 命令不会被自动视为只读。
+
+`run_shell` 会在权限判断前校验命令输入，空命令会直接返回错误，不进入执行流程。
 
 `preview_edit` 是只读工具，适合在修改前查看 diff；`apply_edit` 会写文件，适合在确认修改后应用。
 
@@ -296,16 +300,26 @@ OpenAI-compatible provider 如果返回 `reasoning_content`，项目会保存为
 
 - 权限规则和权限模式
 - intent 分类和 runtime 工具过滤
+- 显式子 Agent 请求的 intent 分类
+- 显式子 Agent 请求的工具暴露收敛
 - shell 只读命令分类
 - diff/patch 工具行为
+- 工具输入校验
 - tool registry 和 tool policy 边界
 - 上下文 micro-compact
 - full compact 兜底
 - Explore / Plan / Verification 只读子 Agent
 - 子 Agent 输出结构化 prompt contract
+- 子 Agent 工具调用预算和轮次限制
+- 子 Agent 轮次上限 finalization
+- 显式子 Agent 单次调用收敛
+- 子 Agent stream-only 文本返回
 - task/todo 状态和工具共享状态
 - streaming text delta 和最终响应重建
+- stream-only 文本补回最终响应
+- 伪工具调用识别和流式抑制
 - system prompt 的泛学习请求约束
+- system prompt 的真实工具调用约束
 - 工作区路径边界
 - LLM provider 适配层转换
 - `reasoning_content` 续传
@@ -319,7 +333,7 @@ OpenAI-compatible provider 如果返回 `reasoning_content`，项目会保存为
 当前测试数量：
 
 ```text
-44 tests
+59 tests
 ```
 
 相关文件：
@@ -347,11 +361,11 @@ OpenAI-compatible provider 如果返回 `reasoning_content`，项目会保存为
 
 ## 版本归档
 
-当前版本 `0.6.2` 已按特性级别归档：
+当前版本 `0.6.3` 已按特性级别归档：
 
-- 小特性：子 Agent 输出结构化
-- 架构：不新增模块，只补 prompt contract
-- 文档与测试：changelog、当前功能、44 个测试
+- 小特性：工具输入验证层
+- 架构：轻量对齐 Claude `Tool.validateInput()`，当前只补最小边界
+- 文档与测试：changelog、当前功能、59 个测试
 
 详细记录见 `CHANGELOG.md`。
 

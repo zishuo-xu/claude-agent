@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .builtin_tools import build_builtin_tools, is_read_only_shell_command, replace_text, unified_diff
+from .builtin_tools import build_builtin_tools, is_read_only_shell_command, replace_text, unified_diff, validate_shell_input
 from .tasks import TaskState
 from .tool_core import Tool, build_tool
 
@@ -19,6 +19,6 @@ __all__ = [
     "default_tools",
     "is_read_only_shell_command",
     "replace_text",
+    "validate_shell_input",
     "unified_diff",
 ]
-

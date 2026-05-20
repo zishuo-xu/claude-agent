@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from mini_agent.config import AgentConfig
-from mini_agent.llm import FinalResponseEvent, LLMResponse, TextBlock
+from mini_agent.llm import FinalResponseEvent, LLMResponse, TextBlock, TextDeltaEvent, ToolUseBlock
 from mini_agent.permissions import PermissionMode
 from mini_agent.subagent import EXPLORE_AGENT, PLAN_AGENT, VERIFY_AGENT, build_subagent_tools, run_subagent
 from mini_agent.tasks import TaskState
@@ -19,6 +19,33 @@ class RecordingClient:
     def stream_complete(self, **kwargs):
         self.stream_calls.append(kwargs)
         yield FinalResponseEvent(LLMResponse([TextBlock("subagent summary")]))
+
+
+class EmptyFinalClient:
+    def __init__(self):
+        self.stream_calls = []
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls.append(kwargs)
+        yield TextDeltaEvent("partial investigation")
+        yield FinalResponseEvent(LLMResponse([]))
+
+
+class LoopingToolClient:
+    def __init__(self):
+        self.stream_calls = []
+        self.complete_calls = []
+
+    def complete(self, **kwargs):
+        self.complete_calls.append(kwargs)
+        return LLMResponse([TextBlock("Findings:\nfinalized from captured transcript")])
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls.append(kwargs)
+        yield FinalResponseEvent(LLMResponse([ToolUseBlock(id=f"call_{len(self.stream_calls)}", name="list_files", input={"path": "."})]))
 
 
 def make_config(tmp_path: Path) -> AgentConfig:
@@ -65,6 +92,39 @@ def test_subagent_receives_only_read_only_tools(tmp_path: Path):
     assert "run_shell" not in tool_names
 
 
+def test_subagent_returns_stream_text_when_final_content_is_empty(tmp_path: Path):
+    registry = ToolRegistry(default_tools(tmp_path, TaskState()))
+    client = EmptyFinalClient()
+
+    result = run_subagent(
+        definition=EXPLORE_AGENT,
+        prompt="inspect files",
+        client=client,
+        config=make_config(tmp_path),
+        tool_registry=registry,
+    )
+
+    assert result == "partial investigation"
+
+
+def test_subagent_finalizes_captured_output_after_turn_limit(tmp_path: Path):
+    registry = ToolRegistry(default_tools(tmp_path, TaskState()))
+    client = LoopingToolClient()
+
+    result = run_subagent(
+        definition=EXPLORE_AGENT,
+        prompt="inspect files",
+        client=client,
+        config=make_config(tmp_path),
+        tool_registry=registry,
+    )
+
+    assert result == "Findings:\nfinalized from captured transcript"
+    assert len(client.stream_calls) == EXPLORE_AGENT.max_turns
+    assert len(client.complete_calls) == 1
+    assert "Captured transcript:" in client.complete_calls[0]["messages"][0]["content"]
+
+
 def test_subagent_uses_agent_specific_system_prompt(tmp_path: Path):
     registry = ToolRegistry(default_tools(tmp_path, TaskState()))
     client = RecordingClient()
@@ -83,6 +143,15 @@ def test_subagent_uses_agent_specific_system_prompt(tmp_path: Path):
     assert "Findings:" in system_prompt
     assert "Relevant files:" in system_prompt
     assert "Open questions:" in system_prompt
+    assert "return a final answer" in system_prompt
+    assert "Use at most 3 focused tool calls" in system_prompt
+    assert "If evidence is incomplete" in system_prompt
+
+
+def test_subagent_default_turn_limit_matches_tool_call_budget():
+    assert EXPLORE_AGENT.max_turns == 4
+    assert PLAN_AGENT.max_turns == 4
+    assert VERIFY_AGENT.max_turns == 4
 
 
 def test_plan_subagent_prompt_has_structured_output_contract(tmp_path: Path):
@@ -103,6 +172,7 @@ def test_plan_subagent_prompt_has_structured_output_contract(tmp_path: Path):
     assert "Steps:" in system_prompt
     assert "Critical files:" in system_prompt
     assert "Risks:" in system_prompt
+    assert "Use at most 3 focused tool calls" in system_prompt
 
 
 def test_verify_subagent_uses_verification_prompt(tmp_path: Path):
@@ -124,3 +194,5 @@ def test_verify_subagent_uses_verification_prompt(tmp_path: Path):
     assert "Evidence:" in system_prompt
     assert "Risks:" in system_prompt
     assert "Do not create, edit, delete" in system_prompt
+    assert "Do not use shell pipelines" in system_prompt
+    assert "Result: inconclusive" in system_prompt

@@ -2,7 +2,7 @@
 
 这是一个参考 Claude Code 设计思想实现的学习型 agent。它不复刻任何非公开源码，只把公开 API 上能实现的核心架构做成一个可运行、可阅读的小项目。
 
-当前版本：`0.6.2`
+当前版本：`0.6.3`
 
 项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
@@ -25,13 +25,13 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 ## 已实现的 Claude Code 设计点
 
 - **对话循环**：`AgentRuntime.run_user_turn()` 管理多轮 `tool_use / tool_result`
-- **流式输出**：主模型调用支持 text delta 边到边打印
+- **流式输出**：主模型调用支持 text delta 接收，并会抑制伪工具调用文本
 - **Task/Todo 状态**：`mini_agent/tasks.py` 保存多步骤任务进度，并通过工具更新
 - **意图识别 / 工具门控**：`mini_agent/intent.py` 先判断用户输入，再决定是否暴露工具
 - **Diff 预览和 patch 工具**：`preview_edit` 先看差异，`apply_edit` 应用修改并返回 diff
 - **模型适配层**：`mini_agent/llm.py` 把不同 LLM API 转成统一的 agent 内部格式
 - **reasoning 续传**：OpenAI-compatible provider 的 `reasoning_content` 会被保留并传回下一轮
-- **工具系统**：`Tool` + `build_tool()` 提供统一 schema、执行、只读/并发/危险标记
+- **工具系统**：`Tool` + `build_tool()` 提供统一 schema、输入校验、执行、只读/并发/危险标记
 - **工具注册表 / 策略边界**：`ToolRegistry` 统一管理工具集合，`tool_policy` 决定当前 intent 能看到哪些工具
 - **上下文 micro-compact**：上下文过大时先清理旧工具结果，再用 full compact 兜底
 - **Explore / Plan / Verification 子 Agent**：以 AgentTool 形式运行只读子 Agent，隔离探索、规划和验证上下文

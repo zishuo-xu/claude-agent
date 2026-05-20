@@ -20,6 +20,15 @@ def test_classifies_project_question_with_tools():
 
     assert decision.intent == Intent.PROJECT_QUESTION
     assert decision.allow_tools
+    assert decision.requested_tool is None
+
+
+def test_classifies_explicit_subagent_request_with_tools():
+    decision = classify_intent("用 explore_agent 找出 runtime 的职责")
+
+    assert decision.intent == Intent.PROJECT_QUESTION
+    assert decision.allow_tools
+    assert decision.requested_tool == "explore_agent"
 
 
 def test_classifies_coding_task_with_tools():
@@ -36,4 +45,3 @@ def test_intent_prompt_includes_tool_guidance():
 
     assert "general_learning" in prompt
     assert "Do not use tools" in prompt
-

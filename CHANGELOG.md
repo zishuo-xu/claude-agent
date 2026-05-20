@@ -2,6 +2,55 @@
 
 本文件记录项目版本变化。
 
+## 0.6.3 - 2026-05-21
+
+当前学习阶段：工具输入验证层。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- `Tool` 新增可选 `validate_input`
+- Runtime 在权限判断前先执行工具输入校验
+- `run_shell` 会拒绝空命令，并返回清晰错误
+
+这是对 Claude `Tool.validateInput()` 思想的轻量实现。当前只补最小边界，不引入复杂 schema 校验框架。
+
+### Fixes / Behavior Adjustments
+
+- system prompt 明确要求使用真实 tool call，不要把 XML/JSON 伪工具调用当文本输出
+- Runtime 可识别模型输出的 XML/JSON 简单伪工具调用，并转换为内部 `tool_use`
+- 流式输出会抑制这类伪工具调用文本，避免直接展示给用户
+- 当 provider 只在 stream delta 中返回文本、最终响应为空时，Runtime 会用累计文本补回最终响应
+- 意图识别会把显式 `explore_agent` / `plan_agent` / `verify_agent` 请求归为可用工具的项目问题
+- 显式子 Agent 请求只暴露被点名的子 Agent 工具，避免主 Agent 抢先使用文件工具
+- 子 Agent 如果没有返回最终文本，会把捕获到的输出作为兜底结果返回给主 Agent
+- 子 Agent prompt 明确最多 3 次工具调用后必须返回最终总结
+- 子 Agent 默认 `max_turns` 调整为 4，对应 3 次工具调用加 1 次最终回答
+- 子 Agent 到达轮次上限时，会追加一次无工具 finalization，把捕获 transcript 压成结构化最终答案
+- 显式子 Agent 请求在目标工具执行一次后会关闭工具暴露，避免主 Agent 反复调用同一个子 Agent
+- `list_files` 默认隐藏 `.env`、`.venv`、`__pycache__` 等常见噪音，可用 `include_hidden=true` 查看
+- Verification 子 Agent prompt 明确避免 shell 管道、重定向、`cd` 和链式命令
+
+### Tests
+
+- 新增空 shell 命令校验测试
+- 新增 runtime 在权限前拦截无效工具输入的测试
+- 新增子 Agent stream-only 文本返回测试
+- 新增伪工具调用识别和流式抑制测试
+- 新增 stream delta 文本补回最终响应测试
+- 新增显式子 Agent 请求的 intent 分类测试
+- 新增显式子 Agent 请求只暴露目标工具的测试
+- 新增子 Agent 工具调用预算和轮次限制测试
+- 新增子 Agent 到达轮次上限后的 finalization 测试
+- 新增显式子 Agent 工具只执行一次的 runtime 测试
+- 新增 `list_files` 默认隐藏噪音和显式显示隐藏项测试
+- 新增 system prompt 真实工具调用约束测试
+
+### Verified
+
+- `59 passed`
+
 ## 0.6.2 - 2026-05-20
 
 当前学习阶段：子 Agent 输出结构化。

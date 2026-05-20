@@ -15,7 +15,7 @@ MAJOR.MINOR.PATCH
 例如：
 
 ```text
-0.6.2
+0.6.3
 ```
 
 ## 版本含义
@@ -141,7 +141,7 @@ VERSION
 当前版本：
 
 ```text
-0.6.2
+0.6.3
 ```
 
 当前版本的既有特性已在 `CHANGELOG.md` 中按以下类别归档：
@@ -289,3 +289,13 @@ VERSION
 - 不新增模块，不引入复杂解析
 
 说明：这是 prompt contract 小特性，用最小改动让子 Agent 的汇报更稳定。
+
+### `0.6.3`: 工具输入验证层
+
+目标：
+
+- `Tool` 支持轻量 `validate_input`
+- Runtime 在权限判断前校验工具输入
+- `run_shell` 拒绝空命令
+
+说明：这是 Claude `Tool.validateInput()` 思想的最小实现。当前不引入复杂 schema 框架，只补一层清晰、可测试的工具边界。

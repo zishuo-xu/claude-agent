@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from mini_agent.tools import default_tools, is_read_only_shell_command
+from mini_agent.tools import default_tools, is_read_only_shell_command, validate_shell_input
 from mini_agent.tasks import TaskState
 
 
@@ -21,6 +21,36 @@ def test_run_shell_tool_marks_pwd_as_read_only(tmp_path: Path):
 
     assert run_shell.read_only({"command": "pwd"})
     assert run_shell.concurrency_safe({"command": "pwd"})
+
+
+def test_list_files_hides_common_noise_by_default(tmp_path: Path):
+    (tmp_path / ".env").write_text("secret", encoding="utf-8")
+    (tmp_path / ".venv").mkdir()
+    (tmp_path / "__pycache__").mkdir()
+    (tmp_path / "README.md").write_text("hello", encoding="utf-8")
+    list_files = default_tools(tmp_path)["list_files"]
+
+    result = list_files.run({"path": "."})
+
+    assert "README.md" in result
+    assert ".env" not in result
+    assert ".venv" not in result
+    assert "__pycache__" not in result
+
+
+def test_list_files_can_include_hidden_noise_when_requested(tmp_path: Path):
+    (tmp_path / ".env").write_text("secret", encoding="utf-8")
+    list_files = default_tools(tmp_path)["list_files"]
+
+    result = list_files.run({"path": ".", "include_hidden": True})
+
+    assert ".env" in result
+
+
+def test_run_shell_input_validator_rejects_empty_command():
+    assert validate_shell_input({"command": ""}) == "command must be a non-empty string"
+    assert validate_shell_input({"command": "   "}) == "command must be a non-empty string"
+    assert validate_shell_input({"command": "pwd"}) is None
 
 
 def test_preview_edit_returns_diff_without_modifying_file(tmp_path: Path):

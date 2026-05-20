@@ -5,6 +5,7 @@ from typing import Any, Callable
 
 
 ToolHandler = Callable[[dict[str, Any]], str]
+ToolValidator = Callable[[dict[str, Any]], str | None]
 
 
 @dataclass
@@ -17,6 +18,7 @@ class Tool:
     read_only: Callable[[dict[str, Any]], bool] = lambda _input: False
     concurrency_safe: Callable[[dict[str, Any]], bool] = lambda _input: False
     destructive: Callable[[dict[str, Any]], bool] = lambda _input: False
+    validate_input: ToolValidator = lambda _input: None
 
     def api_spec(self) -> dict[str, Any]:
         return {
@@ -34,4 +36,3 @@ class Tool:
 
 def build_tool(**kwargs: Any) -> Tool:
     return Tool(**kwargs)
-

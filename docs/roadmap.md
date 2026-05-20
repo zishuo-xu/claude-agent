@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.6.2`
+当前版本：`0.6.3`
 
 ## 已完成主线
 
@@ -17,6 +17,7 @@
 - `0.6.0`: Explore / Plan 只读子 Agent
 - `0.6.1`: Verification 只读子 Agent
 - `0.6.2`: 子 Agent 输出结构化
+- `0.6.3`: 工具输入验证层
 
 ## 架构减重审视
 
@@ -36,7 +37,7 @@
 - 不继续新增更多子 Agent。
 - 不急着做 MCP。
 - 不急着做 Git 专用工具。
-- 不做复杂权限深化。
+- 不做复杂权限深化；仅保留当前轻量输入校验。
 - 不把子 Agent 输出改成 JSON 解析。
 - 不拆分 `AgentRuntime`，除非出现真实复杂度压力。
 
@@ -45,6 +46,7 @@
 - `docs/current-features.md` 和 `docs/architecture.md` 已经偏长，后续只更新必要内容。
 - `builtin_tools.py` 和 `llm.py` 是目前最大的代码文件，但职责仍清楚，暂不拆。
 - `runtime.py` 职责较多，但作为学习版主循环仍可接受。
+- 子 Agent 已有空结果兜底、伪工具调用兼容、3 次工具调用预算、轮次上限 finalization 和显式单次调用收敛；后续先观察真实使用，不急着继续加复杂调度。
 
 ## 下一步
 
@@ -61,9 +63,9 @@
 
 ## 候选但暂缓
 
-### 工具输入验证层 / 权限深化
+### 权限深化
 
-Claude 的 `Tool` 有 `validateInput()`、`checkPermissions()` 等边界。本项目当前权限骨架够用，等工具复杂度真正上来再做。
+Claude 的 `Tool` 还有更细的 `checkPermissions()` 等边界。本项目当前权限骨架够用，等工具复杂度真正上来再做。
 
 ### Git 专用工具
 

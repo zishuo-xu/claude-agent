@@ -63,10 +63,14 @@ agent 主循环。
 - 持有工具注册表 `ToolRegistry`
 - 调用模型
 - 流式消费模型 text delta
+- 在 provider 最终响应缺失文本时，用 stream delta 累计文本补回
 - 通过工具策略根据 intent 决定是否暴露工具 schema
+- system prompt 明确区分真实 tool call 和文本形式的伪工具调用
+- 兼容模型输出的 XML/JSON 简单伪工具调用标记，并转成内部 `tool_use`
 - 将当前任务状态注入 system prompt
 - 识别模型返回的 `tool_use`
 - 调度本地工具
+- 在权限判断前执行工具输入校验
 - 把 `tool_result` 回传给模型
 - 在上下文过大时先触发 micro-compact，再用 full compact 兜底
 
@@ -111,6 +115,9 @@ agent 主循环。
 - 为子 Agent 创建独立 `AgentState` 和 `TaskState`
 - 只向子 Agent 暴露只读工具
 - 只把最终总结返回主 Agent，不把内部工具历史塞回主 Agent
+- 当子 Agent 未产出最终文本时，用捕获输出兜底，避免主 Agent 拿到空结果
+- 子 Agent 默认最多 3 次工具调用，随后必须返回最终总结
+- 子 Agent 到达轮次上限时，追加一次无工具 finalization，把 transcript 压成最终答案
 
 对应 Claude Code 概念：
 
@@ -129,6 +136,7 @@ agent 主循环。
 - 不支持后台并行
 - 不支持每个子 Agent 单独选择模型
 - 不支持 worktree / remote 隔离
+- 不做复杂预算器；当前只用 prompt 约束、`max_turns=4` 和最终总结兜底
 
 ### `mini_agent.intent`
 
@@ -139,6 +147,7 @@ agent 主循环。
 - 将用户输入分类为 `casual_chat`、`general_learning`、`project_question`、`coding_task`、`dangerous_request`
 - 为每类 intent 提供工具使用建议
 - 在简单聊天和泛学习咨询中隐藏工具 schema，避免模型无意义读取项目或执行 shell
+- 显式请求内置子 Agent 时，只暴露被点名的子 Agent 工具；该工具执行一次后关闭工具暴露
 
 对应 Claude Code 概念：
 
@@ -175,12 +184,14 @@ LLM provider 适配层。
 - 定义 `Tool`
 - 提供 `build_tool()` builder
 - 暴露工具 schema 给模型
+- 支持轻量输入校验
 - 封装工具执行和结果长度截断
 - 标记工具是否只读、是否可并发、是否危险
 
 对应 Claude Code 概念：
 
 - `buildTool()`
+- `validateInput()`
 - 工具统一接口
 - fail-closed 默认值
 
@@ -194,6 +205,7 @@ LLM provider 适配层。
 - 维护文件、搜索、shell、task 工具的具体实现
 - 复用 `Workspace` 限制文件路径
 - 为每个工具声明只读、并发、安全风险元信息
+- `list_files` 默认隐藏常见噪音项，必要时可显式包含隐藏项
 
 当前内置工具：
 
@@ -424,13 +436,14 @@ Main Agent
 ```text
 LLMClient.stream_complete()
   -> TextDeltaEvent
-  -> Runtime prints text immediately
+  -> Runtime buffers text delta
   -> FinalResponseEvent
+  -> Runtime prints ordinary text or converts pseudo tool markup
   -> Runtime appends assistant message
   -> Runtime executes tool_use if present
 ```
 
-学习重点：流式输出改变的是模型调用主路径。用户不必等完整回复生成完，runtime 可以边收到 text delta 边展示，同时保留最终结构化响应供工具循环使用。
+学习重点：流式输出改变的是模型调用主路径。当前实现为了兼容会输出伪工具调用文本的 OpenAI-compatible 模型，会先累计 text delta，确认不是伪工具调用后再展示，同时保留最终结构化响应供工具循环使用。
 
 ## 当前简化点
 

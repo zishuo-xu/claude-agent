@@ -21,6 +21,9 @@ Role:
 - Search and read the workspace to answer the assigned question.
 - Stay strictly read-only.
 - Do not create, edit, delete, move, copy, or run commands that change state.
+- Use at most 3 focused tool calls.
+- After the third tool call, or earlier if you have enough evidence, stop using tools and return a final answer.
+- If evidence is incomplete, state that in Open questions instead of continuing to search.
 - Return your final answer using this structure:
   Findings:
   Relevant files:
@@ -33,6 +36,9 @@ Role:
 - Explore the workspace in read-only mode.
 - Design an implementation plan, not the implementation itself.
 - Do not create, edit, delete, move, copy, or run commands that change state.
+- Use at most 3 focused tool calls.
+- After the third tool call, or earlier if you have enough evidence, stop using tools and return a final answer.
+- If evidence is incomplete, state that in Risks instead of continuing to search.
 - Return your final answer using this structure:
   Goal:
   Steps:
@@ -47,7 +53,11 @@ Role:
 - Try to find problems, missing tests, regressions, or unsupported assumptions.
 - Stay strictly read-only.
 - Do not create, edit, delete, move, copy, install packages, or run commands that change state.
-- Prefer existing tests, read-only commands, file inspection, and evidence-based conclusions.
+- Prefer existing tests, simple read-only commands, file inspection, and evidence-based conclusions.
+- Do not use shell pipelines, redirection, cd, or chained shell commands.
+- Use at most 3 focused tool calls.
+- After the third tool call, or earlier if you have enough evidence, stop using tools and return a final answer.
+- If evidence is incomplete, return Result: inconclusive instead of continuing to search.
 - Return your final answer using this structure:
   Result: passed | failed | inconclusive
   Checks:
@@ -61,7 +71,7 @@ class AgentDefinition:
     agent_type: str
     description: str
     system_prompt: str
-    max_turns: int = 6
+    max_turns: int = 4
 
 
 EXPLORE_AGENT = AgentDefinition(
@@ -144,9 +154,64 @@ def run_subagent(
         f"{definition.agent_type} subagent always uses its read-only tool set",
         allow_tools=True,
     )
-    with contextlib.redirect_stdout(io.StringIO()):
+    stdout = io.StringIO()
+    with contextlib.redirect_stdout(stdout):
         result = runtime.run_user_turn(prompt, intent_override=intent)
-    return result or "(subagent completed without a final text response)"
+    output = stdout.getvalue()
+    return result or _finalize_subagent_result(
+        definition=definition,
+        prompt=prompt,
+        output=output,
+        client=client,
+        config=sub_config,
+    )
+
+
+def _finalize_subagent_result(
+    *,
+    definition: AgentDefinition,
+    prompt: str,
+    output: str,
+    client: LLMClient,
+    config: AgentConfig,
+) -> str:
+    fallback = _fallback_subagent_result(output)
+    try:
+        response = client.complete(
+            model=config.model,
+            max_tokens=1024,
+            system=(
+                f"{definition.system_prompt}\n"
+                "You are finalizing after the subagent reached its turn limit. "
+                "Do not use tools. Produce the required final answer from the captured transcript. "
+                "If evidence is incomplete, say so in the required structure."
+            ),
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        f"Original task:\n{prompt}\n\n"
+                        f"Captured transcript:\n{output}\n\n"
+                        "Return the final structured answer now."
+                    ),
+                }
+            ],
+        )
+    except Exception:
+        return fallback
+
+    text = "\n".join(block.text for block in response.content if getattr(block, "type", None) == "text").strip()
+    return text or fallback
+
+
+def _fallback_subagent_result(output: str) -> str:
+    lines = [line.rstrip() for line in output.splitlines() if line.strip()]
+    if not lines:
+        return "(subagent completed without a final text response)"
+    captured = "\n".join(lines[-24:])
+    if len(captured) > 2400:
+        captured = captured[-2400:]
+    return "Subagent reached its turn limit before a final answer. Captured output:\n" + captured
 
 
 def _build_subagent_tool(

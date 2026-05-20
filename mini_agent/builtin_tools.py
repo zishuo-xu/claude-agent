@@ -40,6 +40,17 @@ READ_ONLY_SHELL_COMMANDS = {
 
 SHELL_CONTROL_TOKENS = {";", "&&", "||", "|", ">", ">>", "<", "`", "$("}
 
+DEFAULT_HIDDEN_LIST_NAMES = {
+    ".DS_Store",
+    ".env",
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+}
+
 
 def is_read_only_shell_command(command: str) -> bool:
     if any(token in command for token in SHELL_CONTROL_TOKENS):
@@ -80,18 +91,28 @@ def replace_text(content: str, old: str, new: str, replace_all: bool = False) ->
     return updated, occurrences
 
 
+def validate_shell_input(args: dict) -> str | None:
+    command = args.get("command")
+    if not isinstance(command, str) or not command.strip():
+        return "command must be a non-empty string"
+    return None
+
+
 def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict[str, Tool]:
     workspace = Workspace(root)
     tasks = task_state or TaskState()
 
     def list_files(args: dict) -> str:
         path = workspace.resolve(args.get("path", "."))
+        include_hidden = bool(args.get("include_hidden", False))
         if not path.exists():
             raise FileNotFoundError(str(path))
         if not path.is_dir():
             raise NotADirectoryError(str(path))
         rows = []
         for item in sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
+            if not include_hidden and item.name in DEFAULT_HIDDEN_LIST_NAMES:
+                continue
             suffix = "/" if item.is_dir() else ""
             rows.append(f"{item.relative_to(workspace.root)}{suffix}")
         return "\n".join(rows) or "(empty)"
@@ -188,7 +209,12 @@ def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict
             input_schema={
                 "type": "object",
                 "properties": {
-                    "path": {"type": "string", "description": "Directory path relative to the workspace.", "default": "."}
+                    "path": {"type": "string", "description": "Directory path relative to the workspace.", "default": "."},
+                    "include_hidden": {
+                        "type": "boolean",
+                        "description": "Set true to include common hidden or generated entries such as .env and .venv.",
+                        "default": False,
+                    },
                 },
             },
             call=list_files,
@@ -295,6 +321,7 @@ def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict
                 "required": ["command"],
             },
             call=run_shell,
+            validate_input=validate_shell_input,
             read_only=lambda args: is_read_only_shell_command(args.get("command", "")),
             concurrency_safe=lambda args: is_read_only_shell_command(args.get("command", "")),
             destructive=lambda args: any(word in args.get("command", "") for word in ["rm ", "mv ", "chmod ", "chown "]),

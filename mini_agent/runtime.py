@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import html
+import json
+import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any
@@ -7,7 +10,7 @@ from typing import Any
 from .config import AgentConfig
 from .context import count_message_chars, micro_compact_messages
 from .intent import IntentDecision, classify_intent, intent_prompt
-from .llm import FinalResponseEvent, LLMClient
+from .llm import FinalResponseEvent, LLMClient, TextBlock, ToolUseBlock
 from .permissions import PermissionBehavior, PermissionContext, PermissionRule, decide_permission
 from .tasks import TaskState
 from .tool_core import Tool
@@ -21,6 +24,8 @@ Operating principles:
 - Inspect before editing.
 - Prefer the smallest tool call that advances the task.
 - Explain meaningful actions briefly before using tools.
+- When a tool is needed, use the actual tool call interface. Do not print XML, JSON, or markdown pseudo tool calls as plain text.
+- If the user explicitly asks you to use explore_agent, plan_agent, or verify_agent, call that tool when it is available.
 - Match the user's intent and scope. For greetings or casual chat, reply briefly and do not describe the project architecture unless asked.
 - For general learning requests like "I want to learn Python", do not inspect the workspace or describe this project unless the user explicitly asks to use the project as learning material. Give a concise learning path or ask about their current level.
 - Only explain architecture, tools, permissions, or implementation details when the user asks for them or when they are necessary to complete the task.
@@ -66,6 +71,7 @@ class AgentRuntime:
             self.state.turn_count += 1
             self._compact_if_needed()
             response = self._call_model(self.config.model)
+            response.content = self._normalize_pseudo_tool_call(response.content)
             self.state.messages.append(
                 {
                     "role": "assistant",
@@ -82,6 +88,7 @@ class AgentRuntime:
 
             tool_results = self._execute_tool_uses(tool_uses)
             self.state.messages.append({"role": "user", "content": tool_results})
+            self._disable_requested_tool_after_use(tool_uses)
 
         print(f"\nStopped after {self.config.max_turns} turns.")
         return ""
@@ -118,6 +125,7 @@ class AgentRuntime:
         tools: list[dict[str, Any]],
     ) -> Any:
         final_response = None
+        streamed_text = ""
         for event in self.client.stream_complete(
             model=model,
             max_tokens=max_tokens,
@@ -126,11 +134,15 @@ class AgentRuntime:
             tools=tools,
         ):
             if event.type == "text_delta":
-                print(event.text, end="", flush=True)
+                streamed_text += event.text
             elif isinstance(event, FinalResponseEvent):
                 final_response = event.response
         if final_response is None:
             raise RuntimeError("stream completed without final response")
+        if streamed_text and not final_response.content:
+            final_response.content = [TextBlock(streamed_text)]
+        if streamed_text and not self._contains_pseudo_tool_call(self._content_text(final_response.content)):
+            print(streamed_text, end="", flush=True)
         return final_response
 
     def _system_prompt(self) -> str:
@@ -141,6 +153,65 @@ class AgentRuntime:
 
     def _available_tool_specs(self) -> list[dict[str, Any]]:
         return self.tool_registry.api_specs_for_intent(self.state.current_intent)
+
+    def _disable_requested_tool_after_use(self, tool_uses: list[Any]) -> None:
+        decision = self.state.current_intent
+        if not decision or not decision.requested_tool:
+            return
+        if not any(tool_use.name == decision.requested_tool for tool_use in tool_uses):
+            return
+        self.state.current_intent = IntentDecision(
+            intent=decision.intent,
+            reason=f"{decision.reason}; requested tool already ran",
+            allow_tools=False,
+        )
+
+    def _normalize_pseudo_tool_call(self, content_blocks: list[Any]) -> list[Any]:
+        if any(getattr(block, "type", None) == "tool_use" for block in content_blocks):
+            return content_blocks
+
+        text = self._content_text(content_blocks).strip()
+        xml_match = re.search(
+            r"<invoke\s+name=[\"'](?P<name>[^\"']+)[\"']>\s*"
+            r"<(?P<tag>query|prompt)>(?P<prompt>.*?)</(?P=tag)>\s*"
+            r"</invoke>",
+            text,
+            flags=re.DOTALL,
+        )
+        if xml_match:
+            name = xml_match.group("name")
+            prompt = html.unescape(xml_match.group("prompt")).strip()
+            return self._pseudo_tool_block_or_original(name, {"prompt": prompt}, content_blocks)
+
+        json_match = re.search(r"<tool_call>\s*(?P<body>\{.*?\})\s*</tool_call>", text, flags=re.DOTALL)
+        if not json_match:
+            return content_blocks
+        try:
+            payload = json.loads(json_match.group("body"))
+        except json.JSONDecodeError:
+            return content_blocks
+
+        name = payload.get("name")
+        arguments = payload.get("arguments") or {}
+        if not isinstance(arguments, dict):
+            return content_blocks
+        return self._pseudo_tool_block_or_original(name, arguments, content_blocks)
+
+    def _pseudo_tool_block_or_original(self, name: Any, tool_input: dict[str, Any], original: list[Any]) -> list[Any]:
+        if not isinstance(name, str) or name not in self.tools:
+            return original
+
+        if "prompt" not in tool_input and "query" in tool_input:
+            tool_input = {**tool_input, "prompt": tool_input["query"]}
+
+        prompt = tool_input.get("prompt")
+        if isinstance(prompt, str):
+            tool_input = {**tool_input, "prompt": html.unescape(prompt).strip()}
+            prompt = tool_input["prompt"]
+        if not prompt:
+            return original
+
+        return [ToolUseBlock(id=f"pseudo_tool_{self.state.turn_count}", name=name, input={"prompt": prompt})]
 
     def _compact_if_needed(self) -> None:
         total_chars = count_message_chars(self.state.messages)
@@ -200,6 +271,12 @@ class AgentRuntime:
             return self._tool_result(tool_use.id, f"Unknown tool: {name}", True)
 
         print(f"\n\n[tool] {name} {tool_input}")
+        validation_error = tool.validate_input(tool_input)
+        if validation_error:
+            result = f"Invalid tool input: {validation_error}"
+            print(result)
+            return self._tool_result(tool_use.id, result, True)
+
         decision = decide_permission(
             context=self.permission_context,
             tool_name=name,
@@ -260,3 +337,7 @@ class AgentRuntime:
     @staticmethod
     def _content_text(content_blocks: list[Any]) -> str:
         return "\n".join(block.text for block in content_blocks if getattr(block, "type", None) == "text")
+
+    @staticmethod
+    def _contains_pseudo_tool_call(text: str) -> bool:
+        return "<tool_call" in text or "<invoke" in text

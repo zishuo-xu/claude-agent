@@ -421,3 +421,81 @@ provider reasoning_content -> ReasoningBlock -> provider reasoning_content
 - `mini_agent/llm.py`: `ReasoningBlock`、`OpenAICompatibleLLM._get_reasoning_content()`、`_to_openai_messages()`
 - `tests/test_llm_adapter.py`: `test_openai_adapter_preserves_reasoning_content_for_next_turn`
 - `docs/01-llm-provider-adapter.md`: provider reasoning 续传说明
+
+### Q: 本次修复改了什么？会带来什么影响？
+
+本次修复主要针对 smoke test 暴露的几个真实交互问题：
+
+1. 显式请求 `explore_agent` 时，模型可能没有真正调用工具，而是输出 XML/JSON 伪工具调用文本。
+2. `用 explore_agent 找出 runtime 的职责` 被意图识别误判成 `casual_chat`，导致工具 schema 没有暴露给模型。
+3. 子 Agent 可能没有最终文本，主 Agent 只能拿到空结果。
+4. `list_files` 默认列出 `.env`、`.venv`、`__pycache__` 等噪音。
+5. Verification 子 Agent 容易尝试组合 shell 命令，触发不必要权限确认。
+
+对应修复：
+
+- `mini_agent/intent.py`: 显式提到 `explore_agent`、`plan_agent`、`verify_agent` 时，识别为可使用工具的项目问题。
+- `mini_agent/tool_policy.py`: 显式点名子 Agent 时，只暴露被点名的子 Agent 工具，避免主 Agent 先读文件、搜索代码。
+- `mini_agent/runtime.py`: 兼容模型输出的 XML/JSON 简单伪工具调用，将其转成内部 `ToolUseBlock`；同时抑制这类文本直接展示给用户。
+- `mini_agent/runtime.py`: 当 provider 只在 stream delta 返回文本、最终响应为空时，用累计文本补回最终响应。
+- `mini_agent/subagent.py`: 子 Agent 没有最终文本时，返回捕获输出作为兜底结果；并在 prompt 中要求子 Agent 少量探索后给最终答案。
+- `mini_agent/builtin_tools.py`: `list_files` 默认隐藏常见噪音项，可用 `include_hidden=true` 显式查看。
+- `mini_agent/subagent.py`: Verification prompt 明确避免 shell 管道、重定向、`cd` 和链式命令。
+
+影响：
+
+- 正向影响：显式使用子 Agent 的请求更稳定；普通文件列表更干净；伪工具调用不会污染用户界面；子 Agent 空结果问题减少。
+- 架构影响：没有新增大模块，只是在 intent、tool policy、runtime、subagent、builtin tools 这些既有边界内补齐行为。
+- 取舍：为了识别和抑制伪工具调用，runtime 会先累计 stream text，再决定是否输出；这比真正 token 级即时打印稍慢，但换来更稳定的工具调用体验。
+- 安全影响：`.env` 默认不再被 `list_files` 列出，但仍可在明确路径下读取；这是减少误展示，不是权限隔离。
+- 测试影响：新增 intent、tool policy、runtime streaming、伪工具调用、子 Agent 和 list_files 相关测试，当前测试数为 `56 passed`。
+
+### Q: 现在的 Agent Loop 是怎么做的？
+
+当前 Agent Loop 的核心实现在 `mini_agent/runtime.py` 的 `AgentRuntime.run_user_turn()`。
+
+整体流程是：
+
+```text
+用户输入
+  -> classify_intent() 判断意图
+  -> 把用户消息加入 state.messages
+  -> 循环最多 max_turns 次：
+       1. 必要时做上下文压缩
+       2. 根据 intent 决定暴露哪些工具
+       3. 调用 LLM
+       4. 兼容并规范化伪工具调用
+       5. 把 assistant 响应加入 messages
+       6. 如果没有 tool_use，返回最终文本
+       7. 如果有 tool_use，执行工具
+       8. 把 tool_result 加入 messages
+       9. 进入下一轮，让模型基于工具结果继续回答
+```
+
+它对应 Claude Code 的 `queryLoop` 思想：模型不是一次回答完，而是在“模型思考 -> 工具调用 -> 工具结果 -> 再思考”的循环里完成任务。
+
+当前 loop 里有几个关键边界：
+
+- `intent.py`: 先判断用户请求类型。普通寒暄和泛学习请求不暴露工具；项目问题和编码任务才暴露工具。
+- `tool_policy.py`: 根据 intent 过滤工具。显式点名 `explore_agent`、`plan_agent`、`verify_agent` 时，只暴露被点名的子 Agent。
+- `runtime.py`: 调用模型、处理流式输出、识别 `tool_use`、执行工具、回传 `tool_result`。
+- `permissions.py`: 工具真正执行前做权限判断。
+- `context.py`: 消息过长时先 micro-compact，再 full compact。
+
+工具执行的内部顺序是：
+
+```text
+tool_use
+  -> 查找工具是否存在
+  -> validate_input()
+  -> decide_permission()
+  -> 用户确认或自动允许
+  -> tool.run()
+  -> tool_result
+```
+
+所以当前 Agent Loop 的一句话解释是：
+
+```text
+AgentRuntime 是协调器：它把用户输入、意图识别、LLM 调用、工具执行、权限判断、上下文压缩串成一个可重复的闭环。
+```
