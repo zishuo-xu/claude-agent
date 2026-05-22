@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.9.0`
+当前版本：`0.9.1`
 
 已完成学习主线：
 
@@ -123,5 +123,6 @@ MAJOR.MINOR.PATCH
 - `0.8.3`: Project Question Follow-up Fix / 项目问答跟进修复
 - `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
 - `0.9.0`: Context Strategy Review / 上下文策略复查
+- `0.9.1`: Context Boundary Tests / 上下文边界测试
 
 详细说明以 `CHANGELOG.md` 为准。

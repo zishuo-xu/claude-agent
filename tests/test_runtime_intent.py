@@ -23,6 +23,17 @@ class FakeClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class RecordingCompactClient(FakeClient):
+    def __init__(self):
+        super().__init__()
+        self.complete_kwargs = []
+
+    def complete(self, **kwargs):
+        self.complete_calls += 1
+        self.complete_kwargs.append(kwargs)
+        return LLMResponse([TextBlock("summary preserving old goal")])
+
+
 class ToolUseClient:
     def stream_complete(self, **_kwargs):
         yield FinalResponseEvent(LLMResponse([ToolUseBlock(id="call_1", name="run_shell", input={"command": ""})]))
@@ -557,6 +568,34 @@ def test_runtime_full_compact_still_runs_when_micro_compact_is_not_enough(tmp_pa
     assert runtime.client.complete_calls == 1  # type: ignore[attr-defined]
     assert runtime.state.summary == "summary"
     assert len(runtime.state.messages) == 4
+
+
+def test_runtime_full_compact_preserves_old_goal_in_summary_prompt_and_recent_messages(tmp_path: Path):
+    client = RecordingCompactClient()
+    runtime = make_runtime_with_client(tmp_path, client)
+    runtime.config.context_char_budget = 100
+    runtime.state.messages = [
+        {"role": "user", "content": "User goal: refactor runtime without losing tests."},
+        {"role": "assistant", "content": "I will inspect the runtime first."},
+        {"role": "user", "content": "Older detail " + ("x" * 200)},
+        {"role": "assistant", "content": "Older response " + ("y" * 200)},
+        {"role": "user", "content": "Recent user asks to keep README updated."},
+        {"role": "assistant", "content": "Recent assistant confirms README update."},
+        {"role": "user", "content": "Recent user asks to run tests."},
+        {"role": "assistant", "content": "Recent assistant will run pytest."},
+    ]
+
+    runtime._compact_if_needed()
+
+    summary_prompt = client.complete_kwargs[0]["messages"][0]["content"]
+    assert "User goal: refactor runtime without losing tests." in summary_prompt
+    assert runtime.state.summary == "summary preserving old goal"
+    assert runtime.state.messages == [
+        {"role": "user", "content": "Recent user asks to keep README updated."},
+        {"role": "assistant", "content": "Recent assistant confirms README update."},
+        {"role": "user", "content": "Recent user asks to run tests."},
+        {"role": "assistant", "content": "Recent assistant will run pytest."},
+    ]
 
 
 def test_runtime_injects_full_compact_summary_into_system_prompt(tmp_path: Path):

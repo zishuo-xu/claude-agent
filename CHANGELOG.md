@@ -10,6 +10,21 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.9.1 - 2026-05-22
+
+当前学习阶段：Context Boundary Tests / 上下文边界测试。
+
+变更级别：测试增强版本。
+
+### Tests
+
+- 新增 micro-compact 不压缩孤立 `tool_result` 的测试
+- 新增接近用户长任务的 full compact 测试，确认旧目标进入摘要 prompt，最近 4 条原始消息保留
+
+### Verified
+
+- `90 passed`
+
 ## 0.9.0 - 2026-05-22
 
 当前学习阶段：Context Strategy Review / 上下文策略复查。

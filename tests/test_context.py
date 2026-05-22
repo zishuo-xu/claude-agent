@@ -76,3 +76,17 @@ def test_micro_compact_ignores_non_compactable_tools():
     assert result.compacted_count == 1
     assert result.messages[1]["content"][0]["content"] == "task state"
     assert result.messages[3]["content"][0]["content"].startswith(MICRO_COMPACT_PLACEHOLDER)
+
+
+def test_micro_compact_does_not_clear_tool_result_without_matching_tool_use():
+    messages = [
+        user_tool_result("orphan_call", "manual tool result should stay"),
+        assistant_tool_use("call_1", "read_file"),
+        user_tool_result("call_1", "large result 1"),
+    ]
+
+    result = micro_compact_messages(messages, keep_recent_tool_results=0)
+
+    assert result.compacted_count == 1
+    assert result.messages[0]["content"][0]["content"] == "manual tool result should stay"
+    assert result.messages[2]["content"][0]["content"].startswith(MICRO_COMPACT_PLACEHOLDER)

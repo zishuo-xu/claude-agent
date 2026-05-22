@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.9.0`
+当前版本：`0.9.1`
 
 ## 已完成主线
 
@@ -32,6 +32,7 @@
 - `0.8.3`: Project Question Follow-up Fix / 项目问答跟进修复
 - `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
 - `0.9.0`: Context Strategy Review / 上下文策略复查
+- `0.9.1`: Context Boundary Tests / 上下文边界测试
 
 ## 架构减重审视
 
@@ -95,20 +96,31 @@
 
 ## 下一步
 
-### P1 / `0.9.1`: Context Boundary Tests / 上下文边界测试
+### P1 / `0.9.2`: Context Strategy Decision / 上下文策略取舍
 
-目标：继续补少量上下文边界测试，确认 micro/full compact 不会误伤用户目标、任务状态和最新工具结果。
+目标：基于 0.9.0/0.9.1 的复查结果，决定上下文策略是否暂时收尾，还是需要一个轻量增强点。
 
 作用：
 
-- 保护长任务上下文连续性。
-- 在不做复杂 token 预算器的前提下补齐关键安全边界。
-- 为后续决定是否增强上下文策略提供依据。
+- 避免为了上下文继续堆复杂功能。
+- 明确是否离开上下文主题，转向子 Agent 或权限体验。
+- 保持 mini-claude 的轻量工程化边界。
 
 建议范围：
 
+- 优先做设计判断。
 - 不做复杂 token 预算器。
 - 不引入长期记忆系统。
+- 不改变 compact 主流程。
+
+### 已完成 / `0.9.1`: Context Boundary Tests / 上下文边界测试
+
+目标：补少量上下文边界测试，确认 micro/full compact 不会误伤用户目标、任务状态和最新工具结果。
+
+结果：
+
+- 新增测试确认 micro-compact 不会压缩没有对应 `tool_use` 的孤立 `tool_result`。
+- 新增接近用户长任务的 full compact 测试：旧目标进入摘要 prompt，最近 4 条原始消息保留。
 - 不改变 compact 主流程。
 
 ### 已完成 / `0.9.0`: Context Strategy Review / 上下文策略复查
