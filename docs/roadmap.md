@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.9.6`
+当前版本：`0.9.7`
 
 ## 已完成主线
 
@@ -38,6 +38,7 @@
 - `0.9.4`: Project Answer Compression / 项目问答输出收敛
 - `0.9.5`: Manual Usage Review / 手动使用复查
 - `0.9.6`: Tool Result Display Compact / 工具结果展示收敛
+- `0.9.7`: Shell Execution UX / Shell 执行体验收敛
 
 ## 架构减重审视
 
@@ -101,7 +102,7 @@
 
 ## 下一步
 
-### P1 / `0.9.7`: Project Read Strategy Hardening / 项目读取策略硬化
+### P1 / `0.9.8`: Project Read Strategy Hardening / 项目读取策略硬化
 
 目标：让项目问答在目标文档明确时不再先 `list_files`。
 
@@ -116,6 +117,16 @@
 - 优先调整项目问答提示或轻量策略。
 - 不引入 planner。
 - 不改工具执行层。
+
+### 已完成 / `0.9.7`: Shell Execution UX / Shell 执行体验收敛
+
+目标：改善创建并运行 Python 脚本这类任务的交互体验。
+
+结果：
+
+- `run_shell` 结果在 CLI 中按 exit/stdout/stderr 展示，不再原样输出 JSON。
+- 系统提示建议运行 Python 脚本时优先使用 `python3`。
+- 不改变 shell 工具返回给模型的结构化内容。
 
 ### 已完成 / `0.9.6`: Tool Result Display Compact / 工具结果展示收敛
 

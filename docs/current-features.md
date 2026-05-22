@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.9.6`
+当前版本：`0.9.7`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`96 tests`
+当前测试：`98 tests`
 
 ## LLM Provider
 
@@ -86,7 +86,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - `final_answer`
 
 CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runtime 同时保留事件列表，方便测试和后续演进。
-`tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。长工具结果仍完整进入模型上下文，但 CLI 只显示一行摘要；错误结果保持完整展示。
+`tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。长工具结果仍完整进入模型上下文，但 CLI 只显示一行摘要；错误结果保持完整展示。`run_shell` 结果在 CLI 中按 exit/stdout/stderr 展示，不再原样打印 JSON。
 
 相关文件：`mini_agent/runtime.py`、`mini_agent/tool_executor.py`、`mini_agent/events.py`、`mini_agent/intent.py`、`mini_agent/tool_policy.py`
 
@@ -120,7 +120,7 @@ CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runt
 
 `read_file`、`search_text`、`run_shell`、diff 类工具有较小结果预算。超长结果会保留开头和结尾，并插入截断说明，避免大输出污染上下文。
 
-`list_files` 默认隐藏 `.env`、`.venv`、`__pycache__` 等噪音项；模型可见 schema 不暴露 `include_hidden`，避免无理由列出隐藏文件。`run_shell` 会拒绝空命令，并对部分只读命令做保守识别。
+`list_files` 默认隐藏 `.env`、`.venv`、`__pycache__` 等噪音项；模型可见 schema 不暴露 `include_hidden`，避免无理由列出隐藏文件。`run_shell` 会拒绝空命令，并对部分只读命令做保守识别。运行 Python 脚本时，系统提示会优先建议使用 `python3`。
 
 相关文件：`mini_agent/tool_core.py`、`mini_agent/builtin_tools.py`、`mini_agent/tool_registry.py`
 

@@ -2,7 +2,7 @@
 
 这是一个参考 Claude Code 设计思想实现的轻量级工程化 agent。它不复刻任何非公开源码，而是在较小代码量里保留 Claude-style agent 的核心架构边界。
 
-当前版本：`0.9.6`
+当前版本：`0.9.7`
 
 项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
@@ -28,6 +28,7 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 - **对话循环**：`AgentRuntime.run_user_turn()` 管理多轮 `tool_use / tool_result`
 - **轻量运行时事件**：runtime 产生事件，CLI 负责展示，降低主循环和输出的耦合
 - **工具结果展示收敛**：长工具结果仍进入模型上下文，但 CLI 默认只显示摘要
+- **Shell 输出友好化**：`run_shell` 结果按 exit/stdout/stderr 展示，避免原样输出 JSON
 - **工具轮次执行器**：工具执行从 runtime 拆出，统一处理校验、权限、执行和错误结果
 - **流式输出**：主模型调用支持 text delta 接收，并会抑制伪工具调用文本
 - **Task/Todo 状态**：`mini_agent/tasks.py` 保存多步骤任务进度，并通过工具更新

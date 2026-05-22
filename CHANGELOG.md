@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.9.7 - 2026-05-23
+
+当前学习阶段：Shell Execution UX / Shell 执行体验收敛。
+
+变更级别：小特性。
+
+### Changed
+
+- `run_shell` 的 CLI 展示改为 exit/stdout/stderr 格式，不再原样输出 JSON
+- 系统提示建议运行 Python 脚本时优先使用 `python3`
+- shell 工具结果进入模型上下文的结构不变
+
+### Tests
+
+- 新增 shell 成功结果展示测试
+- 新增 shell 失败结果展示测试
+
+### Verified
+
+- `98 passed`
+
 ## 0.9.6 - 2026-05-23
 
 当前学习阶段：Tool Result Display Compact / 工具结果展示收敛。

@@ -33,3 +33,38 @@ def test_print_runtime_event_keeps_error_tool_result_visible(capsys):
     captured = capsys.readouterr()
     assert "hidden from display" not in captured.out
     assert captured.out == ("error" * 400) + "\n"
+
+
+def test_print_runtime_event_formats_shell_success_result(capsys):
+    print_runtime_event(
+        RuntimeEvent(
+            "tool_result",
+            {
+                "name": "run_shell",
+                "content": '{"command": "python3 hello.py", "exit_code": 0, "stdout": "hello agent\\n", "stderr": ""}',
+                "is_error": False,
+            },
+        )
+    )
+
+    captured = capsys.readouterr()
+    assert captured.out == "[shell] exit 0: python3 hello.py\nstdout:\nhello agent\n"
+
+
+def test_print_runtime_event_formats_shell_failure_result(capsys):
+    print_runtime_event(
+        RuntimeEvent(
+            "tool_result",
+            {
+                "name": "run_shell",
+                "content": (
+                    '{"command": "python hello.py", "exit_code": 127, "stdout": "", '
+                    '"stderr": "/bin/sh: python: command not found\\n"}'
+                ),
+                "is_error": False,
+            },
+        )
+    )
+
+    captured = capsys.readouterr()
+    assert captured.out == "[shell] exit 127: python hello.py\nstderr:\n/bin/sh: python: command not found\n"

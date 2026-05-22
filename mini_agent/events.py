@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -41,8 +42,33 @@ def prompt_permission_request(name: str, tool_input: dict[str, Any], _reason: st
 
 def _format_tool_result_for_display(payload: dict[str, Any]) -> str:
     content = str(payload.get("content", ""))
+    if payload.get("name") == "run_shell":
+        shell_result = _format_shell_result_for_display(content)
+        if shell_result is not None:
+            return shell_result
+
     if payload.get("is_error") or len(content) <= MAX_DISPLAY_TOOL_RESULT_CHARS:
         return content
 
     name = payload.get("name", "tool")
     return f"[tool_result] {name} returned {len(content)} chars; hidden from display."
+
+
+def _format_shell_result_for_display(content: str) -> str | None:
+    try:
+        result = json.loads(content)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(result, dict) or "command" not in result or "exit_code" not in result:
+        return None
+
+    lines = [f"[shell] exit {result['exit_code']}: {result['command']}"]
+    stdout = str(result.get("stdout") or "").rstrip()
+    stderr = str(result.get("stderr") or "").rstrip()
+    if stdout:
+        lines.extend(["stdout:", stdout])
+    if stderr:
+        lines.extend(["stderr:", stderr])
+    if not stdout and not stderr:
+        lines.append("[no output]")
+    return "\n".join(lines)
