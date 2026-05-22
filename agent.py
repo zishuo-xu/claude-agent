@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from mini_agent.config import AgentConfig, load_dotenv
+from mini_agent.events import print_runtime_event
 from mini_agent.llm import AnthropicLLM, LLMClient, OpenAICompatibleLLM
 from mini_agent.permissions import PermissionMode
 from mini_agent.runtime import AgentRuntime
@@ -87,6 +88,7 @@ def main() -> int:
         tools=tool_registry,
         task_state=task_state,
         permission_rules=load_permission_rules(ROOT / "agent_settings.json"),
+        event_handler=print_runtime_event,
     )
 
     print(f"Claude-style learning agent ({provider}, {model}). Type /exit to quit, /mode to see permission mode.")

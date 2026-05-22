@@ -31,6 +31,14 @@ def test_classifies_explicit_subagent_request_with_tools():
     assert decision.requested_tool == "explore_agent"
 
 
+def test_classifies_explicit_builtin_tool_request_with_tools():
+    decision = classify_intent("请调用 run_shell，command 为空字符串")
+
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools
+    assert decision.requested_tool == "run_shell"
+
+
 def test_classifies_coding_task_with_tools():
     decision = classify_intent("帮我修改代码并运行测试")
 

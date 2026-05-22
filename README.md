@@ -1,8 +1,8 @@
-# Claude-Style Learning Agent
+# Mini-Claude
 
-这是一个参考 Claude Code 设计思想实现的学习型 agent。它不复刻任何非公开源码，只把公开 API 上能实现的核心架构做成一个可运行、可阅读的小项目。
+这是一个参考 Claude Code 设计思想实现的轻量级工程化 agent。它不复刻任何非公开源码，而是在较小代码量里保留 Claude-style agent 的核心架构边界。
 
-当前版本：`0.6.3`
+当前版本：`0.8.1`
 
 项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
@@ -10,11 +10,12 @@
 
 长期文档入口：
 
+- [Context Map](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/context-map.md): 文档和代码阅读导航
 - [Architecture](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/architecture.md): 当前架构和模块职责
 - [Current Features](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/current-features.md): 当前功能清单
 - [Roadmap](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/roadmap.md): 下一步工作和优先级
 - [Versioning](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/versioning.md): 版本规则和学习阶段
-- [Learning Q&A](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/learning-qa.md): 技术疑问和解答沉淀
+- [Learning Notes](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/learning-qa.md): 独立学习沉淀，默认不参与日常上下文加载
 
 核心闭环：
 
@@ -25,6 +26,8 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 ## 已实现的 Claude Code 设计点
 
 - **对话循环**：`AgentRuntime.run_user_turn()` 管理多轮 `tool_use / tool_result`
+- **轻量运行时事件**：runtime 产生事件，CLI 负责展示，降低主循环和输出的耦合
+- **工具轮次执行器**：工具执行从 runtime 拆出，统一处理校验、权限、执行和错误结果
 - **流式输出**：主模型调用支持 text delta 接收，并会抑制伪工具调用文本
 - **Task/Todo 状态**：`mini_agent/tasks.py` 保存多步骤任务进度，并通过工具更新
 - **意图识别 / 工具门控**：`mini_agent/intent.py` 先判断用户输入，再决定是否暴露工具
@@ -32,6 +35,7 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 - **模型适配层**：`mini_agent/llm.py` 把不同 LLM API 转成统一的 agent 内部格式
 - **reasoning 续传**：OpenAI-compatible provider 的 `reasoning_content` 会被保留并传回下一轮
 - **工具系统**：`Tool` + `build_tool()` 提供统一 schema、输入校验、执行、只读/并发/危险标记
+- **工具结果预算**：大输出在进入上下文前截断，保留开头、结尾和截断说明
 - **工具注册表 / 策略边界**：`ToolRegistry` 统一管理工具集合，`tool_policy` 决定当前 intent 能看到哪些工具
 - **上下文 micro-compact**：上下文过大时先清理旧工具结果，再用 full compact 兜底
 - **Explore / Plan / Verification 子 Agent**：以 AgentTool 形式运行只读子 Agent，隔离探索、规划和验证上下文
@@ -91,7 +95,7 @@ python agent.py --provider openai-compatible --model mimo-v2-omni
 
 ## 测试
 
-项目有一组轻量测试，用来保护学习版 agent 的核心边界：
+项目有一组轻量测试，用来保护 mini-claude 的核心边界：
 
 - 意图分类和工具门控
 - 权限规则和权限模式
@@ -150,6 +154,13 @@ python agent.py --provider openai-compatible --model mimo-v2-omni
 - `mini_agent/workspace.py`: 工作区路径边界
 - `references/Claude-Code-Source-Study`: Claude Code 源码分析参考仓库
 
+## 外部参考
+
+本项目设计主要参考 Claude Code 的核心思想，并对照两组解读资料：
+
+- [Claude-Code-Source-Study](https://github.com/luyao618/Claude-Code-Source-Study): 作为主要源码学习参考。
+- [CoreCoder article](https://github.com/he-yufeng/CoreCoder/tree/main/article): 作为辅助文章参考，重点对照 Agent Loop、工具系统、上下文压缩、流式执行和多 Agent 设计。
+
 ## 对照阅读路线
 
 建议先读：
@@ -159,6 +170,15 @@ python agent.py --provider openai-compatible --model mimo-v2-omni
 3. `references/Claude-Code-Source-Study/docs/16-权限系统.md`
 4. `references/Claude-Code-Source-Study/docs/06-上下文管理.md`
 5. `references/Claude-Code-Source-Study/docs/12-Agent-系统.md`
+
+再结合 CoreCoder 文章：
+
+1. `CoreCoder/article/01-architecture-overview.md`
+2. `CoreCoder/article/02-agent-loop.md`
+3. `CoreCoder/article/03-tool-system.md`
+4. `CoreCoder/article/04-context-compression.md`
+5. `CoreCoder/article/05-streaming-executor.md`
+6. `CoreCoder/article/06-multi-agent.md`
 
 对照本项目：
 

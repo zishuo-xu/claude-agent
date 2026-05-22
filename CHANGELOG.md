@@ -2,6 +2,244 @@
 
 本文件记录项目版本变化。
 
+## Unreleased
+
+### Documentation
+
+- 统一项目定位为 `mini-claude`
+- 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
+- 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
+
+## 0.8.1 - 2026-05-22
+
+当前学习阶段：Tool Batch Partition / 工具批次分区。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- 新增轻量 `ToolBatch`
+- `ToolTurnExecutor` 按连续并发安全工具分批执行
+- 写入、未知或不安全工具单独串行执行
+- 保持 tool result 格式、权限逻辑和输入校验顺序不变
+
+这是对 Claude `partitionToolCalls()` 思想的轻量实现。它吸收工具编排的核心价值，但不引入 StreamingToolExecutor 的流中调度、取消和丢弃机制。
+
+### Tests
+
+- 新增工具批次分区测试
+- 新增跨批次结果顺序测试
+
+### Verified
+
+- `84 passed`
+
+## 0.8.0 - 2026-05-22
+
+当前学习阶段：Streaming Tool Execution Decision / 流式工具执行取舍。
+
+变更级别：架构决策版本。
+
+### Decision
+
+- 暂不实现完整 StreamingToolExecutor
+- 保留当前 batch tool execution 路径
+- 下一步优先做 `Tool Batch Partition`
+
+理由：Claude 的流式工具执行包含流中启动、挂起结果丢弃、fallback 取消和合成错误结果。它是重要思想，但当前直接实现会让 mini-claude 过早复杂化。更合适的下一步是吸收 Claude 的工具批次分区思想。
+
+### Verified
+
+- 文档决策版本，无代码行为变化
+
+## 0.7.5 - 2026-05-22
+
+当前学习阶段：Runtime Boundary Review / 主循环边界验收。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- 新增 Runtime 边界守护测试
+- 验证工具并发执行、权限决策、终端输入输出没有回流到 `runtime.py`
+- 修正 roadmap 中关于 tool result budget 的过期判断
+
+这是一次架构刹车检查：确认 0.7.x 的拆分让边界更清楚，而不是继续制造不必要的抽象。
+
+### Tests
+
+- 新增 Runtime 不直接持有工具执行细节的测试
+- 新增 Runtime 不直接做终端输入输出的测试
+
+### Verified
+
+- `82 passed`
+
+## 0.7.4 - 2026-05-22
+
+当前学习阶段：Tool Turn Executor / 工具轮次执行器。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- 新增 `mini_agent.tool_executor.ToolTurnExecutor`
+- 将工具并发判断、输入校验、权限确认、执行和错误 tool_result 组装从 runtime 移到工具轮次执行器
+- `AgentRuntime` 只负责调度工具轮次，不再直接持有工具执行细节
+
+这是对 Claude 工具执行服务 / StreamingToolExecutor 边界的轻量对齐。当前不实现流中工具执行，不改变 tool result 格式。
+
+### Tests
+
+- 新增未知工具的 executor 测试
+- 新增权限拒绝的 executor 测试
+
+### Verified
+
+- `80 passed`
+
+## 0.7.3 - 2026-05-21
+
+当前学习阶段：Runtime Error Recovery / 轻量错误恢复。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- 工具错误会发出 `tool_error` 事件，并继续作为 `tool_result` 回传模型
+- 模型调用失败会发出 `model_error` 事件
+- fallback 模型路径继续发出 `model_fallback`
+- 轮次耗尽会发出 `turn_limit_reached` 和 `stopped`
+
+这是对 Claude `queryLoop` 错误恢复思想的轻量实现。当前不做 429/413/529 全套重试，也不做输出 token 截断多轮恢复。
+
+### Tests
+
+- 新增无效工具输入错误事件测试
+- 新增未知工具错误事件测试
+- 新增轮次耗尽事件测试
+- 新增主模型失败 fallback 事件测试
+- 新增无 fallback 模型失败事件测试
+
+### Verified
+
+- `78 passed`
+
+## 0.7.2 - 2026-05-21
+
+当前学习阶段：Runtime Loop Shape / 主循环形态整理。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- `run_user_turn()` 拆成更清晰的阶段方法：
+  - `_begin_turn()`
+  - `_record_assistant_response()`
+  - `_handle_final_answer()`
+  - `_handle_tool_turn()`
+
+这是对 Claude `queryLoop` 阶段感的轻量对齐。它不引入完整状态机，不改变工具执行模型，只让主循环更清楚、更容易放置后续错误恢复和调度逻辑。
+
+### Tests
+
+- 新增 runtime loop 阶段方法存在性测试
+
+### Verified
+
+- `73 passed`
+
+## 0.7.1 - 2026-05-21
+
+当前学习阶段：Runtime Print Cleanup / 输出边界收敛。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- Runtime 移除残留直接文本打印路径
+- 权限确认改为 `permission_request` 事件加可注入 permission handler
+- 终端输入输出进一步集中到 `mini_agent.events` 和 CLI 边界
+
+这是对 `0.7.0` 轻量运行时事件的收敛补充。它继续对齐 Claude 中 runtime 产出事件、外层消费事件的思路，但不引入完整 UI event bus。
+
+### Tests
+
+- 新增权限确认 handler 测试
+
+### Verified
+
+- `72 passed`
+
+## 0.7.0 - 2026-05-21
+
+当前学习阶段：Lightweight Runtime Events / 轻量运行时事件。
+
+变更级别：大特性版本。
+
+### Major Features
+
+- 新增 `mini_agent/events.py`
+- 新增 `RuntimeEvent` 和 `EventHandler`
+- Runtime 会记录并发出 `turn_start`、`model_start`、`text_delta`、`assistant_message`、`tool_start`、`tool_result`、`turn_transition`、`final_answer` 等轻量事件
+- CLI 显式使用 `print_runtime_event()` 展示事件
+- Runtime 支持关闭事件打印，便于测试和后续外层消费
+
+这是对 Claude `queryLoop` / AsyncGenerator 事件化思想的轻量实现。当前只拆清 runtime 和 CLI 输出边界，不实现完整事件总线，也不实现 StreamingToolExecutor。
+
+### Tests
+
+- 新增最终回答事件序列测试
+- 新增工具调用和 `next_turn` 转换事件测试
+- 新增关闭事件打印后的静默 runtime 测试
+
+### Verified
+
+- `71 passed`
+
+## 0.6.5 - 2026-05-21
+
+当前学习阶段：Context Map / 文档导航索引。
+
+变更级别：文档小特性版本。
+
+### Documentation
+
+- 新增 `docs/context-map.md`
+- 在 README 文档入口中加入 Context Map
+- 同步当前版本和文档体系说明
+
+这个版本不改变代码行为。它的目标是降低学习者和 AI 工具进入项目时的文档读取成本。
+
+## 0.6.4 - 2026-05-21
+
+当前学习阶段：Tool Result Budget / 输出收敛。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- `Tool.run()` 统一通过工具结果预算截断超长输出
+- 超长结果保留开头和结尾，并插入截断说明
+- `read_file`、`search_text`、`run_shell`、diff 类工具设置更小结果预算
+
+这是对 Claude 工具结果预算思想的轻量实现。它在工具结果进入上下文前先减噪，不引入复杂预算器，也不拆分 runtime。
+
+### Tests
+
+- 新增通用工具结果截断测试
+- 新增 `read_file` 大文件结果预算测试
+
+### Verified
+
+- `68 passed`
+
+### Documentation
+
+- 压缩 `docs/architecture.md`、`docs/current-features.md`、`docs/versioning.md`、`docs/learning-qa.md`
+- 明确文档职责边界，减少重复内容对上下文的占用
+- 在 `PROJECT_PRINCIPLES.md` 增加文档克制和文档减重要求
+
 ## 0.6.3 - 2026-05-21
 
 当前学习阶段：工具输入验证层。
@@ -20,10 +258,15 @@
 
 - system prompt 明确要求使用真实 tool call，不要把 XML/JSON 伪工具调用当文本输出
 - Runtime 可识别模型输出的 XML/JSON 简单伪工具调用，并转换为内部 `tool_use`
+- Runtime 可识别 `<function=...><parameter=...>` 伪工具调用，并映射常见参数名
+- Runtime 规范化伪工具调用时会保留 `ReasoningBlock`，避免 thinking provider 下一轮丢失 `reasoning_content`
 - 流式输出会抑制这类伪工具调用文本，避免直接展示给用户
 - 当 provider 只在 stream delta 中返回文本、最终响应为空时，Runtime 会用累计文本补回最终响应
+- 当模型最终响应没有用户可见文本、只有空白文本或没有工具调用时，Runtime 会返回简短兜底回复，避免空回复
 - 意图识别会把显式 `explore_agent` / `plan_agent` / `verify_agent` 请求归为可用工具的项目问题
+- 意图识别会把显式 `run_shell` 请求归为可用工具的编码任务，并只暴露 `run_shell`
 - 显式子 Agent 请求只暴露被点名的子 Agent 工具，避免主 Agent 抢先使用文件工具
+- 普通项目问题只暴露 `list_files`、`read_file`、`search_text`，不默认暴露子 Agent，并在一轮工具调用后关闭工具暴露，避免解释类问题读太多文件
 - 子 Agent 如果没有返回最终文本，会把捕获到的输出作为兜底结果返回给主 Agent
 - 子 Agent prompt 明确最多 3 次工具调用后必须返回最终总结
 - 子 Agent 默认 `max_turns` 调整为 4，对应 3 次工具调用加 1 次最终回答
@@ -38,9 +281,16 @@
 - 新增 runtime 在权限前拦截无效工具输入的测试
 - 新增子 Agent stream-only 文本返回测试
 - 新增伪工具调用识别和流式抑制测试
+- 新增 `<function=...><parameter=...>` 伪工具调用识别测试
+- 新增伪工具调用规范化时保留 reasoning 的测试
 - 新增 stream delta 文本补回最终响应测试
+- 新增空最终响应的兜底回复测试
+- 新增空白最终文本的兜底回复测试
 - 新增显式子 Agent 请求的 intent 分类测试
+- 新增显式 `run_shell` 请求的 intent 分类测试
+- 新增显式 `run_shell` 请求只暴露目标工具的测试
 - 新增显式子 Agent 请求只暴露目标工具的测试
+- 新增项目问题工具暴露收窄和一轮后关闭工具的测试
 - 新增子 Agent 工具调用预算和轮次限制测试
 - 新增子 Agent 到达轮次上限后的 finalization 测试
 - 新增显式子 Agent 工具只执行一次的 runtime 测试
@@ -49,7 +299,7 @@
 
 ### Verified
 
-- `59 passed`
+- `66 passed`
 
 ## 0.6.2 - 2026-05-20
 

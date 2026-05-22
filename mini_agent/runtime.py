@@ -3,17 +3,24 @@ from __future__ import annotations
 import html
 import json
 import re
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any
 
 from .config import AgentConfig
 from .context import count_message_chars, micro_compact_messages
-from .intent import IntentDecision, classify_intent, intent_prompt
+from .events import (
+    EventHandler,
+    PermissionRequestHandler,
+    RuntimeEvent,
+    print_runtime_event,
+    prompt_permission_request,
+)
+from .intent import Intent, IntentDecision, classify_intent, intent_prompt
 from .llm import FinalResponseEvent, LLMClient, TextBlock, ToolUseBlock
-from .permissions import PermissionBehavior, PermissionContext, PermissionRule, decide_permission
+from .permissions import PermissionContext, PermissionRule
 from .tasks import TaskState
 from .tool_core import Tool
+from .tool_executor import ToolTurnExecutor
 from .tool_registry import ToolRegistry
 
 
@@ -39,6 +46,7 @@ Operating principles:
 @dataclass
 class AgentState:
     messages: list[dict[str, Any]] = field(default_factory=list)
+    events: list[RuntimeEvent] = field(default_factory=list)
     turn_count: int = 0
     summary: str | None = None
     current_intent: IntentDecision | None = None
@@ -54,6 +62,8 @@ class AgentRuntime:
         task_state: TaskState | None = None,
         permission_rules: list[PermissionRule] | None = None,
         system_prompt: str = SYSTEM_PROMPT,
+        event_handler: EventHandler | None = print_runtime_event,
+        permission_handler: PermissionRequestHandler = prompt_permission_request,
     ):
         self.client = client
         self.config = config
@@ -63,57 +73,101 @@ class AgentRuntime:
         self.task_state = task_state or TaskState()
         self.state = AgentState()
         self.permission_context = PermissionContext(mode=config.permission_mode, rules=permission_rules or [])
+        self.event_handler = event_handler
+        self.permission_handler = permission_handler
 
     def run_user_turn(self, user_input: str, intent_override: IntentDecision | None = None) -> str:
         self.state.current_intent = intent_override or classify_intent(user_input)
         self.state.messages.append({"role": "user", "content": user_input})
         for _ in range(self.config.max_turns):
-            self.state.turn_count += 1
-            self._compact_if_needed()
+            self._begin_turn()
             response = self._call_model(self.config.model)
             response.content = self._normalize_pseudo_tool_call(response.content)
-            self.state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": [self._block_to_dict(block) for block in response.content],
-                }
-            )
-            if not self._has_text(response.content):
-                self._print_text(response.content)
+            self._record_assistant_response(response.content)
 
             tool_uses = [block for block in response.content if getattr(block, "type", None) == "tool_use"]
             if not tool_uses:
-                print()
-                return self._content_text(response.content)
+                return self._handle_final_answer(response.content, user_input)
 
-            tool_results = self._execute_tool_uses(tool_uses)
-            self.state.messages.append({"role": "user", "content": tool_results})
-            self._disable_requested_tool_after_use(tool_uses)
+            self._handle_tool_turn(tool_uses)
 
-        print(f"\nStopped after {self.config.max_turns} turns.")
+        self._emit("turn_limit_reached", max_turns=self.config.max_turns)
+        self._emit("stopped", max_turns=self.config.max_turns)
         return ""
+
+    def _begin_turn(self) -> None:
+        self.state.turn_count += 1
+        self._emit(
+            "turn_start",
+            turn=self.state.turn_count,
+            intent=self.state.current_intent.intent.value if self.state.current_intent else None,
+        )
+        self._compact_if_needed()
+
+    def _record_assistant_response(self, content: list[Any]) -> None:
+        self.state.messages.append(
+            {
+                "role": "assistant",
+                "content": [self._block_to_dict(block) for block in content],
+            }
+        )
+        self._emit(
+            "assistant_message",
+            turn=self.state.turn_count,
+            has_text=self._has_text(content),
+            tools=[block.name for block in content if getattr(block, "type", None) == "tool_use"],
+        )
+
+    def _handle_final_answer(self, content: list[Any], user_input: str) -> str:
+        text = self._content_text(content).strip()
+        if not text:
+            text = self._empty_response_fallback(user_input)
+            self._emit("text_delta", text=text)
+        self._emit("turn_transition", reason="final_answer", turn=self.state.turn_count)
+        self._emit("final_answer", text=text)
+        return text
+
+    def _handle_tool_turn(self, tool_uses: list[Any]) -> None:
+        self._emit(
+            "turn_transition",
+            reason="tool_use",
+            turn=self.state.turn_count,
+            tools=[tool_use.name for tool_use in tool_uses],
+        )
+        tool_results = self._execute_tool_uses(tool_uses)
+        self.state.messages.append({"role": "user", "content": tool_results})
+        self._disable_tools_after_project_question_use(tool_uses)
+        self._emit("turn_transition", reason="next_turn", turn=self.state.turn_count)
 
     def _call_model(self, model: str) -> Any:
         tools = self._available_tool_specs()
+        self._emit("model_start", model=model, visible_tools=len(tools))
         try:
-            return self._stream_model_call(
-                model=model,
-                max_tokens=4096,
-                system=self._system_prompt(),
-                messages=self.state.messages,
-                tools=tools,
-            )
-        except Exception:
+            return self._call_model_once(model=model, tools=tools)
+        except Exception as exc:
+            self._emit("model_error", model=model, error_type=type(exc).__name__, message=str(exc))
             if not self.config.fallback_model or self.config.fallback_model == model:
                 raise
-            print(f"\n[model] {model} failed; retrying with {self.config.fallback_model}\n")
-            return self._stream_model_call(
-                model=self.config.fallback_model,
-                max_tokens=4096,
-                system=self._system_prompt(),
-                messages=self.state.messages,
-                tools=tools,
-            )
+            self._emit("model_fallback", from_model=model, to_model=self.config.fallback_model)
+            try:
+                return self._call_model_once(model=self.config.fallback_model, tools=tools)
+            except Exception as fallback_exc:
+                self._emit(
+                    "model_error",
+                    model=self.config.fallback_model,
+                    error_type=type(fallback_exc).__name__,
+                    message=str(fallback_exc),
+                )
+                raise
+
+    def _call_model_once(self, *, model: str, tools: list[dict[str, Any]]) -> Any:
+        return self._stream_model_call(
+            model=model,
+            max_tokens=4096,
+            system=self._system_prompt(),
+            messages=self.state.messages,
+            tools=tools,
+        )
 
     def _stream_model_call(
         self,
@@ -142,7 +196,7 @@ class AgentRuntime:
         if streamed_text and not final_response.content:
             final_response.content = [TextBlock(streamed_text)]
         if streamed_text and not self._contains_pseudo_tool_call(self._content_text(final_response.content)):
-            print(streamed_text, end="", flush=True)
+            self._emit("text_delta", text=streamed_text)
         return final_response
 
     def _system_prompt(self) -> str:
@@ -154,22 +208,31 @@ class AgentRuntime:
     def _available_tool_specs(self) -> list[dict[str, Any]]:
         return self.tool_registry.api_specs_for_intent(self.state.current_intent)
 
-    def _disable_requested_tool_after_use(self, tool_uses: list[Any]) -> None:
+    def _disable_tools_after_project_question_use(self, tool_uses: list[Any]) -> None:
         decision = self.state.current_intent
-        if not decision or not decision.requested_tool:
+        if not decision or decision.intent != Intent.PROJECT_QUESTION:
             return
-        if not any(tool_use.name == decision.requested_tool for tool_use in tool_uses):
+        if decision.requested_tool and not any(tool_use.name == decision.requested_tool for tool_use in tool_uses):
             return
         self.state.current_intent = IntentDecision(
             intent=decision.intent,
-            reason=f"{decision.reason}; requested tool already ran",
+            reason=f"{decision.reason}; project question tools already ran",
             allow_tools=False,
         )
+
+    def _empty_response_fallback(self, user_input: str) -> str:
+        decision = self.state.current_intent
+        if decision and decision.intent == Intent.CASUAL_CHAT:
+            return "你好，我在。"
+        if decision and decision.intent == Intent.GENERAL_LEARNING:
+            return "我可以给你一个简洁的学习建议，也可以根据你的基础继续细化。"
+        return f"我没有生成可见回复。你刚才的问题是：{user_input}"
 
     def _normalize_pseudo_tool_call(self, content_blocks: list[Any]) -> list[Any]:
         if any(getattr(block, "type", None) == "tool_use" for block in content_blocks):
             return content_blocks
 
+        preserved_blocks = [block for block in content_blocks if getattr(block, "type", None) == "reasoning"]
         text = self._content_text(content_blocks).strip()
         xml_match = re.search(
             r"<invoke\s+name=[\"'](?P<name>[^\"']+)[\"']>\s*"
@@ -181,7 +244,17 @@ class AgentRuntime:
         if xml_match:
             name = xml_match.group("name")
             prompt = html.unescape(xml_match.group("prompt")).strip()
-            return self._pseudo_tool_block_or_original(name, {"prompt": prompt}, content_blocks)
+            return self._pseudo_tool_blocks_or_original(name, {"prompt": prompt}, content_blocks, preserved_blocks)
+
+        function_match = re.search(
+            r"<function=(?P<name>[^>\s]+)>\s*(?P<body>.*?)</function>",
+            text,
+            flags=re.DOTALL,
+        )
+        if function_match:
+            name = function_match.group("name")
+            tool_input = self._parameters_from_pseudo_function(function_match.group("body"))
+            return self._pseudo_tool_blocks_or_original(name, tool_input, content_blocks, preserved_blocks)
 
         json_match = re.search(r"<tool_call>\s*(?P<body>\{.*?\})\s*</tool_call>", text, flags=re.DOTALL)
         if not json_match:
@@ -195,23 +268,41 @@ class AgentRuntime:
         arguments = payload.get("arguments") or {}
         if not isinstance(arguments, dict):
             return content_blocks
-        return self._pseudo_tool_block_or_original(name, arguments, content_blocks)
+        return self._pseudo_tool_blocks_or_original(name, arguments, content_blocks, preserved_blocks)
 
-    def _pseudo_tool_block_or_original(self, name: Any, tool_input: dict[str, Any], original: list[Any]) -> list[Any]:
+    def _pseudo_tool_blocks_or_original(
+        self,
+        name: Any,
+        tool_input: dict[str, Any],
+        original: list[Any],
+        preserved_blocks: list[Any],
+    ) -> list[Any]:
         if not isinstance(name, str) or name not in self.tools:
             return original
 
         if "prompt" not in tool_input and "query" in tool_input:
             tool_input = {**tool_input, "prompt": tool_input["query"]}
+        if "path" not in tool_input and "file_path" in tool_input:
+            tool_input = {**tool_input, "path": tool_input["file_path"]}
 
         prompt = tool_input.get("prompt")
         if isinstance(prompt, str):
             tool_input = {**tool_input, "prompt": html.unescape(prompt).strip()}
             prompt = tool_input["prompt"]
-        if not prompt:
+        if name in {"explore_agent", "plan_agent", "verify_agent"} and not prompt:
             return original
 
-        return [ToolUseBlock(id=f"pseudo_tool_{self.state.turn_count}", name=name, input={"prompt": prompt})]
+        if name in {"explore_agent", "plan_agent", "verify_agent"}:
+            tool_input = {"prompt": prompt}
+
+        return preserved_blocks + [ToolUseBlock(id=f"pseudo_tool_{self.state.turn_count}", name=name, input=tool_input)]
+
+    @staticmethod
+    def _parameters_from_pseudo_function(body: str) -> dict[str, Any]:
+        params: dict[str, Any] = {}
+        for match in re.finditer(r"<parameter=(?P<name>[^>\s]+)>(?P<value>.*?)</parameter>", body, flags=re.DOTALL):
+            params[match.group("name")] = html.unescape(match.group("value")).strip()
+        return params
 
     def _compact_if_needed(self) -> None:
         total_chars = count_message_chars(self.state.messages)
@@ -221,7 +312,7 @@ class AgentRuntime:
         micro_result = micro_compact_messages(self.state.messages)
         if micro_result.changed:
             self.state.messages = micro_result.messages
-            print(f"\n[context] micro-compacted {micro_result.compacted_count} old tool result(s)\n")
+            self._emit("context_notice", message=f"micro-compacted {micro_result.compacted_count} old tool result(s)")
             total_chars = count_message_chars(self.state.messages)
             if total_chars <= self.config.context_char_budget:
                 return
@@ -246,75 +337,16 @@ class AgentRuntime:
             block.text for block in response.content if getattr(block, "type", None) == "text"
         )
         self.state.messages = recent_messages
-        print("\n[context] compacted older conversation into summary\n")
+        self._emit("context_notice", message="compacted older conversation into summary")
 
     def _execute_tool_uses(self, tool_uses: list[Any]) -> list[dict[str, Any]]:
-        if self._can_run_in_parallel(tool_uses):
-            with ThreadPoolExecutor(max_workers=min(4, len(tool_uses))) as executor:
-                return list(executor.map(self._execute_one_tool_use, tool_uses))
-        return [self._execute_one_tool_use(tool_use) for tool_use in tool_uses]
-
-    def _can_run_in_parallel(self, tool_uses: list[Any]) -> bool:
-        if len(tool_uses) < 2:
-            return False
-        for tool_use in tool_uses:
-            tool = self.tools.get(tool_use.name)
-            if not tool or not tool.read_only(tool_use.input) or not tool.concurrency_safe(tool_use.input):
-                return False
-        return True
-
-    def _execute_one_tool_use(self, tool_use: Any) -> dict[str, Any]:
-        name = tool_use.name
-        tool_input = tool_use.input
-        tool = self.tools.get(name)
-        if not tool:
-            return self._tool_result(tool_use.id, f"Unknown tool: {name}", True)
-
-        print(f"\n\n[tool] {name} {tool_input}")
-        validation_error = tool.validate_input(tool_input)
-        if validation_error:
-            result = f"Invalid tool input: {validation_error}"
-            print(result)
-            return self._tool_result(tool_use.id, result, True)
-
-        decision = decide_permission(
-            context=self.permission_context,
-            tool_name=name,
-            tool_input=tool_input,
-            read_only=tool.read_only(tool_input),
-            destructive=tool.destructive(tool_input),
+        executor = ToolTurnExecutor(
+            tools=self.tools,
+            permission_context=self.permission_context,
+            emit=self._emit,
+            permission_handler=self.permission_handler,
         )
-        if decision.behavior == PermissionBehavior.DENY:
-            result = f"Permission denied: {decision.reason}"
-            print(result)
-            return self._tool_result(tool_use.id, result, True)
-        if decision.behavior == PermissionBehavior.ASK and not self._confirm_tool(name, tool_input, decision.reason):
-            result = "Permission rejected by user"
-            print(result)
-            return self._tool_result(tool_use.id, result, True)
-
-        try:
-            result = tool.run(tool_input)
-            print(result)
-            return self._tool_result(tool_use.id, result, False)
-        except Exception as exc:
-            result = f"{type(exc).__name__}: {exc}"
-            print(result)
-            return self._tool_result(tool_use.id, result, True)
-
-    def _confirm_tool(self, name: str, tool_input: dict[str, Any], reason: str) -> bool:
-        print(f"[permission] {reason}")
-        answer = input(f"Allow {name} {tool_input}? [y/N] ").strip().lower()
-        return answer in {"y", "yes"}
-
-    @staticmethod
-    def _tool_result(tool_use_id: str, content: str, is_error: bool) -> dict[str, Any]:
-        return {
-            "type": "tool_result",
-            "tool_use_id": tool_use_id,
-            "content": content,
-            "is_error": is_error,
-        }
+        return executor.execute(tool_uses)
 
     @staticmethod
     def _block_to_dict(block: Any) -> dict[str, Any]:
@@ -324,11 +356,11 @@ class AgentRuntime:
             return block
         raise TypeError(f"unsupported content block: {block!r}")
 
-    @staticmethod
-    def _print_text(content_blocks: list[Any]) -> None:
-        for block in content_blocks:
-            if getattr(block, "type", None) == "text":
-                print(block.text, end="")
+    def _emit(self, event_type: str, **payload: Any) -> None:
+        event = RuntimeEvent(event_type, payload)
+        self.state.events.append(event)
+        if self.event_handler:
+            self.event_handler(event)
 
     @staticmethod
     def _has_text(content_blocks: list[Any]) -> bool:

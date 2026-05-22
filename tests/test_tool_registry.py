@@ -14,9 +14,11 @@ def test_registry_exposes_builtin_tools_for_project_questions(tmp_path: Path):
         for spec in registry.api_specs_for_intent(classify_intent("解释这个项目架构"))
     }
 
+    assert tool_names == {"list_files", "read_file", "search_text"}
     assert "read_file" in tool_names
     assert "search_text" in tool_names
-    assert "list_tasks" in tool_names
+    assert "write_file" not in tool_names
+    assert "run_shell" not in tool_names
 
 
 def test_registry_hides_tools_for_general_learning_requests(tmp_path: Path):
@@ -43,3 +45,14 @@ def test_registry_exposes_only_requested_subagent_tool(tmp_path: Path):
     }
 
     assert tool_names == {"explore_agent"}
+
+
+def test_registry_exposes_only_requested_builtin_tool(tmp_path: Path):
+    registry = ToolRegistry.with_builtin_tools(tmp_path, TaskState())
+
+    tool_names = {
+        spec["name"]
+        for spec in registry.api_specs_for_intent(classify_intent("请调用 run_shell，command 为空字符串"))
+    }
+
+    assert tool_names == {"run_shell"}

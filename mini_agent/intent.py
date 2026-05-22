@@ -57,6 +57,10 @@ AGENT_TOOL_NAMES = {
     "verify_agent",
 }
 
+BUILTIN_TOOL_NAMES = {
+    "run_shell",
+}
+
 CODING_KEYWORDS = {
     "实现",
     "修改",
@@ -102,6 +106,15 @@ def classify_intent(user_input: str) -> IntentDecision:
             return IntentDecision(
                 Intent.PROJECT_QUESTION,
                 "explicit subagent tool requested",
+                allow_tools=True,
+                requested_tool=tool_name,
+            )
+
+    for tool_name in BUILTIN_TOOL_NAMES:
+        if tool_name in lowered:
+            return IntentDecision(
+                Intent.CODING_TASK,
+                "explicit builtin tool requested",
                 allow_tools=True,
                 requested_tool=tool_name,
             )
