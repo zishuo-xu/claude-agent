@@ -10,6 +10,30 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.8.2 - 2026-05-22
+
+当前学习阶段：Tool Batch Events / 工具批次事件。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- 新增 `tool_batch_start` 事件
+- 新增 `tool_batch_end` 事件
+- 批次事件包含 `parallel`、`tools`、`tool_use_ids`
+- 默认 CLI 不打印批次事件，避免增加用户噪音
+
+这是对工具批次分区的事件化补充：执行结构存在，事件结构也能表达。它不引入完整事件总线，也不实现 StreamingToolExecutor。
+
+### Tests
+
+- 新增工具批次事件测试
+- 调整未知工具和权限拒绝测试以适配批次事件顺序
+
+### Verified
+
+- `85 passed`
+
 ## 0.8.1 - 2026-05-22
 
 当前学习阶段：Tool Batch Partition / 工具批次分区。

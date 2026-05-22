@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.8.1`
+当前版本：`0.8.2`
 
 已完成学习主线：
 
@@ -119,5 +119,6 @@ MAJOR.MINOR.PATCH
 - `0.7.5`: Runtime Boundary Review / 主循环边界验收
 - `0.8.0`: Streaming Tool Execution Decision / 流式工具执行取舍
 - `0.8.1`: Tool Batch Partition / 工具批次分区
+- `0.8.2`: Tool Batch Events / 工具批次事件
 
 详细说明以 `CHANGELOG.md` 为准。

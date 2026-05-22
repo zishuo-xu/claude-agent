@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.8.1`
+当前版本：`0.8.2`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`84 tests`
+当前测试：`85 tests`
 
 ## LLM Provider
 
@@ -53,6 +53,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 工具调用、工具执行、工具结果回传
 - 工具轮次执行器
 - 工具批次分区：连续并发安全工具并发执行，不安全工具串行执行
+- 工具批次事件：`tool_batch_start` / `tool_batch_end`
 - Runtime 边界守护测试
 - 轻量错误恢复事件
 - 轻量运行时事件
@@ -74,6 +75,8 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - `tool_start`
 - `tool_result`
 - `tool_error`
+- `tool_batch_start`
+- `tool_batch_end`
 - `model_error`
 - `model_fallback`
 - `turn_limit_reached`

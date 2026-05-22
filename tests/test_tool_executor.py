@@ -23,8 +23,8 @@ def test_tool_turn_executor_returns_error_for_unknown_tool():
             "is_error": True,
         }
     ]
-    assert events[0][0] == "tool_error"
-    assert events[0][1]["category"] == "unknown_tool"
+    tool_errors = [event for event in events if event[0] == "tool_error"]
+    assert tool_errors[0][1]["category"] == "unknown_tool"
 
 
 def test_tool_turn_executor_uses_permission_handler_for_rejection():
@@ -46,7 +46,14 @@ def test_tool_turn_executor_uses_permission_handler_for_rejection():
 
     assert result[0]["is_error"] is True
     assert result[0]["content"] == "Permission rejected by user"
-    assert [event[0] for event in events] == ["tool_start", "permission_request", "tool_error", "tool_result"]
+    assert [event[0] for event in events] == [
+        "tool_batch_start",
+        "tool_start",
+        "permission_request",
+        "tool_error",
+        "tool_result",
+        "tool_batch_end",
+    ]
 
 
 def test_tool_turn_executor_partitions_contiguous_parallel_safe_tools():
@@ -132,3 +139,46 @@ def test_tool_turn_executor_preserves_original_result_order_across_batches():
 
     assert [item["tool_use_id"] for item in result] == ["call_1", "call_2", "call_3", "call_4"]
     assert [item["content"] for item in result] == ["read:1", "read:2", "write:3", "read:4"]
+
+
+def test_tool_turn_executor_emits_batch_events_without_changing_tool_results():
+    events = []
+    executor = ToolTurnExecutor(
+        tools={
+            "read_file": build_tool(
+                name="read_file",
+                description="Read",
+                input_schema={"type": "object"},
+                call=lambda tool_input: f"read:{tool_input['index']}",
+                read_only=lambda _input: True,
+                concurrency_safe=lambda _input: True,
+            ),
+            "write_file": build_tool(
+                name="write_file",
+                description="Write",
+                input_schema={"type": "object"},
+                call=lambda tool_input: f"write:{tool_input['index']}",
+            ),
+        },
+        permission_context=PermissionContext(mode=PermissionMode.BYPASS),
+        emit=lambda event_type, **payload: events.append((event_type, payload)),
+        permission_handler=lambda _name, _input, _reason: True,
+    )
+
+    result = executor.execute(
+        [
+            ToolUseBlock(id="call_1", name="read_file", input={"index": 1}),
+            ToolUseBlock(id="call_2", name="read_file", input={"index": 2}),
+            ToolUseBlock(id="call_3", name="write_file", input={"index": 3}),
+        ]
+    )
+
+    batch_events = [event for event in events if event[0].startswith("tool_batch_")]
+
+    assert [item["tool_use_id"] for item in result] == ["call_1", "call_2", "call_3"]
+    assert batch_events == [
+        ("tool_batch_start", {"parallel": True, "tools": ["read_file", "read_file"], "tool_use_ids": ["call_1", "call_2"]}),
+        ("tool_batch_end", {"parallel": True, "tools": ["read_file", "read_file"], "tool_use_ids": ["call_1", "call_2"]}),
+        ("tool_batch_start", {"parallel": False, "tools": ["write_file"], "tool_use_ids": ["call_3"]}),
+        ("tool_batch_end", {"parallel": False, "tools": ["write_file"], "tool_use_ids": ["call_3"]}),
+    ]

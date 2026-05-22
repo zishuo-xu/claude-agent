@@ -28,12 +28,22 @@ class ToolTurnExecutor:
     def execute(self, tool_uses: list[Any]) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
         for batch in self._partition_tool_uses(tool_uses):
+            self._emit_batch_event("tool_batch_start", batch)
             if batch.parallel:
                 with ThreadPoolExecutor(max_workers=min(4, len(batch.tool_uses))) as executor:
                     results.extend(executor.map(self._execute_one, batch.tool_uses))
             else:
                 results.extend(self._execute_one(tool_use) for tool_use in batch.tool_uses)
+            self._emit_batch_event("tool_batch_end", batch)
         return results
+
+    def _emit_batch_event(self, event_type: str, batch: ToolBatch) -> None:
+        self.emit(
+            event_type,
+            parallel=batch.parallel,
+            tools=[tool_use.name for tool_use in batch.tool_uses],
+            tool_use_ids=[tool_use.id for tool_use in batch.tool_uses],
+        )
 
     def _partition_tool_uses(self, tool_uses: list[Any]) -> list[ToolBatch]:
         batches: list[ToolBatch] = []

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.8.1`
+当前版本：`0.8.2`
 
 ## 已完成主线
 
@@ -28,6 +28,7 @@
 - `0.7.5`: Runtime Boundary Review / 主循环边界验收
 - `0.8.0`: Streaming Tool Execution Decision / 流式工具执行取舍
 - `0.8.1`: Tool Batch Partition / 工具批次分区
+- `0.8.2`: Tool Batch Events / 工具批次事件
 
 ## 架构减重审视
 
@@ -91,22 +92,32 @@
 
 ## 下一步
 
-### P1 / `0.8.2`: Tool Execution Event Shape / 工具执行事件形态
+### P1 / `0.8.3`: Tool Executor Boundary Review / 工具执行边界复查
 
-目标：审视工具批次分区后的事件输出是否足够清楚，只在必要时补充轻量事件，不引入完整事件总线。
+目标：复查 `ToolTurnExecutor` 在批次分区和批次事件后是否仍然简洁，避免工具执行层继续膨胀。
 
 作用：
 
-- 让用户和测试能看清工具批次执行过程。
-- 为未来可能的简化流式执行保留事件形状。
-- 防止事件层因为批次执行变得难以理解。
+- 确认 0.8.x 的工具执行层没有过度工程化。
+- 决定下一步是否离开工具执行主题，转向上下文或子 Agent。
+- 保持 mini-claude 的轻量架构边界。
 
 建议范围：
 
-- 优先审视，不急着新增事件。
-- 不改变 tool result 格式。
-- 不引入完整事件总线。
-- 不实现流中工具执行。
+- 优先阅读和测试，不急着新增功能。
+- 不继续拆模块，除非出现明显职责混乱。
+- 不实现 StreamingToolExecutor。
+
+### 已完成 / `0.8.2`: Tool Batch Events / 工具批次事件
+
+目标：让事件流能表达工具批次边界，但默认 CLI 不打印批次事件，避免增加用户噪音。
+
+结果：
+
+- 新增 `tool_batch_start`
+- 新增 `tool_batch_end`
+- 批次事件包含 `parallel`、`tools`、`tool_use_ids`
+- 不改变 tool result 格式、权限逻辑、Agent Loop 和 CLI 默认输出
 
 ### 已完成 / `0.8.1`: Tool Batch Partition / 工具批次分区
 
