@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.9.3`
+当前版本：`0.9.4`
 
 已完成学习主线：
 
@@ -126,5 +126,6 @@ MAJOR.MINOR.PATCH
 - `0.9.1`: Context Boundary Tests / 上下文边界测试
 - `0.9.2`: Strict Tool Input Validation / 严格工具输入校验
 - `0.9.3`: Project Question Read Strategy / 项目问答读取策略
+- `0.9.4`: Project Answer Compression / 项目问答输出收敛
 
 详细说明以 `CHANGELOG.md` 为准。

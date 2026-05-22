@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.9.4 - 2026-05-23
+
+当前学习阶段：Project Answer Compression / 项目问答输出收敛。
+
+变更级别：小特性。
+
+### Changed
+
+- 项目问答 guidance 增加输出收敛要求：直接、简洁回答用户的具体问题
+- 默认不复述整份文档、长历史或宽泛功能清单
+- 用户明确要求详细时再展开
+
+### Tests
+
+- 扩展项目问答 system prompt 边界测试，固定输出收敛约束
+
+### Verified
+
+- `93 passed`
+
 ## 0.9.3 - 2026-05-22
 
 当前学习阶段：Project Question Read Strategy / 项目问答读取策略。

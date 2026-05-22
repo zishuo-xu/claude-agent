@@ -143,7 +143,9 @@ def intent_prompt(decision: IntentDecision) -> str:
         Intent.PROJECT_QUESTION: (
             "Use the smallest useful read path. Prefer README.md, docs/context-map.md, docs/architecture.md, "
             "docs/current-features.md, and docs/roadmap.md before reading code. Use list_files only when the "
-            "target file is unclear, and stop using tools once enough context is available."
+            "target file is unclear, and stop using tools once enough context is available. Answer the user's "
+            "specific question directly and concisely. Do not restate whole documents, long histories, or broad "
+            "feature lists unless the user explicitly asks for detail."
         ),
         Intent.CODING_TASK: "You may use tools to inspect, edit, run tests, and verify changes.",
         Intent.DANGEROUS_REQUEST: "Do not use tools. Explain the safety concern and ask for a safer, more specific goal.",

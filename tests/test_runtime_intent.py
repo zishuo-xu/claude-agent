@@ -619,6 +619,9 @@ def test_project_question_prompt_prefers_doc_entry_points(tmp_path: Path):
     assert "docs/context-map.md" in prompt
     assert "docs/architecture.md" in prompt
     assert "Use list_files only when the target file is unclear" in prompt
+    assert "Answer the user's specific question directly and concisely" in prompt
+    assert "Do not restate whole documents" in prompt
+    assert "unless the user explicitly asks for detail" in prompt
 
 
 def test_runtime_validates_tool_input_before_permission(tmp_path: Path, capsys):

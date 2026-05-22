@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.9.3`
+当前版本：`0.9.4`
 
 ## 启动
 
@@ -65,7 +65,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - micro-compact 和 full compact
 
 普通寒暄、泛学习请求默认不读项目、不调用工具；项目问题和编码任务才进入工具循环。
-项目问题优先按文档入口读取：`README.md`、`docs/context-map.md`、`docs/architecture.md`、`docs/current-features.md`、`docs/roadmap.md`；目标文件不清楚时才列目录或搜索。项目问题如果第一轮只列目录，会允许再进行一轮必要读取；读取或搜索后会关闭项目问答工具，避免无休止扫描项目。
+项目问题优先按文档入口读取：`README.md`、`docs/context-map.md`、`docs/architecture.md`、`docs/current-features.md`、`docs/roadmap.md`；目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；用户明确要求详细时再展开。项目问题如果第一轮只列目录，会允许再进行一轮必要读取；读取或搜索后会关闭项目问答工具，避免无休止扫描项目。
 
 当前运行时事件包括：
 
