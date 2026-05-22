@@ -10,6 +10,28 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.8.4 - 2026-05-22
+
+当前学习阶段：Tool Executor Boundary Review / 工具执行边界复查。
+
+变更级别：小特性版本。
+
+### Minor Features
+
+- 复查 `ToolTurnExecutor` 边界，确认工具执行层仍保持轻量
+- 新增测试固定 `tool_batch_start` / `tool_batch_end` 默认不打印到 CLI
+- 下一步从工具执行主题转向上下文策略复查
+
+这是一次架构健康检查。它不新增用户能力，只防止内部批次事件意外变成用户终端噪音。
+
+### Tests
+
+- 新增 `print_runtime_event()` 不打印工具批次事件的测试
+
+### Verified
+
+- `87 passed`
+
 ## 0.8.3 - 2026-05-22
 
 当前学习阶段：Project Question Follow-up Fix / 项目问答跟进修复。

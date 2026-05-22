@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.8.3`
+当前版本：`0.8.4`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`86 tests`
+当前测试：`87 tests`
 
 ## LLM Provider
 
@@ -86,6 +86,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - `final_answer`
 
 CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runtime 同时保留事件列表，方便测试和后续演进。
+`tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。
 
 相关文件：`mini_agent/runtime.py`、`mini_agent/tool_executor.py`、`mini_agent/events.py`、`mini_agent/intent.py`、`mini_agent/tool_policy.py`
 

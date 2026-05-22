@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.8.3`
+当前版本：`0.8.4`
 
 ## 已完成主线
 
@@ -30,6 +30,7 @@
 - `0.8.1`: Tool Batch Partition / 工具批次分区
 - `0.8.2`: Tool Batch Events / 工具批次事件
 - `0.8.3`: Project Question Follow-up Fix / 项目问答跟进修复
+- `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
 
 ## 架构减重审视
 
@@ -93,21 +94,31 @@
 
 ## 下一步
 
-### P1 / `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
+### P1 / `0.9.0`: Context Strategy Review / 上下文策略复查
 
-目标：复查 `ToolTurnExecutor` 在批次分区和批次事件后是否仍然简洁，避免工具执行层继续膨胀。
+目标：离开工具执行主题，复查当前 tool result budget、micro-compact、full compact 是否形成清晰上下文策略。
 
 作用：
 
-- 确认 0.8.x 的工具执行层没有过度工程化。
-- 决定下一步是否离开工具执行主题，转向上下文或子 Agent。
-- 保持 mini-claude 的轻量架构边界。
+- 对齐 Claude 的上下文管理主线。
+- 判断是否需要补上下文状态说明或更清晰的 compact 触发边界。
+- 避免继续在工具执行层堆功能。
 
 建议范围：
 
-- 优先阅读和测试，不急着新增功能。
-- 不继续拆模块，除非出现明显职责混乱。
-- 不实现 StreamingToolExecutor。
+- 优先审视 `context.py`、`runtime._compact_if_needed()` 和相关测试。
+- 不做复杂 token 预算器。
+- 不引入长期记忆系统。
+
+### 已完成 / `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
+
+目标：复查 `ToolTurnExecutor` 在批次分区和批次事件后是否仍然简洁，避免工具执行层继续膨胀。
+
+结论：
+
+- `ToolTurnExecutor` 职责仍集中：分区、执行、权限、错误包装和批次事件。
+- `AgentRuntime` 没有重新承担工具并发、权限决策或终端 IO。
+- 新增测试固定批次事件默认不打印，避免内部事件变成用户噪音。
 
 ### 已完成 / `0.8.3`: Project Question Follow-up Fix / 项目问答跟进修复
 
