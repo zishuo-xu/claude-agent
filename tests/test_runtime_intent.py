@@ -233,13 +233,22 @@ def test_runtime_hides_tools_for_general_learning(tmp_path: Path):
 
 def test_runtime_exposes_tools_for_project_question(tmp_path: Path):
     runtime = make_runtime(tmp_path)
-    runtime.state.current_intent = classify_intent("解释这个项目架构")
+    runtime.state.current_intent = classify_intent("看看这个项目")
 
     tool_names = {tool["name"] for tool in runtime._available_tool_specs()}
 
     assert tool_names == {"list_files", "read_file", "search_text"}
     assert "read_file" in tool_names
     assert "search_text" in tool_names
+
+
+def test_runtime_hides_list_files_for_project_question_with_clear_docs(tmp_path: Path):
+    runtime = make_runtime(tmp_path)
+    runtime.state.current_intent = classify_intent("解释这个项目架构")
+
+    tool_names = {tool["name"] for tool in runtime._available_tool_specs()}
+
+    assert tool_names == {"read_file", "search_text"}
 
 
 def test_runtime_prompt_includes_current_intent(tmp_path: Path):
@@ -667,7 +676,7 @@ def test_runtime_disables_project_question_tools_after_one_tool_round(tmp_path: 
     result = runtime.run_user_turn("解释当前项目架构")
 
     assert result == "architecture summary"
-    assert client.tool_names_by_call[0] == ["list_files", "read_file", "search_text"]
+    assert client.tool_names_by_call[0] == ["read_file", "search_text"]
     assert client.tool_names_by_call[1] == []
 
 
@@ -678,7 +687,7 @@ def test_runtime_allows_project_question_to_read_after_listing_files(tmp_path: P
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / "architecture.md").write_text("architecture", encoding="utf-8")
 
-    result = runtime.run_user_turn("解释当前项目架构")
+    result = runtime.run_user_turn("看看这个项目")
 
     assert result == "architecture summary"
     assert client.tool_names_by_call[0] == ["list_files", "read_file", "search_text"]

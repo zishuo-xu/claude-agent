@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.9.9`
+当前版本：`0.10.0`
 
 已完成学习主线：
 
@@ -132,5 +132,6 @@ MAJOR.MINOR.PATCH
 - `0.9.7`: Shell Execution UX / Shell 执行体验收敛
 - `0.9.8`: Direct File Task UX / 明确文件任务体验收敛
 - `0.9.9`: Direct File Tool Gating / 明确文件任务工具门控
+- `0.10.0`: Project Read Strategy Hardening / 项目读取策略硬化
 
 详细说明以 `CHANGELOG.md` 为准。

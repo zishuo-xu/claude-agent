@@ -125,6 +125,13 @@ def classify_intent(user_input: str) -> IntentDecision:
     asks_to_use_project = any(phrase in lowered for phrase in ["用这个项目", "结合当前代码", "结合这个项目", "use this project"])
 
     if mentions_project:
+        if _looks_like_documented_project_question(lowered):
+            return IntentDecision(
+                Intent.PROJECT_QUESTION,
+                "project question with clear documentation entrypoint",
+                allow_tools=True,
+                hidden_tools=frozenset({"list_files"}),
+            )
         return IntentDecision(Intent.PROJECT_QUESTION, "project-specific question", allow_tools=True)
 
     if any(keyword in lowered for keyword in CODING_KEYWORDS):
@@ -150,6 +157,23 @@ def _looks_like_direct_file_task(text: str) -> bool:
     has_content = any(keyword in text for keyword in ["内容", "content"])
     has_create_or_edit = any(keyword in text for keyword in ["创建", "新增", "写入", "生成", "create", "write", "add"])
     return has_path and has_content and has_create_or_edit
+
+
+def _looks_like_documented_project_question(text: str) -> bool:
+    return any(
+        keyword in text
+        for keyword in [
+            "项目结构",
+            "项目架构",
+            "当前架构",
+            "当前功能",
+            "当前版本",
+            "下一步",
+            "roadmap",
+            "architecture",
+            "current features",
+        ]
+    )
 
 
 def intent_prompt(decision: IntentDecision) -> str:

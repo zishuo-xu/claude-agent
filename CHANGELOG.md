@@ -10,6 +10,29 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.10.0 - 2026-05-23
+
+当前学习阶段：Project Read Strategy Hardening / 项目读取策略硬化。
+
+变更级别：大特性。
+
+### Changed
+
+- 明确文档入口的项目问答会隐藏 `list_files`
+- 项目结构、项目架构、当前功能、当前版本、下一步等问题直接走 read/search 路径
+- 模糊项目问题仍保留 `list_files`
+- 复用 `hidden_tools`，不新增 planner，不改变工具执行层
+
+### Tests
+
+- 新增项目问答隐藏 `list_files` 的 intent 测试
+- 新增项目问答隐藏 `list_files` 的 tool registry 测试
+- 更新 runtime 工具可见性测试
+
+### Verified
+
+- `104 passed`
+
 ## 0.9.9 - 2026-05-23
 
 当前学习阶段：Direct File Tool Gating / 明确文件任务工具门控。

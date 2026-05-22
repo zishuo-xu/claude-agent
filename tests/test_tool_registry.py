@@ -11,7 +11,7 @@ def test_registry_exposes_builtin_tools_for_project_questions(tmp_path: Path):
 
     tool_names = {
         spec["name"]
-        for spec in registry.api_specs_for_intent(classify_intent("解释这个项目架构"))
+        for spec in registry.api_specs_for_intent(classify_intent("看看这个项目"))
     }
 
     assert tool_names == {"list_files", "read_file", "search_text"}
@@ -19,6 +19,17 @@ def test_registry_exposes_builtin_tools_for_project_questions(tmp_path: Path):
     assert "search_text" in tool_names
     assert "write_file" not in tool_names
     assert "run_shell" not in tool_names
+
+
+def test_registry_hides_list_files_for_project_questions_with_clear_docs(tmp_path: Path):
+    registry = ToolRegistry.with_builtin_tools(tmp_path, TaskState())
+
+    tool_names = {
+        spec["name"]
+        for spec in registry.api_specs_for_intent(classify_intent("这个项目结构是什么？"))
+    }
+
+    assert tool_names == {"read_file", "search_text"}
 
 
 def test_registry_hides_tools_for_general_learning_requests(tmp_path: Path):
