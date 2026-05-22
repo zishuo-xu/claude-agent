@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.8.2`
+当前版本：`0.8.3`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`85 tests`
+当前测试：`86 tests`
 
 ## LLM Provider
 
@@ -65,6 +65,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - micro-compact 和 full compact
 
 普通寒暄、泛学习请求默认不读项目、不调用工具；项目问题和编码任务才进入工具循环。
+项目问题如果第一轮只列目录，会允许再进行一轮必要读取；读取或搜索后会关闭项目问答工具，避免无休止扫描项目。
 
 当前运行时事件包括：
 
@@ -118,7 +119,7 @@ CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runt
 
 `read_file`、`search_text`、`run_shell`、diff 类工具有较小结果预算。超长结果会保留开头和结尾，并插入截断说明，避免大输出污染上下文。
 
-`list_files` 默认隐藏 `.env`、`.venv`、`__pycache__` 等噪音项。`run_shell` 会拒绝空命令，并对部分只读命令做保守识别。
+`list_files` 默认隐藏 `.env`、`.venv`、`__pycache__` 等噪音项；模型可见 schema 不暴露 `include_hidden`，避免无理由列出隐藏文件。`run_shell` 会拒绝空命令，并对部分只读命令做保守识别。
 
 相关文件：`mini_agent/tool_core.py`、`mini_agent/builtin_tools.py`、`mini_agent/tool_registry.py`
 

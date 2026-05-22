@@ -10,6 +10,28 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.8.3 - 2026-05-22
+
+当前学习阶段：Project Question Follow-up Fix / 项目问答跟进修复。
+
+变更级别：修复版本。
+
+### Fixes
+
+- 项目问题第一轮如果只用了 `list_files`，允许第二轮继续读取必要文件
+- 使用 `read_file` / `search_text` 后仍会关闭项目问答工具，避免无休止扫描项目
+- `list_files` 的模型可见 schema 不再暴露 `include_hidden`，减少普通项目问答列出隐藏文件的概率
+
+这是针对真实验收问题的轻量修复：项目架构问题不能只列目录就结束，但也不能重新放开无限读文件。
+
+### Tests
+
+- 新增项目问题先列目录、再读文档、最后总结的 runtime 测试
+
+### Verified
+
+- `86 passed`
+
 ## 0.8.2 - 2026-05-22
 
 当前学习阶段：Tool Batch Events / 工具批次事件。

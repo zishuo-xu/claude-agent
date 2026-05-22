@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.8.2`
+当前版本：`0.8.3`
 
 ## 已完成主线
 
@@ -29,6 +29,7 @@
 - `0.8.0`: Streaming Tool Execution Decision / 流式工具执行取舍
 - `0.8.1`: Tool Batch Partition / 工具批次分区
 - `0.8.2`: Tool Batch Events / 工具批次事件
+- `0.8.3`: Project Question Follow-up Fix / 项目问答跟进修复
 
 ## 架构减重审视
 
@@ -57,7 +58,7 @@
 - `docs/current-features.md` 和 `docs/architecture.md` 已经偏长，后续只更新必要内容。
 - `builtin_tools.py` 和 `llm.py` 是目前最大的代码文件，但职责仍清楚，暂不拆。
 - `runtime.py` 已拆出事件展示和工具执行细节；剩余复杂度主要来自 provider 兼容、伪工具调用和上下文处理。
-- 真实验收发现的空回复、项目解释读太多文件问题已做轻量收敛；后续继续先观察真实使用，不急着继续加复杂调度。
+- 真实验收发现的空回复、项目解释读太多文件、只列目录不总结问题已做轻量收敛；后续继续先观察真实使用，不急着继续加复杂调度。
 
 ### 参考资料使用原则
 
@@ -92,7 +93,7 @@
 
 ## 下一步
 
-### P1 / `0.8.3`: Tool Executor Boundary Review / 工具执行边界复查
+### P1 / `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
 
 目标：复查 `ToolTurnExecutor` 在批次分区和批次事件后是否仍然简洁，避免工具执行层继续膨胀。
 
@@ -107,6 +108,16 @@
 - 优先阅读和测试，不急着新增功能。
 - 不继续拆模块，除非出现明显职责混乱。
 - 不实现 StreamingToolExecutor。
+
+### 已完成 / `0.8.3`: Project Question Follow-up Fix / 项目问答跟进修复
+
+目标：修复“解释项目架构”这类问题只执行 `list_files` 后就返回提示符、不继续总结的问题。
+
+结果：
+
+- 项目问题第一轮如果只用了 `list_files`，允许第二轮继续读取必要文件。
+- 一旦使用 `read_file` / `search_text`，或第二轮仍只列目录，就关闭项目问答工具。
+- `list_files` 的模型可见 schema 不再暴露 `include_hidden`，减少 `.env`、`.venv` 等隐藏项出现在普通项目问答中的概率。
 
 ### 已完成 / `0.8.2`: Tool Batch Events / 工具批次事件
 

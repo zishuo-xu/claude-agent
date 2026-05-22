@@ -148,6 +148,27 @@ class ProjectQuestionToolThenAnswerClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class ProjectQuestionListThenReadClient:
+    def __init__(self):
+        self.stream_calls = 0
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls += 1
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        if self.stream_calls == 1:
+            yield FinalResponseEvent(LLMResponse([ToolUseBlock(id="call_1", name="list_files", input={"path": "."})]))
+        elif self.stream_calls == 2:
+            yield FinalResponseEvent(
+                LLMResponse([ToolUseBlock(id="call_2", name="read_file", input={"path": "docs/architecture.md"})])
+            )
+        else:
+            yield FinalResponseEvent(LLMResponse([TextBlock("architecture summary")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 def make_runtime(tmp_path: Path) -> AgentRuntime:
     task_state = TaskState()
     return AgentRuntime(
@@ -583,3 +604,18 @@ def test_runtime_disables_project_question_tools_after_one_tool_round(tmp_path: 
     assert result == "architecture summary"
     assert client.tool_names_by_call[0] == ["list_files", "read_file", "search_text"]
     assert client.tool_names_by_call[1] == []
+
+
+def test_runtime_allows_project_question_to_read_after_listing_files(tmp_path: Path):
+    client = ProjectQuestionListThenReadClient()
+    runtime = make_runtime_with_client(tmp_path, client)
+    runtime.config.max_turns = 4
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "architecture.md").write_text("architecture", encoding="utf-8")
+
+    result = runtime.run_user_turn("解释当前项目架构")
+
+    assert result == "architecture summary"
+    assert client.tool_names_by_call[0] == ["list_files", "read_file", "search_text"]
+    assert client.tool_names_by_call[1] == ["list_files", "read_file", "search_text"]
+    assert client.tool_names_by_call[2] == []

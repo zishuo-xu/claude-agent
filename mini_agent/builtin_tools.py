@@ -209,12 +209,7 @@ def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict
             input_schema={
                 "type": "object",
                 "properties": {
-                    "path": {"type": "string", "description": "Directory path relative to the workspace.", "default": "."},
-                    "include_hidden": {
-                        "type": "boolean",
-                        "description": "Set true to include common hidden or generated entries such as .env and .venv.",
-                        "default": False,
-                    },
+                    "path": {"type": "string", "description": "Directory path relative to the workspace.", "default": "."}
                 },
             },
             call=list_files,
