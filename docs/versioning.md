@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.9.4`
+当前版本：`0.9.6`
 
 已完成学习主线：
 
@@ -127,5 +127,7 @@ MAJOR.MINOR.PATCH
 - `0.9.2`: Strict Tool Input Validation / 严格工具输入校验
 - `0.9.3`: Project Question Read Strategy / 项目问答读取策略
 - `0.9.4`: Project Answer Compression / 项目问答输出收敛
+- `0.9.5`: Manual Usage Review / 手动使用复查
+- `0.9.6`: Tool Result Display Compact / 工具结果展示收敛
 
 详细说明以 `CHANGELOG.md` 为准。

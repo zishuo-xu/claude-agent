@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.9.4`
+当前版本：`0.9.6`
 
 ## 已完成主线
 
@@ -36,6 +36,8 @@
 - `0.9.2`: Strict Tool Input Validation / 严格工具输入校验
 - `0.9.3`: Project Question Read Strategy / 项目问答读取策略
 - `0.9.4`: Project Answer Compression / 项目问答输出收敛
+- `0.9.5`: Manual Usage Review / 手动使用复查
+- `0.9.6`: Tool Result Display Compact / 工具结果展示收敛
 
 ## 架构减重审视
 
@@ -99,7 +101,33 @@
 
 ## 下一步
 
-### P1 / `0.9.5`: Manual Usage Review / 手动使用复查
+### P1 / `0.9.7`: Project Read Strategy Hardening / 项目读取策略硬化
+
+目标：让项目问答在目标文档明确时不再先 `list_files`。
+
+作用：
+
+- 减少无意义目录读取。
+- 让项目问答更接近“按需加载”。
+- 在 0.9.6 降低展示噪音后，继续处理真实暴露的读取路径问题。
+
+建议范围：
+
+- 优先调整项目问答提示或轻量策略。
+- 不引入 planner。
+- 不改工具执行层。
+
+### 已完成 / `0.9.6`: Tool Result Display Compact / 工具结果展示收敛
+
+目标：长工具结果仍进入模型上下文，但 CLI 默认只展示摘要，避免读长文档时刷屏。
+
+结果：
+
+- 成功工具结果超过展示阈值时，CLI 显示一行摘要。
+- 短工具结果照常展示。
+- 错误工具结果保持完整展示，方便排查。
+
+### 已完成 / `0.9.5`: Manual Usage Review / 手动使用复查
 
 目标：用真实问题复查 0.9.x 的项目问答、工具输入校验、上下文行为和输出收敛效果，决定 0.9 是否收尾。
 

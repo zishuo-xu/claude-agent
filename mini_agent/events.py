@@ -12,6 +12,7 @@ class RuntimeEvent:
 
 EventHandler = Callable[[RuntimeEvent], None]
 PermissionRequestHandler = Callable[[str, dict[str, Any], str], bool]
+MAX_DISPLAY_TOOL_RESULT_CHARS = 1_200
 
 
 def print_runtime_event(event: RuntimeEvent) -> None:
@@ -20,7 +21,7 @@ def print_runtime_event(event: RuntimeEvent) -> None:
     elif event.type == "tool_start":
         print(f"\n\n[tool] {event.payload['name']} {event.payload['input']}")
     elif event.type == "tool_result":
-        print(event.payload.get("content", ""))
+        print(_format_tool_result_for_display(event.payload))
     elif event.type == "permission_request":
         print(f"[permission] {event.payload['reason']}")
     elif event.type == "context_notice":
@@ -36,3 +37,12 @@ def print_runtime_event(event: RuntimeEvent) -> None:
 def prompt_permission_request(name: str, tool_input: dict[str, Any], _reason: str) -> bool:
     answer = input(f"Allow {name} {tool_input}? [y/N] ").strip().lower()
     return answer in {"y", "yes"}
+
+
+def _format_tool_result_for_display(payload: dict[str, Any]) -> str:
+    content = str(payload.get("content", ""))
+    if payload.get("is_error") or len(content) <= MAX_DISPLAY_TOOL_RESULT_CHARS:
+        return content
+
+    name = payload.get("name", "tool")
+    return f"[tool_result] {name} returned {len(content)} chars; hidden from display."
