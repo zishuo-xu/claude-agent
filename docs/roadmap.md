@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.8.4`
+当前版本：`0.9.0`
 
 ## 已完成主线
 
@@ -31,6 +31,7 @@
 - `0.8.2`: Tool Batch Events / 工具批次事件
 - `0.8.3`: Project Question Follow-up Fix / 项目问答跟进修复
 - `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
+- `0.9.0`: Context Strategy Review / 上下文策略复查
 
 ## 架构减重审视
 
@@ -94,21 +95,31 @@
 
 ## 下一步
 
-### P1 / `0.9.0`: Context Strategy Review / 上下文策略复查
+### P1 / `0.9.1`: Context Boundary Tests / 上下文边界测试
 
-目标：离开工具执行主题，复查当前 tool result budget、micro-compact、full compact 是否形成清晰上下文策略。
+目标：继续补少量上下文边界测试，确认 micro/full compact 不会误伤用户目标、任务状态和最新工具结果。
 
 作用：
 
-- 对齐 Claude 的上下文管理主线。
-- 判断是否需要补上下文状态说明或更清晰的 compact 触发边界。
-- 避免继续在工具执行层堆功能。
+- 保护长任务上下文连续性。
+- 在不做复杂 token 预算器的前提下补齐关键安全边界。
+- 为后续决定是否增强上下文策略提供依据。
 
 建议范围：
 
-- 优先审视 `context.py`、`runtime._compact_if_needed()` 和相关测试。
 - 不做复杂 token 预算器。
 - 不引入长期记忆系统。
+- 不改变 compact 主流程。
+
+### 已完成 / `0.9.0`: Context Strategy Review / 上下文策略复查
+
+目标：离开工具执行主题，复查当前 tool result budget、micro-compact、full compact 是否形成清晰上下文策略。
+
+结论：
+
+- 当前上下文策略保持四段式：tool result budget -> micro-compact -> full compact -> summary 注入 system prompt。
+- 暂不做复杂 token 预算器、长期记忆系统或向量库。
+- 新增测试确认 full compact 摘要会进入后续 system prompt。
 
 ### 已完成 / `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
 

@@ -559,6 +559,16 @@ def test_runtime_full_compact_still_runs_when_micro_compact_is_not_enough(tmp_pa
     assert len(runtime.state.messages) == 4
 
 
+def test_runtime_injects_full_compact_summary_into_system_prompt(tmp_path: Path):
+    runtime = make_runtime(tmp_path)
+    runtime.state.summary = "Preserve user goal and edited files."
+
+    prompt = runtime._system_prompt()
+
+    assert "Conversation summary so far:" in prompt
+    assert "Preserve user goal and edited files." in prompt
+
+
 def test_runtime_validates_tool_input_before_permission(tmp_path: Path, capsys):
     runtime = make_runtime_with_client(tmp_path, ToolUseClient())
 
