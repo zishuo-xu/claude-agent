@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.10.0`
+当前版本：`0.10.1`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`104 tests`
+当前测试：`106 tests`
 
 ## LLM Provider
 
@@ -65,7 +65,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - micro-compact 和 full compact
 
 普通寒暄、泛学习请求默认不读项目、不调用工具；项目问题和编码任务才进入工具循环。明确给出目标路径和内容的 coding task 会隐藏 `list_files`，让模型直接创建或编辑文件。
-项目问题优先按文档入口读取：`README.md`、`docs/context-map.md`、`docs/architecture.md`、`docs/current-features.md`、`docs/roadmap.md`。项目结构、架构、当前功能、当前版本、下一步这类问题会隐藏 `list_files`，直接读文档；目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；用户明确要求详细时再展开。
+项目问题优先按文档入口读取：`README.md`、`docs/context-map.md`、`docs/architecture.md`、`docs/current-features.md`、`docs/roadmap.md`。项目结构、架构、当前功能、当前版本、下一步这类问题会隐藏 `list_files`，直接读文档；隐藏工具即使被模型输出，也会在执行层被拒绝。目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；用户明确要求详细时再展开。
 
 当前运行时事件包括：
 

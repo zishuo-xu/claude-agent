@@ -180,6 +180,23 @@ class ProjectQuestionListThenReadClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class HiddenProjectListFilesClient:
+    def __init__(self):
+        self.stream_calls = 0
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls += 1
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        if self.stream_calls == 1:
+            yield FinalResponseEvent(LLMResponse([ToolUseBlock(id="call_1", name="list_files", input={"path": "."})]))
+        else:
+            yield FinalResponseEvent(LLMResponse([TextBlock("done")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 def make_runtime(tmp_path: Path) -> AgentRuntime:
     task_state = TaskState()
     return AgentRuntime(
@@ -249,6 +266,21 @@ def test_runtime_hides_list_files_for_project_question_with_clear_docs(tmp_path:
     tool_names = {tool["name"] for tool in runtime._available_tool_specs()}
 
     assert tool_names == {"read_file", "search_text"}
+
+
+def test_runtime_rejects_hidden_tool_execution_for_project_question(tmp_path: Path):
+    client = HiddenProjectListFilesClient()
+    runtime = make_silent_runtime_with_client(tmp_path, client)
+    runtime.config.max_turns = 2
+
+    result = runtime.run_user_turn("这个项目结构是什么？")
+
+    assert result == "done"
+    assert client.tool_names_by_call == [["read_file", "search_text"], ["read_file", "search_text"]]
+    tool_errors = [event for event in runtime.state.events if event.type == "tool_error"]
+    assert tool_errors[0].payload["name"] == "list_files"
+    assert tool_errors[0].payload["category"] == "unknown_tool"
+    assert runtime.state.messages[-2]["content"][0]["content"] == "Unknown tool: list_files"
 
 
 def test_runtime_prompt_includes_current_intent(tmp_path: Path):
@@ -380,7 +412,7 @@ def test_runtime_uses_permission_handler_for_ask_decisions(tmp_path: Path, capsy
     runtime = make_silent_runtime_with_client(tmp_path, WriteFileToolClient())
     runtime.permission_handler = lambda _name, _input, _reason: False
 
-    runtime.run_user_turn("write a file")
+    runtime.run_user_turn("新增 tmp/x.txt，内容是 x")
 
     captured = capsys.readouterr()
     assert captured.out == ""
@@ -395,7 +427,7 @@ def test_runtime_uses_permission_handler_for_ask_decisions(tmp_path: Path, capsy
 def test_runtime_emits_tool_error_for_invalid_tool_input(tmp_path: Path):
     runtime = make_silent_runtime_with_client(tmp_path, ToolUseClient())
 
-    runtime.run_user_turn("run empty shell")
+    runtime.run_user_turn("请调用 run_shell，command 为空字符串")
 
     tool_errors = [event for event in runtime.state.events if event.type == "tool_error"]
     assert tool_errors[0].payload["name"] == "run_shell"
@@ -526,6 +558,18 @@ def test_runtime_normalizes_function_parameter_pseudo_tool_markup(tmp_path: Path
     assert content[0].input == {"path": "README.md"}
 
 
+def test_runtime_does_not_normalize_hidden_pseudo_tool_markup(tmp_path: Path):
+    runtime = make_runtime(tmp_path)
+    runtime.state.current_intent = classify_intent("这个项目结构是什么？")
+    text = '<tool_call>{"name": "list_files", "arguments": {"path": "."}}</tool_call>'
+
+    content = runtime._normalize_pseudo_tool_call([TextBlock(text)])
+
+    assert len(content) == 1
+    assert content[0].type == "text"
+    assert content[0].text == text
+
+
 def test_runtime_micro_compacts_before_full_compact(tmp_path: Path, capsys):
     runtime = make_runtime(tmp_path)
     runtime.config.context_char_budget = 5_000
@@ -636,7 +680,7 @@ def test_project_question_prompt_prefers_doc_entry_points(tmp_path: Path):
 def test_runtime_validates_tool_input_before_permission(tmp_path: Path, capsys):
     runtime = make_runtime_with_client(tmp_path, ToolUseClient())
 
-    runtime.run_user_turn("run empty shell")
+    runtime.run_user_turn("请调用 run_shell，command 为空字符串")
 
     captured = capsys.readouterr()
     assert "Invalid tool input: command must be a non-empty string" in captured.out

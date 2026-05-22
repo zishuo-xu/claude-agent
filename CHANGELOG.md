@@ -10,6 +10,28 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.10.1 - 2026-05-23
+
+当前学习阶段：Visible Tool Enforcement / 可见工具执行校验。
+
+变更级别：小特性。
+
+### Changed
+
+- runtime 执行工具时只传入当前 intent 可见的工具集合
+- 伪工具调用归一化也遵守当前可见工具集合
+- 明确文档入口的项目问答中，隐藏的 `list_files` 即使被模型输出也不会被执行
+
+### Tests
+
+- 新增隐藏工具不能被执行的 runtime 测试
+- 新增隐藏伪工具调用不被归一化的测试
+- 调整旧测试，让权限和输入校验用明确工具意图触发
+
+### Verified
+
+- `106 passed`
+
 ## 0.10.0 - 2026-05-23
 
 当前学习阶段：Project Read Strategy Hardening / 项目读取策略硬化。

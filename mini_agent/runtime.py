@@ -211,6 +211,9 @@ class AgentRuntime:
     def _available_tool_specs(self) -> list[dict[str, Any]]:
         return self.tool_registry.api_specs_for_intent(self.state.current_intent)
 
+    def _available_tools(self) -> dict[str, Tool]:
+        return self.tool_registry.available_for_intent(self.state.current_intent)
+
     def _disable_tools_after_project_question_use(self, tool_uses: list[Any]) -> None:
         decision = self.state.current_intent
         if not decision or decision.intent != Intent.PROJECT_QUESTION:
@@ -284,7 +287,7 @@ class AgentRuntime:
         original: list[Any],
         preserved_blocks: list[Any],
     ) -> list[Any]:
-        if not isinstance(name, str) or name not in self.tools:
+        if not isinstance(name, str) or name not in self._available_tools():
             return original
 
         if "prompt" not in tool_input and "query" in tool_input:
@@ -349,7 +352,7 @@ class AgentRuntime:
 
     def _execute_tool_uses(self, tool_uses: list[Any]) -> list[dict[str, Any]]:
         executor = ToolTurnExecutor(
-            tools=self.tools,
+            tools=self._available_tools(),
             permission_context=self.permission_context,
             emit=self._emit,
             permission_handler=self.permission_handler,
