@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.9.3 - 2026-05-22
+
+当前学习阶段：Project Question Read Strategy / 项目问答读取策略。
+
+变更级别：小特性。
+
+### Changed
+
+- 项目问答 guidance 改为优先读取文档入口：`README.md`、`docs/context-map.md`、`docs/architecture.md`、`docs/current-features.md`、`docs/roadmap.md`
+- 明确 `list_files` 只在目标文件不清楚时使用
+- 保持现有工具策略和主循环不变，不新增 planner 或子 Agent
+
+### Tests
+
+- 新增项目问答 system prompt 边界测试
+
+### Verified
+
+- `93 passed`
+
 ## 0.9.2 - 2026-05-22
 
 当前学习阶段：Strict Tool Input Validation / 严格工具输入校验。

@@ -608,6 +608,19 @@ def test_runtime_injects_full_compact_summary_into_system_prompt(tmp_path: Path)
     assert "Preserve user goal and edited files." in prompt
 
 
+def test_project_question_prompt_prefers_doc_entry_points(tmp_path: Path):
+    runtime = make_runtime(tmp_path)
+    runtime.state.current_intent = classify_intent("解释当前项目架构")
+
+    prompt = runtime._system_prompt()
+
+    assert "Use the smallest useful read path" in prompt
+    assert "README.md" in prompt
+    assert "docs/context-map.md" in prompt
+    assert "docs/architecture.md" in prompt
+    assert "Use list_files only when the target file is unclear" in prompt
+
+
 def test_runtime_validates_tool_input_before_permission(tmp_path: Path, capsys):
     runtime = make_runtime_with_client(tmp_path, ToolUseClient())
 

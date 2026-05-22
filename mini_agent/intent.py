@@ -140,7 +140,11 @@ def intent_prompt(decision: IntentDecision) -> str:
     guidance = {
         Intent.CASUAL_CHAT: "Reply briefly. Do not use tools. Do not describe project architecture unless asked.",
         Intent.GENERAL_LEARNING: "Give concise learning advice or ask about the user's level. Do not use tools or inspect the workspace.",
-        Intent.PROJECT_QUESTION: "You may use read/search tools to inspect project docs or code before explaining.",
+        Intent.PROJECT_QUESTION: (
+            "Use the smallest useful read path. Prefer README.md, docs/context-map.md, docs/architecture.md, "
+            "docs/current-features.md, and docs/roadmap.md before reading code. Use list_files only when the "
+            "target file is unclear, and stop using tools once enough context is available."
+        ),
         Intent.CODING_TASK: "You may use tools to inspect, edit, run tests, and verify changes.",
         Intent.DANGEROUS_REQUEST: "Do not use tools. Explain the safety concern and ask for a safer, more specific goal.",
     }[decision.intent]

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.9.2`
+当前版本：`0.9.3`
 
 ## 已完成主线
 
@@ -34,6 +34,7 @@
 - `0.9.0`: Context Strategy Review / 上下文策略复查
 - `0.9.1`: Context Boundary Tests / 上下文边界测试
 - `0.9.2`: Strict Tool Input Validation / 严格工具输入校验
+- `0.9.3`: Project Question Read Strategy / 项目问答读取策略
 
 ## 架构减重审视
 
@@ -97,7 +98,23 @@
 
 ## 下一步
 
-### P1 / `0.9.3`: Project Question Read Strategy / 项目问答读取策略
+### P1 / `0.9.4`: Manual Usage Review / 手动使用复查
+
+目标：用真实问题复查 0.9.x 的项目问答、工具输入校验和上下文行为，决定 0.9 是否收尾。
+
+作用：
+
+- 避免继续凭想象加功能。
+- 发现真实用户使用中的输出噪音或工具误用。
+- 为进入下一条主线前做轻量验收。
+
+建议范围：
+
+- 以手动案例和少量测试为主。
+- 不新增大模块。
+- 只修真实暴露的问题。
+
+### 已完成 / `0.9.3`: Project Question Read Strategy / 项目问答读取策略
 
 目标：复查“解释当前项目架构”这类问题的读取路径，让 agent 优先读少量入口文档，必要时再读代码。
 
@@ -109,9 +126,9 @@
 
 建议范围：
 
-- 只调整项目问答的工具使用提示或轻量策略。
-- 优先使用 `README.md`、`docs/context-map.md`、`docs/architecture.md`。
-- 不新增子 Agent，不做复杂文件评分。
+- 项目问答 guidance 优先推荐 `README.md`、`docs/context-map.md`、`docs/architecture.md`、`docs/current-features.md`、`docs/roadmap.md`。
+- 明确只有目标文件不清楚时才使用 `list_files`。
+- 新增 system prompt 边界测试。
 
 ### 已完成 / `0.9.2`: Strict Tool Input Validation / 严格工具输入校验
 
