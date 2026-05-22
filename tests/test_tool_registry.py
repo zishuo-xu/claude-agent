@@ -56,3 +56,18 @@ def test_registry_exposes_only_requested_builtin_tool(tmp_path: Path):
     }
 
     assert tool_names == {"run_shell"}
+
+
+def test_registry_hides_list_files_for_direct_file_tasks(tmp_path: Path):
+    registry = ToolRegistry.with_builtin_tools(tmp_path, TaskState())
+
+    tool_names = {
+        spec["name"]
+        for spec in registry.api_specs_for_intent(
+            classify_intent("创建 tmp_manual_test/hello.py，内容是打印 hello agent，然后运行它")
+        )
+    }
+
+    assert "list_files" not in tool_names
+    assert "write_file" in tool_names
+    assert "run_shell" in tool_names

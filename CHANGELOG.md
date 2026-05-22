@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.9.9 - 2026-05-23
+
+当前学习阶段：Direct File Tool Gating / 明确文件任务工具门控。
+
+变更级别：小特性。
+
+### Changed
+
+- `IntentDecision` 增加轻量 `hidden_tools`，用于隐藏本轮不应暴露的工具
+- 明确给出文件路径和内容的 coding task 会隐藏 `list_files`
+- 工具注册表会按 `hidden_tools` 过滤模型可见工具
+
+### Tests
+
+- 扩展明确文件任务意图测试，确认隐藏 `list_files`
+- 新增工具注册表测试，确认明确文件任务不暴露 `list_files`
+
+### Verified
+
+- `101 passed`
+
 ## 0.9.8 - 2026-05-23
 
 当前学习阶段：Direct File Task UX / 明确文件任务体验收敛。

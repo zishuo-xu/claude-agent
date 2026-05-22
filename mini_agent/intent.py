@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from enum import Enum
 
 
@@ -18,6 +19,7 @@ class IntentDecision:
     reason: str
     allow_tools: bool
     requested_tool: str | None = None
+    hidden_tools: frozenset[str] = field(default_factory=frozenset)
 
 
 CASUAL_PHRASES = {
@@ -126,6 +128,13 @@ def classify_intent(user_input: str) -> IntentDecision:
         return IntentDecision(Intent.PROJECT_QUESTION, "project-specific question", allow_tools=True)
 
     if any(keyword in lowered for keyword in CODING_KEYWORDS):
+        if _looks_like_direct_file_task(lowered):
+            return IntentDecision(
+                Intent.CODING_TASK,
+                "direct file task with explicit path and content",
+                allow_tools=True,
+                hidden_tools=frozenset({"list_files"}),
+            )
         return IntentDecision(Intent.CODING_TASK, "coding or project task", allow_tools=True)
 
     if any(keyword in lowered for keyword in LEARNING_KEYWORDS):
@@ -134,6 +143,13 @@ def classify_intent(user_input: str) -> IntentDecision:
         return IntentDecision(Intent.GENERAL_LEARNING, "general learning request", allow_tools=False)
 
     return IntentDecision(Intent.CASUAL_CHAT, "no project or coding action requested", allow_tools=False)
+
+
+def _looks_like_direct_file_task(text: str) -> bool:
+    has_path = bool(re.search(r"[\w./-]+\.[a-z0-9_]+", text))
+    has_content = any(keyword in text for keyword in ["内容", "content"])
+    has_create_or_edit = any(keyword in text for keyword in ["创建", "新增", "写入", "生成", "create", "write", "add"])
+    return has_path and has_content and has_create_or_edit
 
 
 def intent_prompt(decision: IntentDecision) -> str:

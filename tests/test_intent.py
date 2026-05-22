@@ -61,5 +61,6 @@ def test_coding_task_prompt_avoids_listing_when_path_and_content_are_explicit():
     prompt = intent_prompt(decision)
 
     assert decision.intent == Intent.CODING_TASK
+    assert decision.hidden_tools == frozenset({"list_files"})
     assert "explicit file path and exact content" in prompt
     assert "do not call list_files first" in prompt

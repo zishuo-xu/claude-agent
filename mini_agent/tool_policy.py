@@ -20,4 +20,6 @@ def tools_for_intent(tools: dict[str, Tool], decision: IntentDecision | None) ->
         return {decision.requested_tool: tool} if tool else {}
     if decision and decision.intent == Intent.PROJECT_QUESTION:
         return {name: tool for name, tool in tools.items() if name in PROJECT_QUESTION_TOOLS}
+    if decision and decision.hidden_tools:
+        return {name: tool for name, tool in tools.items() if name not in decision.hidden_tools}
     return tools
