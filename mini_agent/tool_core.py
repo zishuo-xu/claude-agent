@@ -27,6 +27,22 @@ class Tool:
             "input_schema": self.input_schema,
         }
 
+    def validation_error(self, tool_input: dict[str, Any]) -> str | None:
+        schema = self.input_schema or {}
+        properties = schema.get("properties")
+        if isinstance(properties, dict):
+            unknown_fields = sorted(set(tool_input) - set(properties))
+            if unknown_fields:
+                return f"unknown input field(s): {', '.join(unknown_fields)}"
+
+        required = schema.get("required")
+        if isinstance(required, list):
+            missing_fields = [field for field in required if field not in tool_input]
+            if missing_fields:
+                return f"missing required input field(s): {', '.join(missing_fields)}"
+
+        return self.validate_input(tool_input)
+
     def run(self, tool_input: dict[str, Any]) -> str:
         result = self.call(tool_input)
         return truncate_tool_result(result, self.max_result_chars)

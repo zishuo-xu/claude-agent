@@ -514,7 +514,7 @@ def test_runtime_normalizes_function_parameter_pseudo_tool_markup(tmp_path: Path
     assert len(content) == 1
     assert content[0].type == "tool_use"
     assert content[0].name == "read_file"
-    assert content[0].input["path"] == "README.md"
+    assert content[0].input == {"path": "README.md"}
 
 
 def test_runtime_micro_compacts_before_full_compact(tmp_path: Path, capsys):

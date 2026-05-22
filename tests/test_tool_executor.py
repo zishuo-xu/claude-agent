@@ -56,6 +56,59 @@ def test_tool_turn_executor_uses_permission_handler_for_rejection():
     ]
 
 
+def test_tool_turn_executor_rejects_unknown_input_fields():
+    events = []
+    tool = build_tool(
+        name="read_file",
+        description="Read",
+        input_schema={
+            "type": "object",
+            "properties": {"path": {"type": "string"}},
+            "required": ["path"],
+        },
+        call=lambda _input: "read",
+        read_only=lambda _input: True,
+    )
+    executor = ToolTurnExecutor(
+        tools={"read_file": tool},
+        permission_context=PermissionContext(mode=PermissionMode.BYPASS),
+        emit=lambda event_type, **payload: events.append((event_type, payload)),
+        permission_handler=lambda _name, _input, _reason: True,
+    )
+
+    result = executor.execute([ToolUseBlock(id="call_1", name="read_file", input={"path": "agent.py", "limit": "50"})])
+
+    assert result[0]["is_error"] is True
+    assert result[0]["content"] == "Invalid tool input: unknown input field(s): limit"
+    tool_errors = [event for event in events if event[0] == "tool_error"]
+    assert tool_errors[0][1]["category"] == "validation"
+
+
+def test_tool_turn_executor_rejects_missing_required_input_fields():
+    tool = build_tool(
+        name="read_file",
+        description="Read",
+        input_schema={
+            "type": "object",
+            "properties": {"path": {"type": "string"}},
+            "required": ["path"],
+        },
+        call=lambda _input: "read",
+        read_only=lambda _input: True,
+    )
+    executor = ToolTurnExecutor(
+        tools={"read_file": tool},
+        permission_context=PermissionContext(mode=PermissionMode.BYPASS),
+        emit=lambda _event_type, **_payload: None,
+        permission_handler=lambda _name, _input, _reason: True,
+    )
+
+    result = executor.execute([ToolUseBlock(id="call_1", name="read_file", input={})])
+
+    assert result[0]["is_error"] is True
+    assert result[0]["content"] == "Invalid tool input: missing required input field(s): path"
+
+
 def test_tool_turn_executor_partitions_contiguous_parallel_safe_tools():
     executor = ToolTurnExecutor(
         tools={

@@ -70,7 +70,7 @@ class ToolTurnExecutor:
             return self._tool_error_result(tool_use.id, name=name, content=result, category="unknown_tool")
 
         self.emit("tool_start", name=name, input=tool_input)
-        validation_error = tool.validate_input(tool_input)
+        validation_error = tool.validation_error(tool_input)
         if validation_error:
             result = f"Invalid tool input: {validation_error}"
             return self._tool_error_result(tool_use.id, name=name, content=result, category="validation")

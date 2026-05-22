@@ -290,6 +290,7 @@ class AgentRuntime:
             tool_input = {**tool_input, "prompt": tool_input["query"]}
         if "path" not in tool_input and "file_path" in tool_input:
             tool_input = {**tool_input, "path": tool_input["file_path"]}
+            tool_input.pop("file_path", None)
 
         prompt = tool_input.get("prompt")
         if isinstance(prompt, str):

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.9.1`
+当前版本：`0.9.2`
 
 ## 已完成主线
 
@@ -33,6 +33,7 @@
 - `0.8.4`: Tool Executor Boundary Review / 工具执行边界复查
 - `0.9.0`: Context Strategy Review / 上下文策略复查
 - `0.9.1`: Context Boundary Tests / 上下文边界测试
+- `0.9.2`: Strict Tool Input Validation / 严格工具输入校验
 
 ## 架构减重审视
 
@@ -96,22 +97,32 @@
 
 ## 下一步
 
-### P1 / `0.9.2`: Context Strategy Decision / 上下文策略取舍
+### P1 / `0.9.3`: Project Question Read Strategy / 项目问答读取策略
 
-目标：基于 0.9.0/0.9.1 的复查结果，决定上下文策略是否暂时收尾，还是需要一个轻量增强点。
+目标：复查“解释当前项目架构”这类问题的读取路径，让 agent 优先读少量入口文档，必要时再读代码。
 
 作用：
 
-- 避免为了上下文继续堆复杂功能。
-- 明确是否离开上下文主题，转向子 Agent 或权限体验。
-- 保持 mini-claude 的轻量工程化边界。
+- 减少无关文件读取，降低上下文消耗。
+- 让项目问答更像 Claude 的按需探索，而不是一次性扫描。
+- 保持实现轻量，不引入复杂规划器。
 
 建议范围：
 
-- 优先做设计判断。
-- 不做复杂 token 预算器。
-- 不引入长期记忆系统。
-- 不改变 compact 主流程。
+- 只调整项目问答的工具使用提示或轻量策略。
+- 优先使用 `README.md`、`docs/context-map.md`、`docs/architecture.md`。
+- 不新增子 Agent，不做复杂文件评分。
+
+### 已完成 / `0.9.2`: Strict Tool Input Validation / 严格工具输入校验
+
+目标：让工具调用输入严格符合工具 schema，避免模型传入未知字段却被静默忽略。
+
+结果：
+
+- `Tool` 统一校验未知字段和必填字段。
+- `ToolTurnExecutor` 使用统一校验入口。
+- 伪工具调用的 `file_path` 别名会归一为 `path`，不再残留旧字段。
+- 新增工具输入边界测试。
 
 ### 已完成 / `0.9.1`: Context Boundary Tests / 上下文边界测试
 

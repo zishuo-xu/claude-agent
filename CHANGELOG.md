@@ -10,6 +10,28 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.9.2 - 2026-05-22
+
+当前学习阶段：Strict Tool Input Validation / 严格工具输入校验。
+
+变更级别：小特性。
+
+### Changed
+
+- `Tool` 增加统一 schema 输入校验：未知字段会被拒绝，缺少 required 字段会被拒绝
+- `ToolTurnExecutor` 改为使用统一校验入口，避免各工具重复处理基础输入契约
+- 伪工具调用中的 `file_path` 会归一成 `path`，并移除旧别名，避免严格校验误判
+
+### Tests
+
+- 新增未知字段拒绝测试
+- 新增 required 字段缺失测试
+- 收紧伪工具调用别名归一化测试
+
+### Verified
+
+- `92 passed`
+
 ## 0.9.1 - 2026-05-22
 
 当前学习阶段：Context Boundary Tests / 上下文边界测试。
