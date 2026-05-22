@@ -147,7 +147,11 @@ def intent_prompt(decision: IntentDecision) -> str:
             "specific question directly and concisely. Do not restate whole documents, long histories, or broad "
             "feature lists unless the user explicitly asks for detail."
         ),
-        Intent.CODING_TASK: "You may use tools to inspect, edit, run tests, and verify changes.",
+        Intent.CODING_TASK: (
+            "You may use tools to inspect, edit, run tests, and verify changes. If the user gives an explicit "
+            "file path and exact content, create or edit that file directly; do not call list_files first unless "
+            "the target path is ambiguous or you need to discover existing files."
+        ),
         Intent.DANGEROUS_REQUEST: "Do not use tools. Explain the safety concern and ask for a safer, more specific goal.",
     }[decision.intent]
     return f"Current user intent: {decision.intent.value}. Reason: {decision.reason}. Tool guidance: {guidance}"

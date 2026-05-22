@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.9.7`
+当前版本：`0.9.8`
 
 已完成学习主线：
 
@@ -130,5 +130,6 @@ MAJOR.MINOR.PATCH
 - `0.9.5`: Manual Usage Review / 手动使用复查
 - `0.9.6`: Tool Result Display Compact / 工具结果展示收敛
 - `0.9.7`: Shell Execution UX / Shell 执行体验收敛
+- `0.9.8`: Direct File Task UX / 明确文件任务体验收敛
 
 详细说明以 `CHANGELOG.md` 为准。

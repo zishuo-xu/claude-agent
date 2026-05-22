@@ -53,3 +53,13 @@ def test_intent_prompt_includes_tool_guidance():
 
     assert "general_learning" in prompt
     assert "Do not use tools" in prompt
+
+
+def test_coding_task_prompt_avoids_listing_when_path_and_content_are_explicit():
+    decision = classify_intent("创建 tmp_manual_test/hello.py，内容是打印 hello agent，然后运行它")
+
+    prompt = intent_prompt(decision)
+
+    assert decision.intent == Intent.CODING_TASK
+    assert "explicit file path and exact content" in prompt
+    assert "do not call list_files first" in prompt

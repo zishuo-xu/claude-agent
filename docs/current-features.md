@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.9.7`
+当前版本：`0.9.8`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`98 tests`
+当前测试：`100 tests`
 
 ## LLM Provider
 
@@ -64,7 +64,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - task/todo 状态注入 system prompt
 - micro-compact 和 full compact
 
-普通寒暄、泛学习请求默认不读项目、不调用工具；项目问题和编码任务才进入工具循环。
+普通寒暄、泛学习请求默认不读项目、不调用工具；项目问题和编码任务才进入工具循环。明确给出目标路径和内容的 coding task 会提示模型直接创建或编辑文件，不先列目录。
 项目问题优先按文档入口读取：`README.md`、`docs/context-map.md`、`docs/architecture.md`、`docs/current-features.md`、`docs/roadmap.md`；目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；用户明确要求详细时再展开。项目问题如果第一轮只列目录，会允许再进行一轮必要读取；读取或搜索后会关闭项目问答工具，避免无休止扫描项目。
 
 当前运行时事件包括：
@@ -86,7 +86,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - `final_answer`
 
 CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runtime 同时保留事件列表，方便测试和后续演进。
-`tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。长工具结果仍完整进入模型上下文，但 CLI 只显示一行摘要；错误结果保持完整展示。`run_shell` 结果在 CLI 中按 exit/stdout/stderr 展示，不再原样打印 JSON。
+`tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。长工具结果仍完整进入模型上下文，但 CLI 只显示一行摘要；错误结果保持完整展示。`run_shell` 结果在 CLI 中按 exit/stdout/stderr 展示，不再原样打印 JSON。`list_files` 结果在 CLI 中显示摘要，避免目录列表刷屏。
 
 相关文件：`mini_agent/runtime.py`、`mini_agent/tool_executor.py`、`mini_agent/events.py`、`mini_agent/intent.py`、`mini_agent/tool_policy.py`
 

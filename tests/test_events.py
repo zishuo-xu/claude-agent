@@ -68,3 +68,19 @@ def test_print_runtime_event_formats_shell_failure_result(capsys):
 
     captured = capsys.readouterr()
     assert captured.out == "[shell] exit 127: python hello.py\nstderr:\n/bin/sh: python: command not found\n"
+
+
+def test_print_runtime_event_summarizes_list_files_result(capsys):
+    print_runtime_event(
+        RuntimeEvent(
+            "tool_result",
+            {
+                "name": "list_files",
+                "content": "docs/\nmini_agent/\ntests/\nREADME.md\nVERSION\nCHANGELOG.md\n",
+                "is_error": False,
+            },
+        )
+    )
+
+    captured = capsys.readouterr()
+    assert captured.out == "[tool_result] list_files returned 6 entries: docs/, mini_agent/, tests/, README.md, VERSION, ... +1 more\n"

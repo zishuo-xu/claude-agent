@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.9.8 - 2026-05-23
+
+当前学习阶段：Direct File Task UX / 明确文件任务体验收敛。
+
+变更级别：小特性。
+
+### Changed
+
+- coding task guidance 明确：用户给出文件路径和精确内容时，直接创建或编辑文件，不先 `list_files`
+- `list_files` 的 CLI 展示改为条目数和少量预览，避免目录列表刷屏
+- 不改变工具执行和权限管线
+
+### Tests
+
+- 新增明确文件任务不应先 `list_files` 的提示测试
+- 新增 `list_files` 展示摘要测试
+
+### Verified
+
+- `100 passed`
+
 ## 0.9.7 - 2026-05-23
 
 当前学习阶段：Shell Execution UX / Shell 执行体验收敛。

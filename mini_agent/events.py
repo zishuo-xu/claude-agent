@@ -46,6 +46,8 @@ def _format_tool_result_for_display(payload: dict[str, Any]) -> str:
         shell_result = _format_shell_result_for_display(content)
         if shell_result is not None:
             return shell_result
+    if payload.get("name") == "list_files" and not payload.get("is_error"):
+        return _format_list_files_result_for_display(content)
 
     if payload.get("is_error") or len(content) <= MAX_DISPLAY_TOOL_RESULT_CHARS:
         return content
@@ -72,3 +74,12 @@ def _format_shell_result_for_display(content: str) -> str | None:
     if not stdout and not stderr:
         lines.append("[no output]")
     return "\n".join(lines)
+
+
+def _format_list_files_result_for_display(content: str) -> str:
+    entries = [line for line in content.splitlines() if line.strip()]
+    if not entries:
+        return "[tool_result] list_files returned 0 entries."
+    preview = ", ".join(entries[:5])
+    suffix = "" if len(entries) <= 5 else f", ... +{len(entries) - 5} more"
+    return f"[tool_result] list_files returned {len(entries)} entries: {preview}{suffix}"
