@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.10.2`
+当前版本：`0.10.3`
 
 ## 已完成主线
 
@@ -44,6 +44,7 @@
 - `0.10.0`: Project Read Strategy Hardening / 项目读取策略硬化
 - `0.10.1`: Visible Tool Enforcement / 可见工具执行校验
 - `0.10.2`: Create Intent Recognition / 创建意图识别补强
+- `0.10.3`: Output Style Review / 输出风格复查
 
 ## 架构减重审视
 
@@ -107,15 +108,28 @@
 
 ## 下一步
 
-### P1 / `0.10.3`: Output Style Review / 输出风格复查
+### P1 / `0.10.4`: Architecture Answer Accuracy Review / 架构问答准确性复查
 
-目标：复查真实回答中仍偏长、偶尔使用 emoji 或过度结构化的问题。
+目标：复查“当前架构上分为几层？”这类问题的回答准确性，避免读了架构文档后把 8 层解释成 7 层。
 
 作用：
 
-- 让项目问答更贴近“直接回答当前问题”。
-- 降低 CLI 使用时的阅读负担。
-- 继续保持轻量，只先做手动复查，必要时再小幅调整 prompt。
+- 确认是 prompt 表达问题、文档表述问题，还是模型总结偏差。
+- 优先通过小幅文档或 prompt 收敛解决，不引入新模块。
+
+### 已完成 / `0.10.3`: Output Style Review / 输出风格复查
+
+目标：复查真实回答中仍偏长、偶尔使用 emoji 或过度结构化的问题。
+
+结果：
+
+- 项目问答 prompt 明确默认短答。
+- 默认不使用 emoji、表格、目录树或额外学习链接。
+- 明确要求始终给出可见最终回答。
+- 隐藏工具误调用会转为内部引导结果，避免把普通用户暴露在 `Unknown tool` 噪音里。
+- final response 只有最终文本、没有 text delta 时，CLI 也会展示答案。
+- `下一步` 等文档入口问题即使没有显式项目词，也会走项目问答路径。
+- 项目问答会优先选择最相关文档入口，避免先读 README 后再需要第二轮读 roadmap。
 
 ### 已完成 / `0.10.2`: Create Intent Recognition / 创建意图识别补强
 

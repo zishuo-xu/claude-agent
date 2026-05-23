@@ -21,7 +21,7 @@ def test_classifies_project_question_with_tools():
     assert decision.intent == Intent.PROJECT_QUESTION
     assert decision.allow_tools
     assert decision.requested_tool is None
-    assert decision.hidden_tools == frozenset({"list_files"})
+    assert decision.hidden_tools == frozenset({"list_files", "search_text"})
 
 
 def test_project_question_without_clear_doc_entrypoint_can_list_files():
@@ -30,6 +30,14 @@ def test_project_question_without_clear_doc_entrypoint_can_list_files():
     assert decision.intent == Intent.PROJECT_QUESTION
     assert decision.allow_tools
     assert decision.hidden_tools == frozenset()
+
+
+def test_documented_project_question_without_project_word_uses_docs():
+    decision = classify_intent("下一步应该做什么？")
+
+    assert decision.intent == Intent.PROJECT_QUESTION
+    assert decision.allow_tools
+    assert decision.hidden_tools == frozenset({"list_files", "search_text"})
 
 
 def test_classifies_explicit_subagent_request_with_tools():

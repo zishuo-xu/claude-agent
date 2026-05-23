@@ -198,8 +198,11 @@ class AgentRuntime:
             raise RuntimeError("stream completed without final response")
         if streamed_text and not final_response.content:
             final_response.content = [TextBlock(streamed_text)]
-        if streamed_text and not self._contains_pseudo_tool_call(self._content_text(final_response.content)):
+        final_text = self._content_text(final_response.content)
+        if streamed_text and not self._contains_pseudo_tool_call(final_text):
             self._emit("text_delta", text=streamed_text)
+        elif final_text and not self._contains_pseudo_tool_call(final_text):
+            self._emit("text_delta", text=final_text)
         return final_response
 
     def _system_prompt(self) -> str:
@@ -351,13 +354,37 @@ class AgentRuntime:
         self._emit("context_notice", message="compacted older conversation into summary")
 
     def _execute_tool_uses(self, tool_uses: list[Any]) -> list[dict[str, Any]]:
+        available_tools = self._available_tools()
         executor = ToolTurnExecutor(
-            tools=self._available_tools(),
+            tools=available_tools,
             permission_context=self.permission_context,
             emit=self._emit,
             permission_handler=self.permission_handler,
         )
-        return executor.execute(tool_uses)
+        if all(tool_use.name not in self.tools or tool_use.name in available_tools for tool_use in tool_uses):
+            return executor.execute(tool_uses)
+
+        results: list[dict[str, Any]] = []
+        for tool_use in tool_uses:
+            if tool_use.name in self.tools and tool_use.name not in available_tools:
+                results.append(self._unavailable_tool_result(tool_use))
+                continue
+            results.extend(executor.execute([tool_use]))
+        return results
+
+    def _unavailable_tool_result(self, tool_use: Any) -> dict[str, Any]:
+        visible = ", ".join(self._available_tools()) or "no tools"
+        content = (
+            f"Tool {tool_use.name} is not available for this request. "
+            f"Use the currently visible tools ({visible}) or answer from available context."
+        )
+        self._emit("tool_error", name=tool_use.name, category="unavailable_tool", error_type=None, content=content)
+        return {
+            "type": "tool_result",
+            "tool_use_id": tool_use.id,
+            "content": content,
+            "is_error": False,
+        }
 
     @staticmethod
     def _block_to_dict(block: Any) -> dict[str, Any]:

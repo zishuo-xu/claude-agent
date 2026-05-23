@@ -29,7 +29,7 @@ def test_registry_hides_list_files_for_project_questions_with_clear_docs(tmp_pat
         for spec in registry.api_specs_for_intent(classify_intent("这个项目结构是什么？"))
     }
 
-    assert tool_names == {"read_file", "search_text"}
+    assert tool_names == {"read_file"}
 
 
 def test_registry_hides_tools_for_general_learning_requests(tmp_path: Path):

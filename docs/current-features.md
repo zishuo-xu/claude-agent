@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.10.2`
+当前版本：`0.10.3`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`108 tests`
+当前测试：`110 tests`
 
 ## LLM Provider
 
@@ -65,7 +65,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - micro-compact 和 full compact
 
 普通寒暄、泛学习请求默认不读项目、不调用工具；项目问题和编码任务才进入工具循环。中文“创建文件并给出内容”的请求会进入 coding task。明确给出目标路径和内容的 coding task 会隐藏 `list_files`，让模型直接创建或编辑文件。
-项目问题优先按文档入口读取：`README.md`、`docs/context-map.md`、`docs/architecture.md`、`docs/current-features.md`、`docs/roadmap.md`。项目结构、架构、当前功能、当前版本、下一步这类问题会隐藏 `list_files`，直接读文档；隐藏工具即使被模型输出，也会在执行层被拒绝。目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；用户明确要求详细时再展开。
+项目问题会按问题选择最相关文档入口：架构问题读 `docs/architecture.md`，功能/版本问题读 `docs/current-features.md`，下一步/roadmap 问题读 `docs/roadmap.md`，宽泛项目概览再读 `README.md` 或 `docs/context-map.md`。项目结构、架构、当前功能、当前版本、下一步这类问题会隐藏 `list_files`，直接读文档；即使问题没有显式出现“项目”二字，只要命中文档入口问题，也按项目问答处理。隐藏工具即使被模型输出，也会在执行层转成内部引导结果，不按普通未知工具错误展示。目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；默认用短段落或 3-6 条短要点，不主动使用 emoji、表格、目录树或额外学习链接。
 
 当前运行时事件包括：
 

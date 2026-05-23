@@ -125,14 +125,15 @@ def classify_intent(user_input: str) -> IntentDecision:
     mentions_project = any(keyword in lowered for keyword in PROJECT_KEYWORDS)
     asks_to_use_project = any(phrase in lowered for phrase in ["用这个项目", "结合当前代码", "结合这个项目", "use this project"])
 
+    if _looks_like_documented_project_question(lowered):
+        return IntentDecision(
+            Intent.PROJECT_QUESTION,
+            "project question with clear documentation entrypoint",
+            allow_tools=True,
+            hidden_tools=frozenset({"list_files", "search_text"}),
+        )
+
     if mentions_project:
-        if _looks_like_documented_project_question(lowered):
-            return IntentDecision(
-                Intent.PROJECT_QUESTION,
-                "project question with clear documentation entrypoint",
-                allow_tools=True,
-                hidden_tools=frozenset({"list_files"}),
-            )
         return IntentDecision(Intent.PROJECT_QUESTION, "project-specific question", allow_tools=True)
 
     if any(keyword in lowered for keyword in CODING_KEYWORDS):
@@ -182,11 +183,15 @@ def intent_prompt(decision: IntentDecision) -> str:
         Intent.CASUAL_CHAT: "Reply briefly. Do not use tools. Do not describe project architecture unless asked.",
         Intent.GENERAL_LEARNING: "Give concise learning advice or ask about the user's level. Do not use tools or inspect the workspace.",
         Intent.PROJECT_QUESTION: (
-            "Use the smallest useful read path. Prefer README.md, docs/context-map.md, docs/architecture.md, "
-            "docs/current-features.md, and docs/roadmap.md before reading code. Use list_files only when the "
+            "Use the smallest useful read path. Choose the most relevant documentation entry first: "
+            "architecture questions use docs/architecture.md; feature or version questions use "
+            "docs/current-features.md; next-step or roadmap questions use docs/roadmap.md; broad project "
+            "overview questions use README.md or docs/context-map.md. Use list_files only when the "
             "target file is unclear, and stop using tools once enough context is available. Answer the user's "
             "specific question directly and concisely. Do not restate whole documents, long histories, or broad "
-            "feature lists unless the user explicitly asks for detail."
+            "feature lists unless the user explicitly asks for detail. Keep the final answer to 3-6 short bullets "
+            "or a short paragraph by default. Do not use emoji, tables, directory trees, or extra learning links "
+            "unless the user asks for them. Always provide a visible final answer."
         ),
         Intent.CODING_TASK: (
             "You may use tools to inspect, edit, run tests, and verify changes. If the user gives an explicit "

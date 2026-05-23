@@ -109,6 +109,14 @@ class StreamTextOnlyClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class FinalTextWithoutDeltaClient:
+    def stream_complete(self, **_kwargs):
+        yield FinalResponseEvent(LLMResponse([TextBlock("final-only text")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 class EmptyResponseClient:
     def stream_complete(self, **_kwargs):
         yield FinalResponseEvent(LLMResponse([]))
@@ -265,10 +273,10 @@ def test_runtime_hides_list_files_for_project_question_with_clear_docs(tmp_path:
 
     tool_names = {tool["name"] for tool in runtime._available_tool_specs()}
 
-    assert tool_names == {"read_file", "search_text"}
+    assert tool_names == {"read_file"}
 
 
-def test_runtime_rejects_hidden_tool_execution_for_project_question(tmp_path: Path):
+def test_runtime_guides_hidden_tool_execution_for_project_question(tmp_path: Path):
     client = HiddenProjectListFilesClient()
     runtime = make_silent_runtime_with_client(tmp_path, client)
     runtime.config.max_turns = 2
@@ -276,11 +284,14 @@ def test_runtime_rejects_hidden_tool_execution_for_project_question(tmp_path: Pa
     result = runtime.run_user_turn("这个项目结构是什么？")
 
     assert result == "done"
-    assert client.tool_names_by_call == [["read_file", "search_text"], ["read_file", "search_text"]]
+    assert client.tool_names_by_call == [["read_file"], ["read_file"]]
     tool_errors = [event for event in runtime.state.events if event.type == "tool_error"]
     assert tool_errors[0].payload["name"] == "list_files"
-    assert tool_errors[0].payload["category"] == "unknown_tool"
-    assert runtime.state.messages[-2]["content"][0]["content"] == "Unknown tool: list_files"
+    assert tool_errors[0].payload["category"] == "unavailable_tool"
+    tool_result = runtime.state.messages[-2]["content"][0]
+    assert tool_result["is_error"] is False
+    assert "not available for this request" in tool_result["content"]
+    assert "read_file" in tool_result["content"]
 
 
 def test_runtime_prompt_includes_current_intent(tmp_path: Path):
@@ -349,6 +360,22 @@ def test_runtime_stream_model_call_preserves_stream_text_when_final_content_is_e
     captured = capsys.readouterr()
     assert captured.out == "stream-only text"
     assert response.content[0].text == "stream-only text"
+
+
+def test_runtime_stream_model_call_prints_final_text_without_delta(tmp_path: Path, capsys):
+    runtime = make_runtime_with_client(tmp_path, FinalTextWithoutDeltaClient())
+
+    response = runtime._stream_model_call(
+        model="fake-model",
+        max_tokens=10,
+        system="system",
+        messages=[],
+        tools=[],
+    )
+
+    captured = capsys.readouterr()
+    assert captured.out == "final-only text"
+    assert response.content[0].text == "final-only text"
 
 
 def test_runtime_records_lightweight_events_for_final_answer(tmp_path: Path):
@@ -668,13 +695,18 @@ def test_project_question_prompt_prefers_doc_entry_points(tmp_path: Path):
     prompt = runtime._system_prompt()
 
     assert "Use the smallest useful read path" in prompt
-    assert "README.md" in prompt
-    assert "docs/context-map.md" in prompt
     assert "docs/architecture.md" in prompt
+    assert "docs/current-features.md" in prompt
+    assert "docs/roadmap.md" in prompt
+    assert "next-step or roadmap questions use docs/roadmap.md" in prompt
+    assert "broad project overview questions use README.md or docs/context-map.md" in prompt
     assert "Use list_files only when the target file is unclear" in prompt
     assert "Answer the user's specific question directly and concisely" in prompt
     assert "Do not restate whole documents" in prompt
     assert "unless the user explicitly asks for detail" in prompt
+    assert "3-6 short bullets" in prompt
+    assert "Do not use emoji, tables, directory trees" in prompt
+    assert "Always provide a visible final answer" in prompt
 
 
 def test_runtime_validates_tool_input_before_permission(tmp_path: Path, capsys):
@@ -720,7 +752,7 @@ def test_runtime_disables_project_question_tools_after_one_tool_round(tmp_path: 
     result = runtime.run_user_turn("解释当前项目架构")
 
     assert result == "architecture summary"
-    assert client.tool_names_by_call[0] == ["read_file", "search_text"]
+    assert client.tool_names_by_call[0] == ["read_file"]
     assert client.tool_names_by_call[1] == []
 
 

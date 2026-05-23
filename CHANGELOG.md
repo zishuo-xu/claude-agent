@@ -10,6 +10,33 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.10.3 - 2026-05-23
+
+当前学习阶段：Output Style Review / 输出风格复查。
+
+变更级别：小特性。
+
+### Changed
+
+- 收紧项目问答默认输出风格：短段落或 3-6 条短要点
+- 默认不使用 emoji、表格、目录树或额外学习链接
+- 项目问答 prompt 明确要求始终给出可见最终回答
+- 隐藏但存在的工具被模型调用时，runtime 返回内部引导结果，不再按普通未知工具错误展示
+- streaming provider 只在 final response 返回文本、没有 text delta 时，CLI 也会打印最终文本
+- `下一步`、`当前版本` 等明确文档入口问题即使没有显式项目词，也会按项目问答处理
+- 项目问答 prompt 改为按问题选择最相关入口文档，不再默认先读 README
+
+### Tests
+
+- 扩展项目问答 system prompt 边界测试
+- 更新隐藏工具执行兜底测试，区分 unavailable tool 和 unknown tool
+- 新增 final response 无 text delta 时仍打印文本的测试
+- 新增无显式项目词的文档入口问题意图测试
+
+### Verified
+
+- `110 passed`
+
 ## 0.10.2 - 2026-05-23
 
 当前学习阶段：Create Intent Recognition / 创建意图识别补强。
