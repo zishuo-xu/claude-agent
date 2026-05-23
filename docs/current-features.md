@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.10.5`
+当前版本：`0.11.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`112 tests`
+当前测试：`113 tests`
 
 ## LLM Provider
 
@@ -167,6 +167,7 @@ deny -> allow -> ask -> mode fallback
 - full compact 保留最近 4 条原始消息
 - full compact 摘要会注入后续 system prompt
 - 边界测试覆盖孤立 tool_result、旧目标摘要 prompt、最近消息保留
+- 真实长任务测试覆盖用户目标、文件路径、命令、未完成事项和 summary 注入
 
 可压缩工具结果包括文件、搜索、编辑、shell 等高噪音输出；task/todo 工具结果暂不压缩。
 

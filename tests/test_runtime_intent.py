@@ -678,6 +678,68 @@ def test_runtime_full_compact_preserves_old_goal_in_summary_prompt_and_recent_me
     ]
 
 
+def test_runtime_compacts_realistic_long_task_without_losing_key_context(tmp_path: Path):
+    client = RecordingCompactClient()
+    runtime = make_runtime_with_client(tmp_path, client)
+    runtime.config.context_char_budget = 600
+    runtime.state.messages = [
+        {"role": "user", "content": "User goal: refactor context handling without losing task intent."},
+        {"role": "assistant", "content": "I will inspect context.py and runtime.py first."},
+    ]
+    for index, tool_name in enumerate(["read_file", "search_text", "run_shell", "read_file", "search_text", "run_shell", "read_file", "search_text"]):
+        tool_use_id = f"call_{index}"
+        runtime.state.messages.append(
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": tool_use_id,
+                        "name": tool_name,
+                        "input": {"path": "mini_agent/context.py", "command": ".venv/bin/python -m pytest"},
+                    }
+                ],
+            }
+        )
+        runtime.state.messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": f"{tool_name} output references mini_agent/runtime.py and pytest " + ("x" * 300),
+                        "is_error": False,
+                    }
+                ],
+            }
+        )
+    runtime.state.messages.extend(
+        [
+            {"role": "user", "content": "Recent decision: keep compaction lightweight."},
+            {"role": "assistant", "content": "I will add focused tests only."},
+            {"role": "user", "content": "Unresolved: verify summary injection still works."},
+            {"role": "assistant", "content": "Next step is running the compact tests."},
+        ]
+    )
+
+    runtime._compact_if_needed()
+
+    summary_prompt = client.complete_kwargs[0]["messages"][0]["content"]
+    assert "User goal: refactor context handling without losing task intent." in summary_prompt
+    assert "mini_agent/context.py" in summary_prompt
+    assert "mini_agent/runtime.py" in summary_prompt
+    assert ".venv/bin/python -m pytest" in summary_prompt
+    assert "old tool result cleared by micro-compact" in summary_prompt
+    assert runtime.state.summary == "summary preserving old goal"
+    assert runtime.state.messages == [
+        {"role": "user", "content": "Recent decision: keep compaction lightweight."},
+        {"role": "assistant", "content": "I will add focused tests only."},
+        {"role": "user", "content": "Unresolved: verify summary injection still works."},
+        {"role": "assistant", "content": "Next step is running the compact tests."},
+    ]
+
+
 def test_runtime_injects_full_compact_summary_into_system_prompt(tmp_path: Path):
     runtime = make_runtime(tmp_path)
     runtime.state.summary = "Preserve user goal and edited files."

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.10.5`
+当前版本：`0.11.0`
 
 ## 已完成主线
 
@@ -47,6 +47,7 @@
 - `0.10.3`: Output Style Review / 输出风格复查
 - `0.10.4`: Architecture Answer Accuracy Review / 架构问答准确性复查
 - `0.10.5`: 0.10 Line Review / 0.10 主线复查
+- `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
 
 ## 架构减重审视
 
@@ -110,7 +111,17 @@
 
 ## 下一步
 
-### P1 / `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
+### P1 / `0.11.1`: Summary Boundary Review / 摘要边界复查
+
+目标：进一步明确 full compact 摘要应该保留哪些信息，哪些信息不应塞进摘要。
+
+作用：
+
+- 让 summary 和 TaskState 的职责更清楚。
+- 防止摘要变成新的“巨型上下文”。
+- 继续保持轻量，优先测试和 prompt 边界，不引入长期记忆系统。
+
+### 已完成 / `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
 
 目标：用更接近真实长对话的场景复查 tool result budget、micro-compact、full compact 和 summary 注入是否稳定。
 
@@ -118,6 +129,12 @@
 
 - 0.10 项目问答主线已经基本稳定，下一步转向 Claude-style agent 的另一条核心主线：上下文管理。
 - 优先做复查和少量测试，不急着引入复杂 token 预算器或长期记忆。
+
+结果：
+
+- 新增真实长任务 compact 测试。
+- 验证 micro/full compact 后仍保留用户目标、关键文件路径、测试命令和未完成事项。
+- 验证最近 4 条原始消息仍被保留，summary 注入路径仍可用。
 
 ### 已完成 / `0.10.5`: 0.10 Line Review / 0.10 主线复查
 
