@@ -206,7 +206,11 @@ class AgentRuntime:
         return final_response
 
     def _system_prompt(self) -> str:
-        summary = f"\nConversation summary so far:\n{self.state.summary}\n" if self.state.summary else ""
+        summary = (
+            f"\nConversation summary so far (historical context, not the current task list):\n{self.state.summary}\n"
+            if self.state.summary
+            else ""
+        )
         intent = f"\n{intent_prompt(self.state.current_intent)}\n" if self.state.current_intent else ""
         tasks = f"\n{self.task_state.prompt_summary()}\n"
         return f"{self.system_prompt}\nWorkspace root: {self.config.workspace}\n{intent}{tasks}{summary}"

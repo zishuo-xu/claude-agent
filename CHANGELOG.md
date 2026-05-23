@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.11.3 - 2026-05-23
+
+当前学习阶段：Context / TaskState Relationship Review / 上下文与任务状态关系复查。
+
+变更级别：小特性。
+
+### Changed
+
+- system prompt 明确标记 `TaskState` 为 live task state
+- system prompt 明确标记 full compact summary 为 historical context，不是当前任务列表
+
+### Tests
+
+- 新增 TaskState 和 summary 同时存在且独立注入 system prompt 的测试
+- 更新 TaskState prompt summary 测试
+
+### Verified
+
+- `116 passed`
+
 ## 0.11.2 - 2026-05-23
 
 当前学习阶段：Tool Result Compact Policy Review / 工具结果压缩策略复查。

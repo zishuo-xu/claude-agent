@@ -53,6 +53,5 @@ class TaskState:
 
     def prompt_summary(self) -> str:
         if not self.items:
-            return "Current tasks: none."
-        return "Current tasks:\n" + self.render()
-
+            return "Current tasks (live task state): none."
+        return "Current tasks (live task state):\n" + self.render()

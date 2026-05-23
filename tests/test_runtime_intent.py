@@ -310,7 +310,7 @@ def test_runtime_prompt_includes_task_state(tmp_path: Path):
 
     prompt = runtime._system_prompt()
 
-    assert "Current tasks:" in prompt
+    assert "Current tasks (live task state):" in prompt
     assert "t1 [todo] Inspect files" in prompt
 
 
@@ -748,8 +748,24 @@ def test_runtime_injects_full_compact_summary_into_system_prompt(tmp_path: Path)
 
     prompt = runtime._system_prompt()
 
-    assert "Conversation summary so far:" in prompt
+    assert "Conversation summary so far (historical context, not the current task list):" in prompt
     assert "Preserve user goal and edited files." in prompt
+
+
+def test_runtime_prompt_keeps_task_state_and_summary_separate(tmp_path: Path):
+    runtime = make_runtime(tmp_path)
+    runtime.task_state.set_tasks(["Run tests", "Update docs"])
+    runtime.task_state.update_task("t1", "in_progress", "pytest running")
+    runtime.state.summary = "Historical decision: keep context compaction lightweight."
+
+    prompt = runtime._system_prompt()
+
+    task_index = prompt.index("Current tasks (live task state):")
+    summary_index = prompt.index("Conversation summary so far (historical context, not the current task list):")
+    assert task_index < summary_index
+    assert "t1 [in_progress] Run tests - pytest running" in prompt
+    assert "t2 [todo] Update docs" in prompt
+    assert "Historical decision: keep context compaction lightweight." in prompt
 
 
 def test_project_question_prompt_prefers_doc_entry_points(tmp_path: Path):

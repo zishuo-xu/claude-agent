@@ -31,9 +31,8 @@ def test_task_state_rejects_unknown_task():
 
 def test_task_state_prompt_summary():
     state = TaskState()
-    assert state.prompt_summary() == "Current tasks: none."
+    assert state.prompt_summary() == "Current tasks (live task state): none."
 
     state.set_tasks(["Inspect files"])
 
-    assert "Current tasks:" in state.prompt_summary()
-
+    assert "Current tasks (live task state):" in state.prompt_summary()

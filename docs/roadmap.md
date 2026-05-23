@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.11.2`
+当前版本：`0.11.3`
 
 ## 已完成主线
 
@@ -50,6 +50,7 @@
 - `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
 - `0.11.1`: Summary Boundary Review / 摘要边界复查
 - `0.11.2`: Tool Result Compact Policy Review / 工具结果压缩策略复查
+- `0.11.3`: Context / TaskState Relationship Review / 上下文与任务状态关系复查
 
 ## 架构减重审视
 
@@ -113,7 +114,16 @@
 
 ## 下一步
 
-### P1 / `0.11.3`: Context / TaskState Relationship Review / 上下文与任务状态关系复查
+### P1 / `0.11.4`: Context Line Review / 上下文主线收尾复查
+
+目标：复查 0.11.x 上下文管理主线是否已经覆盖主要边界，决定是否收尾。
+
+作用：
+
+- 用少量测试和文档检查确认 compact、summary、TaskState 边界是否稳定。
+- 如果没有明显问题，转向下一条更有价值的 Claude-style 主线。
+
+### 已完成 / `0.11.3`: Context / TaskState Relationship Review / 上下文与任务状态关系复查
 
 目标：明确 summary 和 TaskState 各自负责什么，避免重复或冲突。
 
@@ -121,6 +131,11 @@
 
 - TaskState 保存当前任务进度，summary 保存压缩后的历史决策和上下文。
 - 防止后续把 todo 状态也塞进 summary，或把历史摘要当成实时任务状态。
+
+结果：
+
+- system prompt 明确区分 `Current tasks (live task state)` 和 `Conversation summary so far (historical context, not the current task list)`。
+- 测试固定 TaskState 和 summary 可以同时存在，且各自独立注入。
 
 ### 已完成 / `0.11.2`: Tool Result Compact Policy Review / 工具结果压缩策略复查
 

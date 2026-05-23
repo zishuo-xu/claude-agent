@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.11.2`
+当前版本：`0.11.3`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`115 tests`
+当前测试：`116 tests`
 
 ## LLM Provider
 
@@ -168,10 +168,11 @@ deny -> allow -> ask -> mode fallback
 - full compact 保留最近 4 条原始消息
 - full compact 摘要会注入后续 system prompt
 - full compact 摘要提示会要求保留目标、决策、路径、命令和未完成事项，同时避免复制长工具输出、闲聊和重复细节
+- `TaskState` 作为 live task state 独立注入；summary 作为 historical context 独立注入
 - 边界测试覆盖孤立 tool_result、旧目标摘要 prompt、最近消息保留
 - 真实长任务测试覆盖用户目标、文件路径、命令、未完成事项和 summary 注入
 
-可压缩工具结果包括文件、搜索、编辑、shell 等高噪音成功输出；task/todo 工具结果和错误工具结果暂不压缩。
+可压缩工具结果包括文件、搜索、编辑、shell 等高噪音成功输出；task/todo 工具结果和错误工具结果暂不压缩。`TaskState` 负责当前任务进度，summary 负责压缩后的历史上下文，二者不合并。
 
 相关文件：`mini_agent/context.py`
 
