@@ -704,6 +704,7 @@ def test_project_question_prompt_prefers_doc_entry_points(tmp_path: Path):
     assert "Answer the user's specific question directly and concisely" in prompt
     assert "Do not restate whole documents" in prompt
     assert "unless the user explicitly asks for detail" in prompt
+    assert "preserve that count and list exactly" in prompt
     assert "3-6 short bullets" in prompt
     assert "Do not use emoji, tables, directory trees" in prompt
     assert "Always provide a visible final answer" in prompt

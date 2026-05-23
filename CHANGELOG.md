@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.10.4 - 2026-05-23
+
+当前学习阶段：Architecture Answer Accuracy Review / 架构问答准确性复查。
+
+变更级别：小特性。
+
+### Changed
+
+- `docs/architecture.md` 明确写出当前架构分为 8 层
+- 明确 `Sub Agents` 是独立一层，不应合并到其他层
+- 项目问答 prompt 增加要求：保留文档中的明确数字和有序列表
+
+### Tests
+
+- 新增架构文档明确 8 层的文档测试
+- 扩展项目问答 prompt 测试，固定保留明确数字和列表的约束
+
+### Verified
+
+- `111 passed`
+
 ## 0.10.3 - 2026-05-23
 
 当前学习阶段：Output Style Review / 输出风格复查。

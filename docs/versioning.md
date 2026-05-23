@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.10.3`
+当前版本：`0.10.4`
 
 已完成学习主线：
 
@@ -136,5 +136,6 @@ MAJOR.MINOR.PATCH
 - `0.10.1`: Visible Tool Enforcement / 可见工具执行校验
 - `0.10.2`: Create Intent Recognition / 创建意图识别补强
 - `0.10.3`: Output Style Review / 输出风格复查
+- `0.10.4`: Architecture Answer Accuracy Review / 架构问答准确性复查
 
 详细说明以 `CHANGELOG.md` 为准。

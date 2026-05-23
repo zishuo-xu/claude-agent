@@ -189,7 +189,9 @@ def intent_prompt(decision: IntentDecision) -> str:
             "overview questions use README.md or docs/context-map.md. Use list_files only when the "
             "target file is unclear, and stop using tools once enough context is available. Answer the user's "
             "specific question directly and concisely. Do not restate whole documents, long histories, or broad "
-            "feature lists unless the user explicitly asks for detail. Keep the final answer to 3-6 short bullets "
+            "feature lists unless the user explicitly asks for detail. When the document states an explicit "
+            "count or ordered list, preserve that count and list exactly. "
+            "Keep the final answer to 3-6 short bullets "
             "or a short paragraph by default. Do not use emoji, tables, directory trees, or extra learning links "
             "unless the user asks for them. Always provide a visible final answer."
         ),

@@ -14,6 +14,8 @@
 
 ## 分层
 
+当前架构明确分为 8 层，`Sub Agents` 是独立一层，不应合并到其他层：
+
 ```text
 CLI / Config
   -> agent.py
