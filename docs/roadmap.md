@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.10.1`
+当前版本：`0.10.2`
 
 ## 已完成主线
 
@@ -43,6 +43,7 @@
 - `0.9.9`: Direct File Tool Gating / 明确文件任务工具门控
 - `0.10.0`: Project Read Strategy Hardening / 项目读取策略硬化
 - `0.10.1`: Visible Tool Enforcement / 可见工具执行校验
+- `0.10.2`: Create Intent Recognition / 创建意图识别补强
 
 ## 架构减重审视
 
@@ -106,7 +107,17 @@
 
 ## 下一步
 
-### P1 / `0.10.2`: Create Intent Recognition / 创建意图识别补强
+### P1 / `0.10.3`: Output Style Review / 输出风格复查
+
+目标：复查真实回答中仍偏长、偶尔使用 emoji 或过度结构化的问题。
+
+作用：
+
+- 让项目问答更贴近“直接回答当前问题”。
+- 降低 CLI 使用时的阅读负担。
+- 继续保持轻量，只先做手动复查，必要时再小幅调整 prompt。
+
+### 已完成 / `0.10.2`: Create Intent Recognition / 创建意图识别补强
 
 目标：修复真实测试中发现的轻量意图问题：`创建 x.txt，内容是 x` 这类请求应进入 coding task，而不是被当成闲聊。
 
@@ -115,6 +126,12 @@
 - 让中文创建文件请求更稳定地进入工具路径。
 - 减少模型明明想写文件、runtime 却隐藏所有工具的错配。
 - 保持范围很小，只调整 intent 关键词和测试，不新增模块。
+
+结果：
+
+- `创建` 进入 coding task 关键词。
+- `创建 x.txt，内容是 x` 会识别为 coding task，并隐藏 `list_files`。
+- 不带明确文件路径的创建请求仍进入普通 coding task，不提前隐藏探索工具。
 
 ### 已完成 / `0.10.1`: Visible Tool Enforcement / 可见工具执行校验
 

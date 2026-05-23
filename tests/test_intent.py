@@ -73,3 +73,19 @@ def test_coding_task_prompt_avoids_listing_when_path_and_content_are_explicit():
     assert decision.hidden_tools == frozenset({"list_files"})
     assert "explicit file path and exact content" in prompt
     assert "do not call list_files first" in prompt
+
+
+def test_classifies_create_file_with_content_as_coding_task():
+    decision = classify_intent("创建 x.txt，内容是 x")
+
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools
+    assert decision.hidden_tools == frozenset({"list_files"})
+
+
+def test_create_keyword_without_file_path_does_not_hide_list_files():
+    decision = classify_intent("创建一个简单的 Python 示例")
+
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools
+    assert decision.hidden_tools == frozenset()

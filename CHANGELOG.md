@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.10.2 - 2026-05-23
+
+当前学习阶段：Create Intent Recognition / 创建意图识别补强。
+
+变更级别：小特性。
+
+### Changed
+
+- 将中文 `创建` 纳入 coding task 关键词
+- `创建 x.txt，内容是 x` 会识别为明确文件任务，并隐藏 `list_files`
+- 不带明确文件路径的创建请求仍保留普通 coding task 工具可见性
+
+### Tests
+
+- 新增中文创建文件请求的意图识别测试
+- 新增创建类非明确文件任务不隐藏 `list_files` 的测试
+
+### Verified
+
+- `108 passed`
+
 ## 0.10.1 - 2026-05-23
 
 当前学习阶段：Visible Tool Enforcement / 可见工具执行校验。
