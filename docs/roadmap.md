@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.10.4`
+当前版本：`0.10.5`
 
 ## 已完成主线
 
@@ -46,6 +46,7 @@
 - `0.10.2`: Create Intent Recognition / 创建意图识别补强
 - `0.10.3`: Output Style Review / 输出风格复查
 - `0.10.4`: Architecture Answer Accuracy Review / 架构问答准确性复查
+- `0.10.5`: 0.10 Line Review / 0.10 主线复查
 
 ## 架构减重审视
 
@@ -109,7 +110,16 @@
 
 ## 下一步
 
-### P1 / `0.10.5`: 0.10 Line Review / 0.10 主线复查
+### P1 / `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
+
+目标：用更接近真实长对话的场景复查 tool result budget、micro-compact、full compact 和 summary 注入是否稳定。
+
+作用：
+
+- 0.10 项目问答主线已经基本稳定，下一步转向 Claude-style agent 的另一条核心主线：上下文管理。
+- 优先做复查和少量测试，不急着引入复杂 token 预算器或长期记忆。
+
+### 已完成 / `0.10.5`: 0.10 Line Review / 0.10 主线复查
 
 目标：复查 0.10.x 项目问答体验是否已经足够稳定，决定是否结束这一条主线。
 
@@ -117,6 +127,12 @@
 
 - 用少量真实问题验收读取路径、回答长度、准确性和工具噪音。
 - 如果没有明显问题，暂停继续微调项目问答，转向下一条更有价值的主线。
+
+结果：
+
+- 明确项目问题能按文档入口读取，模糊项目问题允许 `list_files`。
+- 文件创建任务能直接请求 `write_file` 权限。
+- 发现并修复工具数量回答不准的问题：当前 CLI 为 14 个模型可用工具，即 11 个基础工具 + 3 个只读子 Agent 工具。
 
 ### 已完成 / `0.10.4`: Architecture Answer Accuracy Review / 架构问答准确性复查
 

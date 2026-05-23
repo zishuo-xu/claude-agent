@@ -10,6 +10,31 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.10.5 - 2026-05-23
+
+当前学习阶段：0.10 Line Review / 0.10 主线复查。
+
+变更级别：小特性。
+
+### Review
+
+- 手动验收项目结构、架构层数、当前功能、下一步、模糊项目查看和创建文件路径
+- 明确项目问题能按文档入口读取，模糊项目问题允许 `list_files`
+- 文件创建任务能直接请求 `write_file` 权限
+
+### Changed
+
+- `docs/current-features.md` 明确当前 CLI 启动后共有 14 个模型可用工具：11 个基础工具 + 3 个只读子 Agent 工具
+- 项目问答 prompt 增加要求：不要估算数量
+
+### Tests
+
+- 新增当前功能文档的工具数量拆分测试
+
+### Verified
+
+- `112 passed`
+
 ## 0.10.4 - 2026-05-23
 
 当前学习阶段：Architecture Answer Accuracy Review / 架构问答准确性复查。

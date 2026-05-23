@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.10.4`
+当前版本：`0.10.5`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`111 tests`
+当前测试：`112 tests`
 
 ## LLM Provider
 
@@ -92,7 +92,9 @@ CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runt
 
 ## 工具系统
 
-当前工具：
+当前 CLI 启动后共有 14 个模型可用工具：11 个基础工具 + 3 个只读子 Agent 工具。
+
+基础工具：
 
 - `list_files`
 - `read_file`
@@ -105,6 +107,9 @@ CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runt
 - `set_tasks`
 - `update_task`
 - `list_tasks`
+
+子 Agent 工具：
+
 - `explore_agent`
 - `plan_agent`
 - `verify_agent`

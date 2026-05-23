@@ -190,7 +190,7 @@ def intent_prompt(decision: IntentDecision) -> str:
             "target file is unclear, and stop using tools once enough context is available. Answer the user's "
             "specific question directly and concisely. Do not restate whole documents, long histories, or broad "
             "feature lists unless the user explicitly asks for detail. When the document states an explicit "
-            "count or ordered list, preserve that count and list exactly. "
+            "count or ordered list, preserve that count and list exactly; do not estimate counts. "
             "Keep the final answer to 3-6 short bullets "
             "or a short paragraph by default. Do not use emoji, tables, directory trees, or extra learning links "
             "unless the user asks for them. Always provide a visible final answer."
