@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.11.0`
+当前版本：`0.11.1`
 
 ## 已完成主线
 
@@ -48,6 +48,7 @@
 - `0.10.4`: Architecture Answer Accuracy Review / 架构问答准确性复查
 - `0.10.5`: 0.10 Line Review / 0.10 主线复查
 - `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
+- `0.11.1`: Summary Boundary Review / 摘要边界复查
 
 ## 架构减重审视
 
@@ -111,7 +112,16 @@
 
 ## 下一步
 
-### P1 / `0.11.1`: Summary Boundary Review / 摘要边界复查
+### P1 / `0.11.2`: Tool Result Compact Policy Review / 工具结果压缩策略复查
+
+目标：复查哪些工具结果应该参与 micro-compact，哪些结果应该完整保留。
+
+作用：
+
+- 避免把任务状态、权限结果等低噪音但有语义的内容误压缩。
+- 继续围绕上下文管理主线补边界测试，不引入复杂策略系统。
+
+### 已完成 / `0.11.1`: Summary Boundary Review / 摘要边界复查
 
 目标：进一步明确 full compact 摘要应该保留哪些信息，哪些信息不应塞进摘要。
 
@@ -120,6 +130,12 @@
 - 让 summary 和 TaskState 的职责更清楚。
 - 防止摘要变成新的“巨型上下文”。
 - 继续保持轻量，优先测试和 prompt 边界，不引入长期记忆系统。
+
+结果：
+
+- full compact prompt 明确保留用户目标、决策、文件路径、命令和未完成事项。
+- full compact prompt 明确不要复制长工具输出、闲聊或重复细节。
+- 测试固定 summary prompt 的保留和排除边界。
 
 ### 已完成 / `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
 

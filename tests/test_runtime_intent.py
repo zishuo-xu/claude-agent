@@ -669,6 +669,8 @@ def test_runtime_full_compact_preserves_old_goal_in_summary_prompt_and_recent_me
 
     summary_prompt = client.complete_kwargs[0]["messages"][0]["content"]
     assert "User goal: refactor runtime without losing tests." in summary_prompt
+    assert "Preserve user goals, decisions, file paths, commands, and unresolved work" in summary_prompt
+    assert "Do not copy long tool outputs, casual chatter, or repeated details" in summary_prompt
     assert runtime.state.summary == "summary preserving old goal"
     assert runtime.state.messages == [
         {"role": "user", "content": "Recent user asks to keep README updated."},

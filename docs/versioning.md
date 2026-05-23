@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.11.0`
+当前版本：`0.11.1`
 
 已完成学习主线：
 
@@ -139,5 +139,6 @@ MAJOR.MINOR.PATCH
 - `0.10.4`: Architecture Answer Accuracy Review / 架构问答准确性复查
 - `0.10.5`: 0.10 Line Review / 0.10 主线复查
 - `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
+- `0.11.1`: Summary Boundary Review / 摘要边界复查
 
 详细说明以 `CHANGELOG.md` 为准。

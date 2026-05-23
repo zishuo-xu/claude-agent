@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.11.0`
+当前版本：`0.11.1`
 
 ## 启动
 
@@ -166,6 +166,7 @@ deny -> allow -> ask -> mode fallback
 - 仍超预算时 full compact
 - full compact 保留最近 4 条原始消息
 - full compact 摘要会注入后续 system prompt
+- full compact 摘要提示会要求保留目标、决策、路径、命令和未完成事项，同时避免复制长工具输出、闲聊和重复细节
 - 边界测试覆盖孤立 tool_result、旧目标摘要 prompt、最近消息保留
 - 真实长任务测试覆盖用户目标、文件路径、命令、未完成事项和 summary 注入
 

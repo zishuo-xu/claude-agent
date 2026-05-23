@@ -338,7 +338,8 @@ class AgentRuntime:
         recent_messages = self.state.messages[-4:]
         summary_prompt = (
             "Summarize this conversation for continuing a coding task. "
-            "Preserve user goals, decisions, file paths, commands, and unresolved work.\n\n"
+            "Preserve user goals, decisions, file paths, commands, and unresolved work. "
+            "Do not copy long tool outputs, casual chatter, or repeated details.\n\n"
             f"{old_messages}"
         )
         response = self.client.complete(

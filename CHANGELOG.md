@@ -10,6 +10,25 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.11.1 - 2026-05-23
+
+当前学习阶段：Summary Boundary Review / 摘要边界复查。
+
+变更级别：小特性。
+
+### Changed
+
+- full compact prompt 明确保留用户目标、决策、文件路径、命令和未完成事项
+- full compact prompt 明确不要复制长工具输出、闲聊或重复细节
+
+### Tests
+
+- 扩展 full compact summary prompt 边界测试
+
+### Verified
+
+- `113 passed`
+
 ## 0.11.0 - 2026-05-23
 
 当前学习阶段：Context Compact Real-World Review / 上下文压缩真实复查。
