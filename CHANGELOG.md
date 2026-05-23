@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.11.2 - 2026-05-23
+
+当前学习阶段：Tool Result Compact Policy Review / 工具结果压缩策略复查。
+
+变更级别：小特性。
+
+### Changed
+
+- micro-compact 不再清理错误工具结果，便于继续排查失败原因
+- 当前策略明确为：高噪音成功工具结果可压缩，task/todo 和错误工具结果保留
+
+### Tests
+
+- 新增错误工具结果不被 micro-compact 清理的测试
+- 新增默认保留最近 6 个可压缩工具结果的测试
+
+### Verified
+
+- `115 passed`
+
 ## 0.11.1 - 2026-05-23
 
 当前学习阶段：Summary Boundary Review / 摘要边界复查。

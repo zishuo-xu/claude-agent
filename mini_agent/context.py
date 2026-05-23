@@ -98,6 +98,8 @@ def _collect_compactable_tool_results(
         for block_index, block in enumerate(content):
             if not isinstance(block, dict) or block.get("type") != "tool_result":
                 continue
+            if block.get("is_error") is True:
+                continue
             tool_use_id = block.get("tool_use_id")
             if not isinstance(tool_use_id, str):
                 continue

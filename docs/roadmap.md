@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.11.1`
+当前版本：`0.11.2`
 
 ## 已完成主线
 
@@ -49,6 +49,7 @@
 - `0.10.5`: 0.10 Line Review / 0.10 主线复查
 - `0.11.0`: Context Compact Real-World Review / 上下文压缩真实复查
 - `0.11.1`: Summary Boundary Review / 摘要边界复查
+- `0.11.2`: Tool Result Compact Policy Review / 工具结果压缩策略复查
 
 ## 架构减重审视
 
@@ -112,7 +113,16 @@
 
 ## 下一步
 
-### P1 / `0.11.2`: Tool Result Compact Policy Review / 工具结果压缩策略复查
+### P1 / `0.11.3`: Context / TaskState Relationship Review / 上下文与任务状态关系复查
+
+目标：明确 summary 和 TaskState 各自负责什么，避免重复或冲突。
+
+作用：
+
+- TaskState 保存当前任务进度，summary 保存压缩后的历史决策和上下文。
+- 防止后续把 todo 状态也塞进 summary，或把历史摘要当成实时任务状态。
+
+### 已完成 / `0.11.2`: Tool Result Compact Policy Review / 工具结果压缩策略复查
 
 目标：复查哪些工具结果应该参与 micro-compact，哪些结果应该完整保留。
 
@@ -120,6 +130,12 @@
 
 - 避免把任务状态、权限结果等低噪音但有语义的内容误压缩。
 - 继续围绕上下文管理主线补边界测试，不引入复杂策略系统。
+
+结果：
+
+- task/todo 工具结果继续保留，不参与 micro-compact。
+- 错误工具结果不再参与 micro-compact，方便排查失败原因。
+- 测试固定默认保留最近 6 个可压缩工具结果。
 
 ### 已完成 / `0.11.1`: Summary Boundary Review / 摘要边界复查
 
