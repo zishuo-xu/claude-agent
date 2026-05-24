@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.12.2`
+当前版本：`0.12.3`
 
 ## 启动
 
@@ -56,6 +56,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 工具批次事件：`tool_batch_start` / `tool_batch_end`
 - Runtime 边界守护测试
 - Runtime 状态边界测试
+- Runtime 0.12 主线已收尾，暂不继续拆主循环
 - 轻量错误恢复事件
 - 轻量运行时事件
 - 最大轮次限制

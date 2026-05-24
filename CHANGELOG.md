@@ -10,6 +10,22 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.12.3 - 2026-05-24
+
+当前学习阶段：Runtime Line Review / Runtime 主线收尾复查。
+
+变更级别：复查版本。
+
+### Review
+
+- 复查 0.12.x runtime 减重主线：伪工具调用兼容、system prompt 边界、AgentState 状态边界
+- 确认 `runtime.py` 仍保持 queryLoop 风格协调器角色，暂不继续拆分
+- 下一条主线转向工具系统边界复查
+
+### Verified
+
+- `123 passed`
+
 ## 0.12.2 - 2026-05-24
 
 当前学习阶段：Runtime State Boundary Review / Runtime 状态边界复查。

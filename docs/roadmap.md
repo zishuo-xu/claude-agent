@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.12.2`
+当前版本：`0.12.3`
 
 ## 已完成主线
 
@@ -55,6 +55,7 @@
 - `0.12.0`: Runtime Boundary Slim Review / Runtime 边界减重复查
 - `0.12.1`: Runtime Prompt Boundary Review / Runtime 提示词边界复查
 - `0.12.2`: Runtime State Boundary Review / Runtime 状态边界复查
+- `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
 
 ## 架构减重审视
 
@@ -118,15 +119,32 @@
 
 ## 下一步
 
-### P1 / `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
+### P1 / `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
+
+目标：复查工具系统在当前阶段是否仍然清楚，重点看 `Tool`、`ToolRegistry`、`tool_policy`、`ToolTurnExecutor` 和内置工具之间的边界。
+
+作用：
+
+- Runtime 主线已经收尾，下一条更有价值的 Claude-style 主线是工具系统。
+- Claude Code 的核心之一是工具定义、工具可见性、权限和执行边界分离；本项目已经有这些形状，但需要复查是否仍然轻量。
+- 先 review，不急着新增工具或复杂权限。
+
+### 已完成 / `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
 
 目标：复查 0.12.x 对 runtime 的减重是否已经足够，决定是否暂停继续改 runtime。
 
 作用：
 
-- 0.12.x 已经收敛了伪工具兼容、system prompt 和 state 命名，下一步应避免继续为了优化而优化。
-- 用测试、代码行数和文档检查确认 runtime 主线是否稳定。
-- 如果没有明显复杂度压力，结束 0.12 runtime 主线，转向更有价值的下一条 Claude-style 主线。
+- 0.12.x 已经收敛了伪工具兼容、system prompt 和 state 命名，继续拆 runtime 的收益变低。
+- 用测试、代码行数和文档检查确认 runtime 主线稳定。
+- 避免继续为了优化而优化，结束 0.12 runtime 主线。
+
+结果：
+
+- `runtime.py` 保持 344 行，仍作为 `queryLoop` 风格协调器。
+- 工具执行、伪工具调用解析、事件展示、intent 场景规则已经有独立边界。
+- Runtime 相关测试和全量测试通过。
+- 暂停继续拆 runtime，下一条主线转向工具系统边界复查。
 
 ### 已完成 / `0.12.2`: Runtime State Boundary Review / Runtime 状态边界复查
 
