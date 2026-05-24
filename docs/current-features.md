@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.14.1`
+当前版本：`0.14.2`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`130 tests`
+当前测试：`131 tests`
 
 ## LLM Provider
 
@@ -200,6 +200,7 @@ deny -> allow -> ask -> mode fallback
 - 提示词明确不委托其他 Agent，保持单次只读子任务边界
 - 内部工具历史不进入主 Agent
 - 最终只返回总结
+- finalization 失败时返回短 `inconclusive` 摘要和少量最近证据
 - 显式调用后单次收敛
 
 当前不支持自定义 markdown Agent、插件 Agent、后台并行、独立模型或 worktree 隔离。

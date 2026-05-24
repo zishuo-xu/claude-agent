@@ -48,6 +48,12 @@ class LoopingToolClient:
         yield FinalResponseEvent(LLMResponse([ToolUseBlock(id=f"call_{len(self.stream_calls)}", name="list_files", input={"path": "."})]))
 
 
+class FailingFinalizerClient(LoopingToolClient):
+    def complete(self, **kwargs):
+        self.complete_calls.append(kwargs)
+        raise RuntimeError("finalizer unavailable")
+
+
 def make_config(tmp_path: Path) -> AgentConfig:
     return AgentConfig(
         workspace=tmp_path,
@@ -145,6 +151,24 @@ def test_subagent_finalizes_captured_output_after_turn_limit(tmp_path: Path):
     assert len(client.stream_calls) == EXPLORE_AGENT.max_turns
     assert len(client.complete_calls) == 1
     assert "Captured transcript:" in client.complete_calls[0]["messages"][0]["content"]
+
+
+def test_subagent_fallback_result_is_compact_when_finalizer_fails(tmp_path: Path):
+    registry = ToolRegistry(default_tools(tmp_path, TaskState()))
+    client = FailingFinalizerClient()
+
+    result = run_subagent(
+        definition=EXPLORE_AGENT,
+        prompt="inspect files",
+        client=client,
+        config=make_config(tmp_path),
+        tool_registry=registry,
+    )
+
+    assert result.startswith("Result: inconclusive")
+    assert "Recent evidence:" in result
+    assert "Captured output:" not in result
+    assert len(result) < 1000
 
 
 def test_subagent_uses_agent_specific_system_prompt(tmp_path: Path):

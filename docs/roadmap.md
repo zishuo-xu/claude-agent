@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.14.1`
+当前版本：`0.14.2`
 
 ## 已完成主线
 
@@ -63,6 +63,7 @@
 - `0.13.4`: Tool Line Review / 工具系统主线收尾复查
 - `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
 - `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
+- `0.14.2`: Subagent Finalization Review / 子 Agent 兜底总结复查
 
 ## 架构减重审视
 
@@ -126,7 +127,17 @@
 
 ## 下一步
 
-### P1 / `0.14.2`: Subagent Finalization Review / 子 Agent 兜底总结复查
+### P1 / `0.14.3`: Subagent Line Review / 子 Agent 主线收尾复查
+
+目标：复查 0.14.x 子 Agent 主线是否已经足够清楚，决定是否暂停继续改子 Agent。
+
+作用：
+
+- 0.14.x 已覆盖运行隔离、prompt 边界和兜底总结。
+- 继续优化子 Agent 收益会降低，容易滑向复杂多 Agent 框架。
+- 先做收尾复查，再转向真实使用验收或更高收益的问题。
+
+### 已完成 / `0.14.2`: Subagent Finalization Review / 子 Agent 兜底总结复查
 
 目标：复查子 Agent 达到轮次上限后的 finalization 是否仍然简单可靠。
 
@@ -135,6 +146,12 @@
 - 0.14.0 固定运行隔离，0.14.1 固定 prompt 边界。
 - 下一步只看“到达轮次上限后如何给主 Agent 一个可用总结”，避免隐藏失败或输出过长 transcript。
 - 不新增复杂状态机，不做后台重试，不做多模型路由。
+
+结果：
+
+- finalizer 可用时仍优先把捕获 transcript 压成结构化最终答案。
+- finalizer 失败时返回短 `Result: inconclusive`，只附少量最近证据。
+- 不把长 transcript 直接返回给主 Agent。
 
 ### 已完成 / `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
 

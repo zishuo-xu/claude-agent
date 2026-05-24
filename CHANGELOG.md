@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.14.2 - 2026-05-24
+
+当前学习阶段：Subagent Finalization Review / 子 Agent 兜底总结复查。
+
+变更级别：小特性。
+
+### Changed
+
+- 子 Agent finalizer 可用时仍优先生成结构化最终答案
+- 子 Agent finalizer 失败时返回短 `Result: inconclusive` 摘要
+- 兜底结果只附少量最近证据，不再直接返回长 `Captured output`
+
+### Tests
+
+- 新增测试覆盖 finalizer 失败时的短兜底结果
+
+### Verified
+
+- `131 passed`
+
 ## 0.14.1 - 2026-05-24
 
 当前学习阶段：Subagent Prompt Boundary Review / 子 Agent 提示词边界复查。

@@ -212,11 +212,16 @@ def _finalize_subagent_result(
 def _fallback_subagent_result(output: str) -> str:
     lines = [line.rstrip() for line in output.splitlines() if line.strip()]
     if not lines:
-        return "(subagent completed without a final text response)"
-    captured = "\n".join(lines[-24:])
-    if len(captured) > 2400:
-        captured = captured[-2400:]
-    return "Subagent reached its turn limit before a final answer. Captured output:\n" + captured
+        evidence = "No captured output."
+    else:
+        evidence = "\n".join(lines[-8:])
+        if len(evidence) > 800:
+            evidence = evidence[-800:]
+    return (
+        "Result: inconclusive\n"
+        "Reason: subagent reached its turn limit before a final answer.\n"
+        f"Recent evidence:\n{evidence}"
+    )
 
 
 def _read_only_workspace_tools(tool_registry: ToolRegistry) -> ToolRegistry:
