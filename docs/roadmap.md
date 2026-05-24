@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.14.3`
+当前版本：`0.15.0`
 
 ## 已完成主线
 
@@ -65,6 +65,7 @@
 - `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
 - `0.14.2`: Subagent Finalization Review / 子 Agent 兜底总结复查
 - `0.14.3`: Subagent Line Review / 子 Agent 主线收尾复查
+- `0.15.0`: Real Usage Acceptance Review / 真实使用验收复查
 
 ## 架构减重审视
 
@@ -128,7 +129,17 @@
 
 ## 下一步
 
-### P1 / `0.15.0`: Real Usage Acceptance Review / 真实使用验收复查
+### P1 / `0.15.1`: Acceptance Follow-up Review / 验收跟进复查
+
+目标：继续观察真实 CLI 使用中是否还有高收益小问题，优先修体验问题，不新增架构主线。
+
+作用：
+
+- 0.15.0 已完成第一轮真实使用验收并修复两个具体问题。
+- 下一步只跟进真实使用继续暴露的问题。
+- 如果没有明显问题，就转向阶段总结，而不是继续加功能。
+
+### 已完成 / `0.15.0`: Real Usage Acceptance Review / 真实使用验收复查
 
 目标：用真实 CLI 场景复查 mini-claude 当前体验，优先发现高收益问题，而不是继续扩展架构。
 
@@ -137,6 +148,13 @@
 - Runtime、工具系统、上下文、子 Agent 主线都已阶段性收尾。
 - 下一步更适合回到真实使用，看项目问答、文件编辑、测试运行、错误恢复是否顺滑。
 - 只修真实体验暴露的问题，不预设新增大模块。
+
+结果：
+
+- 验收“当前版本有什么功能”：只读 `docs/current-features.md`，输出收敛，通过。
+- 验收“创建 hello.py 并运行”：未先 `list_files`，直接写文件并用 `python3` 运行，通过。
+- 验收“现在的 Agent Loop 怎么做”：发现误走泛化回答，已将 `Agent Loop / 主循环 / 对话循环` 归为项目文档入口问题。
+- 验收“我想学习 Python”：确认不调用工具，但回答偏长，已收紧泛学习输出到 3-5 行。
 
 ### 已完成 / `0.14.3`: Subagent Line Review / 子 Agent 主线收尾复查
 

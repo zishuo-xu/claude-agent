@@ -40,6 +40,14 @@ def test_documented_project_question_without_project_word_uses_docs():
     assert decision.hidden_tools == frozenset({"list_files", "search_text"})
 
 
+def test_agent_loop_question_uses_project_docs():
+    decision = classify_intent("现在的 Agent Loop 是怎么做的？")
+
+    assert decision.intent == Intent.PROJECT_QUESTION
+    assert decision.allow_tools
+    assert decision.hidden_tools == frozenset({"list_files", "search_text"})
+
+
 def test_classifies_explicit_subagent_request_with_tools():
     decision = classify_intent("用 explore_agent 找出 runtime 的职责")
 
@@ -70,6 +78,9 @@ def test_intent_prompt_includes_tool_guidance():
 
     assert "general_learning" in prompt
     assert "Do not use tools" in prompt
+    assert "3-5 short lines" in prompt
+    assert "Do not use emoji" in prompt
+    assert "unless the user asks for resources" in prompt
 
 
 def test_coding_task_prompt_avoids_listing_when_path_and_content_are_explicit():

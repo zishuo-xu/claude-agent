@@ -171,6 +171,9 @@ def _looks_like_documented_project_question(text: str) -> bool:
             "当前功能",
             "当前版本",
             "下一步",
+            "agent loop",
+            "主循环",
+            "对话循环",
             "roadmap",
             "architecture",
             "current features",
@@ -181,7 +184,11 @@ def _looks_like_documented_project_question(text: str) -> bool:
 def intent_prompt(decision: IntentDecision) -> str:
     guidance = {
         Intent.CASUAL_CHAT: "Reply briefly. Do not use tools. Do not describe project architecture unless asked.",
-        Intent.GENERAL_LEARNING: "Give concise learning advice or ask about the user's level. Do not use tools or inspect the workspace.",
+        Intent.GENERAL_LEARNING: (
+            "Give a brief answer, then ask at most one clarifying question when useful. "
+            "Keep the final answer to 3-5 short lines by default. Do not use tools or inspect the workspace. "
+            "Do not use emoji, tables, or extra links unless the user asks for resources."
+        ),
         Intent.PROJECT_QUESTION: (
             "Use the smallest useful read path. Choose the most relevant documentation entry first: "
             "architecture questions use docs/architecture.md; feature or version questions use "

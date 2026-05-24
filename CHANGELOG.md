@@ -10,6 +10,33 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.15.0 - 2026-05-24
+
+当前学习阶段：Real Usage Acceptance Review / 真实使用验收复查。
+
+变更级别：大特性。
+
+### Review
+
+- 真实 CLI 验收项目功能问答：只读取 `docs/current-features.md`，输出收敛
+- 真实 CLI 验收明确文件任务：直接写入目标文件并使用 `python3` 运行，未先 `list_files`
+- 真实 CLI 验收 Agent Loop 问答：发现误走泛化回答
+- 真实 CLI 验收泛学习请求：确认不调用工具，但回答偏长
+
+### Changed
+
+- `Agent Loop`、`主循环`、`对话循环` 归为明确文档入口的项目问题
+- 泛学习提示词收紧为默认 3-5 行，不主动使用 emoji、表格或额外链接
+
+### Tests
+
+- 新增 Agent Loop 项目问答意图识别测试
+- 扩展泛学习 prompt 测试，固定短输出和资源链接边界
+
+### Verified
+
+- `132 passed`
+
 ## 0.14.3 - 2026-05-24
 
 当前学习阶段：Subagent Line Review / 子 Agent 主线收尾复查。
