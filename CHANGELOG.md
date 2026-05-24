@@ -10,6 +10,23 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.16.1 - 2026-05-24
+
+当前学习阶段：Prompt / Context Acceptance Review / 提示词与上下文验收复查。
+
+变更级别：复查版本。
+
+### Review
+
+- 真实 CLI 验收 Agent Loop 项目问答：仍读取 `docs/architecture.md`，回答基于项目实现
+- 真实 CLI 验收泛学习请求：未调用工具，回答保持收敛
+- 真实 CLI 验收明确文件任务：未先 `list_files`，写入、权限确认、`python3` 运行和最终总结正常
+- 未发现需要改代码的问题
+
+### Verified
+
+- `tests/test_runtime_prompt.py tests/test_runtime_intent.py tests/test_context.py tests/test_tasks.py tests/test_docs.py tests/test_current_features.py` passed
+
 ## 0.16.0 - 2026-05-24
 
 当前学习阶段：Prompt / Context Boundary Review / 提示词与上下文边界复查。

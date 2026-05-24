@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.16.0`
+当前版本：`0.16.1`
 
 ## 已完成主线
 
@@ -69,6 +69,7 @@
 - `0.15.1`: Acceptance Follow-up Review / 验收跟进复查
 - `0.15.2`: Acceptance Summary / 验收阶段总结
 - `0.16.0`: Prompt / Context Boundary Review / 提示词与上下文边界复查
+- `0.16.1`: Prompt / Context Acceptance Review / 提示词与上下文验收复查
 
 ## 架构减重审视
 
@@ -132,7 +133,17 @@
 
 ## 下一步
 
-### P1 / `0.16.1`: Prompt / Context Acceptance Review / 提示词与上下文验收复查
+### P1 / `0.16.2`: Prompt / Context Line Review / 提示词与上下文主线收尾复查
+
+目标：复查 0.16.x 是否已经足够稳定，决定是否结束 prompt/context 边界主线。
+
+作用：
+
+- 0.16.0 已固定拼接边界，0.16.1 已完成真实 CLI 验收。
+- 如果没有新问题，不继续增加 prompt 规则。
+- 下一步只做收尾判断，再决定是否进入权限体验、CLI 输出或 LLM 适配边界。
+
+### 已完成 / `0.16.1`: Prompt / Context Acceptance Review / 提示词与上下文验收复查
 
 目标：用少量真实问题验证 0.16.0 的 prompt/context 拼接边界是否稳定。
 
@@ -141,6 +152,13 @@
 - 0.16.0 已固定拼接顺序和测试边界。
 - 下一步只观察真实问答是否受影响，不急着继续加 prompt 规则。
 - 如果没有问题，结束这条主线；如果有问题，只做轻量修正。
+
+结果：
+
+- 项目问答验收：`Agent Loop` 问题仍读取 `docs/architecture.md`，回答基于项目实现。
+- 泛学习验收：`我想学习 Python` 未调用工具，回答保持收敛；略超过 3-5 行但不构成高收益修复。
+- 文件任务验收：明确文件创建任务未先 `list_files`，写入、权限确认、`python3` 运行和最终总结正常。
+- 相关测试通过，未发现需要改代码的问题。
 
 ### 已完成 / `0.16.0`: Prompt / Context Boundary Review / 提示词与上下文边界复查
 
