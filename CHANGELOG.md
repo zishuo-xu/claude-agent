@@ -10,6 +10,22 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.13.4 - 2026-05-24
+
+当前学习阶段：Tool Line Review / 工具系统主线收尾复查。
+
+变更级别：复查版本。
+
+### Review
+
+- 复查 0.13.x 工具系统主线：工具边界、内置工具形态、输入 schema、错误表现
+- 确认工具系统当前边界清楚，暂不继续新增 Git 工具、MCP、复杂权限或插件系统
+- 下一条主线转向子 Agent 边界复查
+
+### Verified
+
+- `128 passed`
+
 ## 0.13.3 - 2026-05-24
 
 当前学习阶段：Tool Error Surface Review / 工具错误表现复查。

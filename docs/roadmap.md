@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.13.3`
+当前版本：`0.13.4`
 
 ## 已完成主线
 
@@ -60,6 +60,7 @@
 - `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
 - `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
 - `0.13.3`: Tool Error Surface Review / 工具错误表现复查
+- `0.13.4`: Tool Line Review / 工具系统主线收尾复查
 
 ## 架构减重审视
 
@@ -123,15 +124,32 @@
 
 ## 下一步
 
-### P1 / `0.13.4`: Tool Line Review / 工具系统主线收尾复查
+### P1 / `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
+
+目标：复查 Explore / Plan / Verification 子 Agent 是否仍然保持只读、轻量、隔离，是否有继续扩展的必要。
+
+作用：
+
+- Runtime 和工具系统主线已经收尾，下一条 Claude-style 主线适合看 AgentTool / 子 Agent 边界。
+- 当前已有 3 个内置只读子 Agent，需要确认它们没有变成隐藏的复杂执行框架。
+- 先 review，不急着新增 Agent 类型、自定义 markdown agent 或后台并行。
+
+### 已完成 / `0.13.4`: Tool Line Review / 工具系统主线收尾复查
 
 目标：复查 0.13.x 工具系统边界是否已经足够清楚，决定是否暂停继续改工具系统。
 
 作用：
 
 - 0.13.x 已经复查工具边界、内置工具形态、输入 schema 和错误表现。
-- 下一步应避免继续为了优化而优化。
-- 如果没有明显问题，结束工具系统主线，转向下一条 Claude-style 主线。
+- 继续优化工具系统收益变低，容易进入“为了优化而优化”。
+- 结束工具系统主线，转向下一条 Claude-style 主线。
+
+结果：
+
+- 工具链路保持清楚：定义、注册、可见性、权限执行、结果包装各有边界。
+- `builtin_tools.py` 保持单文件，不因较长而拆。
+- 工具 schema 校验和错误展示已经补齐当前阶段需要的轻量边界。
+- 暂不新增 Git 工具、MCP、复杂权限或插件系统。
 
 ### 已完成 / `0.13.3`: Tool Error Surface Review / 工具错误表现复查
 
