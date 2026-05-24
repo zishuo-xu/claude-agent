@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.13.3 - 2026-05-24
+
+当前学习阶段：Tool Error Surface Review / 工具错误表现复查。
+
+变更级别：小特性。
+
+### Changed
+
+- CLI 展示错误工具结果时增加 `[tool_error] tool_name:` 前缀
+- 模型上下文中的错误 `tool_result` 内容保持不变
+- 保持轻量实现，不引入复杂错误类型系统
+
+### Tests
+
+- 更新事件展示测试，固定错误工具结果的 CLI 前缀
+
+### Verified
+
+- `128 passed`
+
 ## 0.13.2 - 2026-05-24
 
 当前学习阶段：Tool Input Schema Review / 工具输入 Schema 复查。

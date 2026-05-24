@@ -32,7 +32,7 @@ def test_print_runtime_event_keeps_error_tool_result_visible(capsys):
 
     captured = capsys.readouterr()
     assert "hidden from display" not in captured.out
-    assert captured.out == ("error" * 400) + "\n"
+    assert captured.out == "[tool_error] read_file: " + ("error" * 400) + "\n"
 
 
 def test_print_runtime_event_formats_shell_success_result(capsys):

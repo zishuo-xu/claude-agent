@@ -49,7 +49,10 @@ def _format_tool_result_for_display(payload: dict[str, Any]) -> str:
     if payload.get("name") == "list_files" and not payload.get("is_error"):
         return _format_list_files_result_for_display(content)
 
-    if payload.get("is_error") or len(content) <= MAX_DISPLAY_TOOL_RESULT_CHARS:
+    if payload.get("is_error"):
+        return f"[tool_error] {payload.get('name', 'tool')}: {content}"
+
+    if len(content) <= MAX_DISPLAY_TOOL_RESULT_CHARS:
         return content
 
     name = payload.get("name", "tool")

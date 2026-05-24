@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.13.2`
+当前版本：`0.13.3`
 
 ## 已完成主线
 
@@ -59,6 +59,7 @@
 - `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
 - `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
 - `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
+- `0.13.3`: Tool Error Surface Review / 工具错误表现复查
 
 ## 架构减重审视
 
@@ -122,15 +123,31 @@
 
 ## 下一步
 
-### P1 / `0.13.3`: Tool Error Surface Review / 工具错误表现复查
+### P1 / `0.13.4`: Tool Line Review / 工具系统主线收尾复查
+
+目标：复查 0.13.x 工具系统边界是否已经足够清楚，决定是否暂停继续改工具系统。
+
+作用：
+
+- 0.13.x 已经复查工具边界、内置工具形态、输入 schema 和错误表现。
+- 下一步应避免继续为了优化而优化。
+- 如果没有明显问题，结束工具系统主线，转向下一条 Claude-style 主线。
+
+### 已完成 / `0.13.3`: Tool Error Surface Review / 工具错误表现复查
 
 目标：复查工具输入错误、权限错误、执行异常在 CLI 和模型上下文中的表现是否清楚。
 
 作用：
 
 - 0.13.2 已让 schema 校验更贴近工具声明。
-- 下一步要看错误返回是否足够可理解，避免模型或用户看到含糊的工具失败。
-- 先 review 和测试，不引入复杂错误类型系统。
+- 检查错误返回是否足够可理解，避免模型或用户看到含糊的工具失败。
+- 不引入复杂错误类型系统，只收敛 CLI 展示。
+
+结果：
+
+- 错误工具结果在 CLI 中显示为 `[tool_error] tool_name: ...`。
+- 模型上下文中的 `tool_result` 内容不变，仍可继续用于下一轮修正。
+- 保持 `tool_error` 事件和错误 `tool_result` 双路径，不新增错误总线。
 
 ### 已完成 / `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
 
