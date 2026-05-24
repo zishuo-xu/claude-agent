@@ -20,6 +20,7 @@
 | Agent Loop | `mini_agent/runtime.py` |
 | 运行时事件 | `mini_agent/events.py` |
 | LLM API 边界 | `mini_agent/llm.py` |
+| 伪工具调用兼容 | `mini_agent/pseudo_tools.py` |
 | 工具抽象 | `mini_agent/tool_core.py` |
 | 内置工具 | `mini_agent/builtin_tools.py` |
 | 工具注册 | `mini_agent/tool_registry.py` |

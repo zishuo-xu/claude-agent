@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.11.4`
+当前版本：`0.12.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`116 tests`
+当前测试：`121 tests`
 
 ## LLM Provider
 
@@ -59,7 +59,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 轻量运行时事件
 - 最大轮次限制
 - 空响应兜底
-- 伪工具调用标记兼容
+- 伪工具调用标记兼容，解析逻辑独立在 `pseudo_tools.py`
 - `reasoning_content` 续传
 - task/todo 状态注入 system prompt
 - micro-compact 和 full compact
@@ -88,7 +88,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runtime 同时保留事件列表，方便测试和后续演进。
 `tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。长工具结果仍完整进入模型上下文，但 CLI 只显示一行摘要；错误结果保持完整展示。`run_shell` 结果在 CLI 中按 exit/stdout/stderr 展示，不再原样打印 JSON。`list_files` 结果在 CLI 中显示摘要，避免目录列表刷屏。
 
-相关文件：`mini_agent/runtime.py`、`mini_agent/tool_executor.py`、`mini_agent/events.py`、`mini_agent/intent.py`、`mini_agent/tool_policy.py`
+相关文件：`mini_agent/runtime.py`、`mini_agent/pseudo_tools.py`、`mini_agent/tool_executor.py`、`mini_agent/events.py`、`mini_agent/intent.py`、`mini_agent/tool_policy.py`
 
 ## 工具系统
 

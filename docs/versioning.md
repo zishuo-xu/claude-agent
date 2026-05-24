@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.11.4`
+当前版本：`0.12.0`
 
 已完成学习主线：
 
@@ -143,5 +143,6 @@ MAJOR.MINOR.PATCH
 - `0.11.2`: Tool Result Compact Policy Review / 工具结果压缩策略复查
 - `0.11.3`: Context / TaskState Relationship Review / 上下文与任务状态关系复查
 - `0.11.4`: Context Line Review / 上下文主线收尾复查
+- `0.12.0`: Runtime Boundary Slim Review / Runtime 边界减重复查
 
 详细说明以 `CHANGELOG.md` 为准。

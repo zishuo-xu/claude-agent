@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.12.0 - 2026-05-24
+
+当前学习阶段：Runtime Boundary Slim Review / Runtime 边界减重复查。
+
+变更级别：大特性。
+
+### Changed
+
+- 新增 `mini_agent/pseudo_tools.py`，承接伪工具调用标记解析、参数别名归一和 reasoning block 保留
+- `AgentRuntime` 不再直接维护 XML/JSON/function 风格伪工具调用解析细节，只保留主循环委托
+- 保持 runtime 对可见工具集合的约束，隐藏工具不会因为伪工具调用兼容而被执行
+
+### Tests
+
+- 新增独立伪工具调用兼容测试
+- 保留 runtime 侧兼容测试，确认对外行为不变
+
+### Verified
+
+- `121 passed`
+
 ## 0.11.4 - 2026-05-24
 
 当前学习阶段：Context Line Review / 上下文主线收尾复查。

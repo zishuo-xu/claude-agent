@@ -2,7 +2,7 @@
 
 这是一个参考 Claude Code 设计思想实现的轻量级工程化 agent。它不复刻任何非公开源码，而是在较小代码量里保留 Claude-style agent 的核心架构边界。
 
-当前版本：`0.11.4`
+当前版本：`0.12.0`
 
 项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
@@ -32,6 +32,7 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 - **明确文件任务直达**：用户给出明确路径和内容时，coding task 不暴露 `list_files`
 - **工具轮次执行器**：工具执行从 runtime 拆出，统一处理校验、权限、执行和错误结果
 - **流式输出**：主模型调用支持 text delta 接收，并会抑制伪工具调用文本
+- **伪工具调用兼容边界**：`mini_agent/pseudo_tools.py` 负责解析模型误输出的工具标记，runtime 只负责调用
 - **Task/Todo 状态**：`mini_agent/tasks.py` 保存多步骤任务进度，并通过工具更新
 - **意图识别 / 工具门控**：`mini_agent/intent.py` 先判断用户输入，再决定是否暴露工具
 - **项目问答策略**：明确文档入口的问题会隐藏并拒绝执行 `list_files`，优先读架构、功能或路线图文档
@@ -146,6 +147,7 @@ python agent.py --provider openai-compatible --model mimo-v2-omni
 - `mini_agent/llm.py`: LLM provider 适配层，把 Anthropic / OpenAI-compatible API 转成统一格式
 - `mini_agent/context.py`: 上下文 micro-compact 和消息字符预算辅助函数
 - `mini_agent/runtime.py`: 对话状态、模型调用、工具调度、上下文压缩
+- `mini_agent/pseudo_tools.py`: 伪工具调用标记解析和归一化
 - `mini_agent/subagent.py`: Explore / Plan / Verification 只读子 Agent 定义、运行和工具包装
 - `mini_agent/tasks.py`: Task/Todo 状态模块
 - `mini_agent/tool_core.py`: 工具核心类型和 `build_tool()`

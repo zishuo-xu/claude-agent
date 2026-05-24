@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import html
-import json
-import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -16,8 +13,9 @@ from .events import (
     prompt_permission_request,
 )
 from .intent import Intent, IntentDecision, classify_intent, intent_prompt
-from .llm import FinalResponseEvent, LLMClient, TextBlock, ToolUseBlock
+from .llm import FinalResponseEvent, LLMClient, TextBlock
 from .permissions import PermissionContext, PermissionRule
+from .pseudo_tools import contains_pseudo_tool_call, normalize_pseudo_tool_call
 from .tasks import TaskState
 from .tool_core import Tool
 from .tool_executor import ToolTurnExecutor
@@ -246,81 +244,11 @@ class AgentRuntime:
         return f"我没有生成可见回复。你刚才的问题是：{user_input}"
 
     def _normalize_pseudo_tool_call(self, content_blocks: list[Any]) -> list[Any]:
-        if any(getattr(block, "type", None) == "tool_use" for block in content_blocks):
-            return content_blocks
-
-        preserved_blocks = [block for block in content_blocks if getattr(block, "type", None) == "reasoning"]
-        text = self._content_text(content_blocks).strip()
-        xml_match = re.search(
-            r"<invoke\s+name=[\"'](?P<name>[^\"']+)[\"']>\s*"
-            r"<(?P<tag>query|prompt)>(?P<prompt>.*?)</(?P=tag)>\s*"
-            r"</invoke>",
-            text,
-            flags=re.DOTALL,
+        return normalize_pseudo_tool_call(
+            content_blocks,
+            available_tool_names=set(self._available_tools()),
+            tool_use_id=f"pseudo_tool_{self.state.turn_count}",
         )
-        if xml_match:
-            name = xml_match.group("name")
-            prompt = html.unescape(xml_match.group("prompt")).strip()
-            return self._pseudo_tool_blocks_or_original(name, {"prompt": prompt}, content_blocks, preserved_blocks)
-
-        function_match = re.search(
-            r"<function=(?P<name>[^>\s]+)>\s*(?P<body>.*?)</function>",
-            text,
-            flags=re.DOTALL,
-        )
-        if function_match:
-            name = function_match.group("name")
-            tool_input = self._parameters_from_pseudo_function(function_match.group("body"))
-            return self._pseudo_tool_blocks_or_original(name, tool_input, content_blocks, preserved_blocks)
-
-        json_match = re.search(r"<tool_call>\s*(?P<body>\{.*?\})\s*</tool_call>", text, flags=re.DOTALL)
-        if not json_match:
-            return content_blocks
-        try:
-            payload = json.loads(json_match.group("body"))
-        except json.JSONDecodeError:
-            return content_blocks
-
-        name = payload.get("name")
-        arguments = payload.get("arguments") or {}
-        if not isinstance(arguments, dict):
-            return content_blocks
-        return self._pseudo_tool_blocks_or_original(name, arguments, content_blocks, preserved_blocks)
-
-    def _pseudo_tool_blocks_or_original(
-        self,
-        name: Any,
-        tool_input: dict[str, Any],
-        original: list[Any],
-        preserved_blocks: list[Any],
-    ) -> list[Any]:
-        if not isinstance(name, str) or name not in self._available_tools():
-            return original
-
-        if "prompt" not in tool_input and "query" in tool_input:
-            tool_input = {**tool_input, "prompt": tool_input["query"]}
-        if "path" not in tool_input and "file_path" in tool_input:
-            tool_input = {**tool_input, "path": tool_input["file_path"]}
-            tool_input.pop("file_path", None)
-
-        prompt = tool_input.get("prompt")
-        if isinstance(prompt, str):
-            tool_input = {**tool_input, "prompt": html.unescape(prompt).strip()}
-            prompt = tool_input["prompt"]
-        if name in {"explore_agent", "plan_agent", "verify_agent"} and not prompt:
-            return original
-
-        if name in {"explore_agent", "plan_agent", "verify_agent"}:
-            tool_input = {"prompt": prompt}
-
-        return preserved_blocks + [ToolUseBlock(id=f"pseudo_tool_{self.state.turn_count}", name=name, input=tool_input)]
-
-    @staticmethod
-    def _parameters_from_pseudo_function(body: str) -> dict[str, Any]:
-        params: dict[str, Any] = {}
-        for match in re.finditer(r"<parameter=(?P<name>[^>\s]+)>(?P<value>.*?)</parameter>", body, flags=re.DOTALL):
-            params[match.group("name")] = html.unescape(match.group("value")).strip()
-        return params
 
     def _compact_if_needed(self) -> None:
         total_chars = count_message_chars(self.state.messages)
@@ -415,4 +343,4 @@ class AgentRuntime:
 
     @staticmethod
     def _contains_pseudo_tool_call(text: str) -> bool:
-        return "<tool_call" in text or "<invoke" in text
+        return contains_pseudo_tool_call(text)

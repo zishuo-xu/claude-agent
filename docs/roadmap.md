@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.11.4`
+当前版本：`0.12.0`
 
 ## 已完成主线
 
@@ -52,6 +52,7 @@
 - `0.11.2`: Tool Result Compact Policy Review / 工具结果压缩策略复查
 - `0.11.3`: Context / TaskState Relationship Review / 上下文与任务状态关系复查
 - `0.11.4`: Context Line Review / 上下文主线收尾复查
+- `0.12.0`: Runtime Boundary Slim Review / Runtime 边界减重复查
 
 ## 架构减重审视
 
@@ -59,7 +60,7 @@
 
 ### 保留
 
-- `AgentRuntime`: 仍作为主循环协调器，暂不拆更细。
+- `AgentRuntime`: 仍作为主循环协调器，只拆出已经形成独立责任的兼容逻辑。
 - `ToolRegistry` / `tool_policy`: 保留，后续工具和子 Agent 都依赖这个边界。
 - `context.py`: 保留，micro-compact 是上下文管理主线的一部分。
 - `subagent.py`: 保留，但暂停继续增加 Agent 类型。
@@ -79,7 +80,7 @@
 
 - `docs/current-features.md` 和 `docs/architecture.md` 已经偏长，后续只更新必要内容。
 - `builtin_tools.py` 和 `llm.py` 是目前最大的代码文件，但职责仍清楚，暂不拆。
-- `runtime.py` 已拆出事件展示和工具执行细节；剩余复杂度主要来自 provider 兼容、伪工具调用和上下文处理。
+- `runtime.py` 已拆出事件展示、工具执行和伪工具调用解析；剩余复杂度主要来自主循环协调和上下文处理。
 - 真实验收发现的空回复、项目解释读太多文件、只列目录不总结问题已做轻量收敛；后续继续先观察真实使用，不急着继续加复杂调度。
 
 ### 参考资料使用原则
@@ -111,19 +112,35 @@
 
 ### 当前判断
 
-这些差异是可接受的：本项目目标是 mini-claude，即轻量级工程化地实现 Claude 的核心架构，而不是复制完整产品复杂度。当前最需要警惕的不是“功能不够多”，而是 `runtime.py` 承载了越来越多 provider 兼容、伪工具调用、流式输出和上下文处理逻辑。后续新增能力应优先围绕“让主循环更清楚、更可维护”展开。
+这些差异是可接受的：本项目目标是 mini-claude，即轻量级工程化地实现 Claude 的核心架构，而不是复制完整产品复杂度。当前最需要警惕的不是“功能不够多”，而是主循环边界变重。后续新增能力应优先围绕“让主循环更清楚、更可维护”展开。
 
 ## 下一步
 
-### P1 / `0.12.0`: Runtime Boundary Slim Review / Runtime 边界减重复查
+### P1 / `0.12.1`: Runtime Prompt Boundary Review / Runtime 提示词边界复查
+
+目标：复查 `SYSTEM_PROMPT` 是否承担了过多行为约束，判断是否需要把稳定策略移到更清楚的策略边界。
+
+作用：
+
+- 0.12.0 已经把伪工具调用兼容从 runtime 拆出，下一步看 prompt 是否也开始变成“第二个 runtime”。
+- Claude-style agent 会有清晰的系统提示、工具描述和运行时策略边界；本项目需要保持这些边界轻量但清楚。
+- 先复查，不急着新增 prompt builder。
+
+### 已完成 / `0.12.0`: Runtime Boundary Slim Review / Runtime 边界减重复查
 
 目标：复查 `AgentRuntime` 当前承担的职责，判断是否需要继续保持现状或做小幅边界整理。
 
 作用：
 
-- 0.11 上下文主线已经覆盖主要边界，下一步回到 Claude-style agent 的主循环边界。
-- 避免 `runtime.py` 因 provider 兼容、伪工具调用、上下文压缩和工具调度继续变重。
-- 先复查和测试，不急着拆模块。
+- 让 runtime 回到 Claude-style `queryLoop` 协调器角色。
+- 把模型误输出伪工具调用的兼容解析移出主循环，避免主循环继续堆 provider / markup 细节。
+- 保持轻量拆分，不引入完整事件总线或 StreamingToolExecutor。
+
+结果：
+
+- 新增 `mini_agent/pseudo_tools.py`，负责伪工具调用解析、参数别名归一和 reasoning block 保留。
+- `AgentRuntime` 只委托该模块，并继续负责可见工具集合和工具执行边界。
+- 新增独立伪工具调用测试；全量测试通过。
 
 ### 已完成 / `0.11.4`: Context Line Review / 上下文主线收尾复查
 
