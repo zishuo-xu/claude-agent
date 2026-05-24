@@ -10,6 +10,28 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.15.1 - 2026-05-24
+
+当前学习阶段：Acceptance Follow-up Review / 验收跟进复查。
+
+变更级别：复查版本。
+
+### Review
+
+- 跟进验收 Agent Loop 后续问答：能沿用上下文回答，未重复读取文档
+- 跟进验收错误命令场景：能清楚展示 exit 127 和 command not found
+- 跟进验收泛学习 agent 场景：保持短回答，未调用工具
+- 本轮未发现必须改代码的高收益问题
+
+### Documentation
+
+- `PROJECT_PRINCIPLES.md` 明确本项目是 CLI，不需要重启
+- 代码改动后的交付流程改为测试和必要 CLI 烟测
+
+### Verified
+
+- `132 passed`
+
 ## 0.15.0 - 2026-05-24
 
 当前学习阶段：Real Usage Acceptance Review / 真实使用验收复查。

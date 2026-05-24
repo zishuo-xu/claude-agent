@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.15.0`
+当前版本：`0.15.1`
 
 已完成学习主线：
 
@@ -157,5 +157,6 @@ MAJOR.MINOR.PATCH
 - `0.14.2`: Subagent Finalization Review / 子 Agent 兜底总结复查
 - `0.14.3`: Subagent Line Review / 子 Agent 主线收尾复查
 - `0.15.0`: Real Usage Acceptance Review / 真实使用验收复查
+- `0.15.1`: Acceptance Follow-up Review / 验收跟进复查
 
 详细说明以 `CHANGELOG.md` 为准。
