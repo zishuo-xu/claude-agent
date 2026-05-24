@@ -10,6 +10,23 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.14.3 - 2026-05-24
+
+当前学习阶段：Subagent Line Review / 子 Agent 主线收尾复查。
+
+变更级别：复查版本。
+
+### Review
+
+- 复查 0.14.x 子 Agent 主线：运行隔离、prompt 边界、兜底总结
+- 确认当前子 Agent 已保持只读、固定角色、不递归和短总结边界
+- 暂停继续扩展自定义 Agent、后台并行、独立模型、worktree 隔离或 JSON 输出解析
+- 下一条主线转向真实使用验收复查
+
+### Verified
+
+- `131 passed`
+
 ## 0.14.2 - 2026-05-24
 
 当前学习阶段：Subagent Finalization Review / 子 Agent 兜底总结复查。

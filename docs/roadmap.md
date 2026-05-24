@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.14.2`
+当前版本：`0.14.3`
 
 ## 已完成主线
 
@@ -64,6 +64,7 @@
 - `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
 - `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
 - `0.14.2`: Subagent Finalization Review / 子 Agent 兜底总结复查
+- `0.14.3`: Subagent Line Review / 子 Agent 主线收尾复查
 
 ## 架构减重审视
 
@@ -127,7 +128,17 @@
 
 ## 下一步
 
-### P1 / `0.14.3`: Subagent Line Review / 子 Agent 主线收尾复查
+### P1 / `0.15.0`: Real Usage Acceptance Review / 真实使用验收复查
+
+目标：用真实 CLI 场景复查 mini-claude 当前体验，优先发现高收益问题，而不是继续扩展架构。
+
+作用：
+
+- Runtime、工具系统、上下文、子 Agent 主线都已阶段性收尾。
+- 下一步更适合回到真实使用，看项目问答、文件编辑、测试运行、错误恢复是否顺滑。
+- 只修真实体验暴露的问题，不预设新增大模块。
+
+### 已完成 / `0.14.3`: Subagent Line Review / 子 Agent 主线收尾复查
 
 目标：复查 0.14.x 子 Agent 主线是否已经足够清楚，决定是否暂停继续改子 Agent。
 
@@ -136,6 +147,12 @@
 - 0.14.x 已覆盖运行隔离、prompt 边界和兜底总结。
 - 继续优化子 Agent 收益会降低，容易滑向复杂多 Agent 框架。
 - 先做收尾复查，再转向真实使用验收或更高收益的问题。
+
+结果：
+
+- 子 Agent 当前保持固定三角色：Explore / Plan / Verification。
+- 子 Agent 边界已覆盖只读隔离、不递归、短 prompt contract 和短兜底总结。
+- 暂停继续扩展自定义 Agent、后台并行、独立模型、worktree 隔离或 JSON 输出解析。
 
 ### 已完成 / `0.14.2`: Subagent Finalization Review / 子 Agent 兜底总结复查
 

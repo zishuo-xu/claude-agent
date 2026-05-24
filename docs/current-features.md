@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.14.2`
+当前版本：`0.14.3`
 
 ## 启动
 
@@ -202,6 +202,7 @@ deny -> allow -> ask -> mode fallback
 - 最终只返回总结
 - finalization 失败时返回短 `inconclusive` 摘要和少量最近证据
 - 显式调用后单次收敛
+- 子 Agent 0.14 主线已收尾，暂不扩展复杂多 Agent 能力
 
 当前不支持自定义 markdown Agent、插件 Agent、后台并行、独立模型或 worktree 隔离。
 
