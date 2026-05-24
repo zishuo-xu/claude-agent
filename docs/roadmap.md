@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.13.0`
+当前版本：`0.13.1`
 
 ## 已完成主线
 
@@ -57,6 +57,7 @@
 - `0.12.2`: Runtime State Boundary Review / Runtime 状态边界复查
 - `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
 - `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
+- `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
 
 ## 架构减重审视
 
@@ -120,15 +121,31 @@
 
 ## 下一步
 
-### P1 / `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
+### P1 / `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
+
+目标：复查内置工具的 JSON schema 是否清楚、一致，并与严格输入校验保持匹配。
+
+作用：
+
+- 0.13.1 已确认 `builtin_tools.py` 当前只是较长，不急着拆。
+- 下一步更有价值的是检查工具 schema 是否足够稳定，避免模型传入无效参数或隐藏参数。
+- 先 review 和测试，不引入复杂 schema 框架。
+
+### 已完成 / `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
 
 目标：复查 `builtin_tools.py` 是否仍然适合作为单文件内置工具集合，重点看是否需要文档化约束，而不是急着拆文件。
 
 作用：
 
 - `builtin_tools.py` 是当前工具系统最大的文件，但职责仍然单一：构造内置工具。
-- 下一步要判断它是否只是“长”，还是已经“杂”。
-- 先 review 和测试，不急着拆文件，避免制造碎片化架构。
+- 判断它目前只是“长”，不是已经“杂”。
+- 先用测试固定工具集合形态，不急着拆文件，避免制造碎片化架构。
+
+结果：
+
+- 保持 `builtin_tools.py` 单文件，不新增 `file_tools.py` / `shell_tools.py` 等拆分。
+- 明确它只承载内置工具构造和少量直接相关 helper。
+- 新增工具集合形态测试，固定当前 11 个基础工具，防止内置工具悄悄变成杂物箱。
 
 ### 已完成 / `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
 

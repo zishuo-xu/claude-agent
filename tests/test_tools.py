@@ -5,6 +5,24 @@ from mini_agent.tools import default_tools, is_read_only_shell_command, validate
 from mini_agent.tasks import TaskState
 
 
+def test_builtin_tool_set_shape_stays_focused(tmp_path: Path):
+    tools = default_tools(tmp_path)
+
+    assert set(tools) == {
+        "list_files",
+        "read_file",
+        "write_file",
+        "edit_file",
+        "preview_edit",
+        "apply_edit",
+        "search_text",
+        "run_shell",
+        "set_tasks",
+        "update_task",
+        "list_tasks",
+    }
+
+
 def test_shell_read_only_classifier_allows_simple_read_commands():
     assert is_read_only_shell_command("pwd")
     assert is_read_only_shell_command("ls -la")

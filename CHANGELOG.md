@@ -10,6 +10,25 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.13.1 - 2026-05-24
+
+当前学习阶段：Builtin Tools Shape Review / 内置工具形态复查。
+
+变更级别：小特性。
+
+### Review
+
+- 复查 `builtin_tools.py`，确认它当前只是较长，职责仍集中在内置工具构造和少量直接相关 helper
+- 暂不拆分 `builtin_tools.py`，避免过早制造文件碎片
+
+### Tests
+
+- 新增内置工具集合形态测试，固定当前 11 个基础工具
+
+### Verified
+
+- `125 passed`
+
 ## 0.13.0 - 2026-05-24
 
 当前学习阶段：Tool Boundary Line Review / 工具系统边界主线复查。
