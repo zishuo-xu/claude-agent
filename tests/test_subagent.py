@@ -92,6 +92,28 @@ def test_subagent_receives_only_read_only_tools(tmp_path: Path):
     assert "run_shell" not in tool_names
 
 
+def test_subagent_does_not_receive_nested_subagent_tools(tmp_path: Path):
+    registry = ToolRegistry(default_tools(tmp_path, TaskState()))
+    subagent_tools = build_subagent_tools(client=RecordingClient(), config=make_config(tmp_path), tool_registry=registry)
+    for tool in subagent_tools.values():
+        registry.register(tool)
+    client = RecordingClient()
+
+    run_subagent(
+        definition=EXPLORE_AGENT,
+        prompt="inspect files",
+        client=client,
+        config=make_config(tmp_path),
+        tool_registry=registry,
+    )
+
+    tool_names = {tool["name"] for tool in client.stream_calls[0]["tools"]}
+    assert "read_file" in tool_names
+    assert "explore_agent" not in tool_names
+    assert "plan_agent" not in tool_names
+    assert "verify_agent" not in tool_names
+
+
 def test_subagent_returns_stream_text_when_final_content_is_empty(tmp_path: Path):
     registry = ToolRegistry(default_tools(tmp_path, TaskState()))
     client = EmptyFinalClient()

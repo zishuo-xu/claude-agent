@@ -92,6 +92,8 @@ VERIFY_AGENT = AgentDefinition(
     system_prompt=VERIFY_PROMPT,
 )
 
+SUBAGENT_TOOL_NAMES = {"explore_agent", "plan_agent", "verify_agent"}
+
 
 def build_subagent_tools(
     *,
@@ -145,7 +147,7 @@ def run_subagent(
     runtime = AgentRuntime(
         client=client,
         config=sub_config,
-        tools=tool_registry.read_only(),
+        tools=_read_only_workspace_tools(tool_registry),
         task_state=TaskState(),
         system_prompt=definition.system_prompt,
     )
@@ -212,6 +214,16 @@ def _fallback_subagent_result(output: str) -> str:
     if len(captured) > 2400:
         captured = captured[-2400:]
     return "Subagent reached its turn limit before a final answer. Captured output:\n" + captured
+
+
+def _read_only_workspace_tools(tool_registry: ToolRegistry) -> ToolRegistry:
+    return ToolRegistry(
+        {
+            name: tool
+            for name, tool in tool_registry.read_only().all().items()
+            if name not in SUBAGENT_TOOL_NAMES
+        }
+    )
 
 
 def _build_subagent_tool(

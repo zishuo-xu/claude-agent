@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.14.0 - 2026-05-24
+
+当前学习阶段：Subagent Boundary Line Review / 子 Agent 边界主线复查。
+
+变更级别：大特性。
+
+### Changed
+
+- 子 Agent 内部工具集继续只使用只读 workspace 工具
+- 子 Agent 内部过滤 `explore_agent`、`plan_agent`、`verify_agent` 工具自身，避免递归 AgentTool 调用
+- 保持当前三种固定内置子 Agent，不新增自定义 agent、后台并行、独立模型或 worktree 隔离
+
+### Tests
+
+- 新增测试确认子 Agent 即使收到包含子 Agent 工具的 registry，也不会向内部 runtime 暴露嵌套子 Agent 工具
+
+### Verified
+
+- `129 passed`
+
 ## 0.13.4 - 2026-05-24
 
 当前学习阶段：Tool Line Review / 工具系统主线收尾复查。

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.13.4`
+当前版本：`0.14.0`
 
 ## 已完成主线
 
@@ -61,6 +61,7 @@
 - `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
 - `0.13.3`: Tool Error Surface Review / 工具错误表现复查
 - `0.13.4`: Tool Line Review / 工具系统主线收尾复查
+- `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
 
 ## 架构减重审视
 
@@ -124,7 +125,17 @@
 
 ## 下一步
 
-### P1 / `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
+### P1 / `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
+
+目标：复查 Explore / Plan / Verification 的 prompt 是否仍然短、稳定、角色清楚。
+
+作用：
+
+- 0.14.0 已固定子 Agent 的运行隔离边界。
+- 下一步只看 prompt contract 是否足够清楚，避免通过提示词偷偷增加复杂流程。
+- 不新增 Agent 类型，不做 JSON 输出解析，不做自定义 markdown agent。
+
+### 已完成 / `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
 
 目标：复查 Explore / Plan / Verification 子 Agent 是否仍然保持只读、轻量、隔离，是否有继续扩展的必要。
 
@@ -132,7 +143,13 @@
 
 - Runtime 和工具系统主线已经收尾，下一条 Claude-style 主线适合看 AgentTool / 子 Agent 边界。
 - 当前已有 3 个内置只读子 Agent，需要确认它们没有变成隐藏的复杂执行框架。
-- 先 review，不急着新增 Agent 类型、自定义 markdown agent 或后台并行。
+- 先收紧边界，不急着新增 Agent 类型、自定义 markdown agent 或后台并行。
+
+结果：
+
+- 子 Agent 继续使用独立 runtime、独立 state、独立 task state 和只读工具集。
+- 子 Agent 内部过滤 `explore_agent`、`plan_agent`、`verify_agent` 工具自身，避免递归 AgentTool 调用。
+- 当前不扩展自定义 Agent、后台并行、独立模型或 worktree 隔离。
 
 ### 已完成 / `0.13.4`: Tool Line Review / 工具系统主线收尾复查
 
