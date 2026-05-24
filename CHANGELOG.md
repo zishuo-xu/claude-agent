@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.13.0 - 2026-05-24
+
+当前学习阶段：Tool Boundary Line Review / 工具系统边界主线复查。
+
+变更级别：大特性。
+
+### Review
+
+- 复查工具链路：`Tool`、`ToolRegistry`、`tool_policy`、`ToolTurnExecutor`、`builtin_tools`
+- 确认工具定义、工具集合、工具可见性、权限执行和结果包装仍然分层清楚
+- 暂不新增 Git 工具、MCP、复杂权限或插件系统
+
+### Tests
+
+- 新增只读工具集过滤测试，确认子 Agent 不会获得依赖输入才可能只读的 `run_shell`
+
+### Verified
+
+- `124 passed`
+
 ## 0.12.3 - 2026-05-24
 
 当前学习阶段：Runtime Line Review / Runtime 主线收尾复查。

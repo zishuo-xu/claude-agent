@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.12.3`
+当前版本：`0.13.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`123 tests`
+当前测试：`124 tests`
 
 ## LLM Provider
 
@@ -126,12 +126,13 @@ CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runt
 - 工具结果预算和截断
 - 权限判断
 - 错误结果统一包装
+- 只读子 Agent 工具集过滤会排除依赖输入才可能只读的 shell 工具
 
 `read_file`、`search_text`、`run_shell`、diff 类工具有较小结果预算。超长结果会保留开头和结尾，并插入截断说明，避免大输出污染上下文。
 
 `list_files` 默认隐藏 `.env`、`.venv`、`__pycache__` 等噪音项；模型可见 schema 不暴露 `include_hidden`，避免无理由列出隐藏文件。`run_shell` 会拒绝空命令，并对部分只读命令做保守识别。运行 Python 脚本时，系统提示会优先建议使用 `python3`。
 
-相关文件：`mini_agent/tool_core.py`、`mini_agent/builtin_tools.py`、`mini_agent/tool_registry.py`
+相关文件：`mini_agent/tool_core.py`、`mini_agent/builtin_tools.py`、`mini_agent/tool_registry.py`、`mini_agent/tool_policy.py`、`mini_agent/tool_executor.py`
 
 ## 权限和工作区安全
 

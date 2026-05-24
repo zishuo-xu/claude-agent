@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.12.3`
+当前版本：`0.13.0`
 
 ## 已完成主线
 
@@ -56,6 +56,7 @@
 - `0.12.1`: Runtime Prompt Boundary Review / Runtime 提示词边界复查
 - `0.12.2`: Runtime State Boundary Review / Runtime 状态边界复查
 - `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
+- `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
 
 ## 架构减重审视
 
@@ -119,7 +120,17 @@
 
 ## 下一步
 
-### P1 / `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
+### P1 / `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
+
+目标：复查 `builtin_tools.py` 是否仍然适合作为单文件内置工具集合，重点看是否需要文档化约束，而不是急着拆文件。
+
+作用：
+
+- `builtin_tools.py` 是当前工具系统最大的文件，但职责仍然单一：构造内置工具。
+- 下一步要判断它是否只是“长”，还是已经“杂”。
+- 先 review 和测试，不急着拆文件，避免制造碎片化架构。
+
+### 已完成 / `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
 
 目标：复查工具系统在当前阶段是否仍然清楚，重点看 `Tool`、`ToolRegistry`、`tool_policy`、`ToolTurnExecutor` 和内置工具之间的边界。
 
@@ -128,6 +139,13 @@
 - Runtime 主线已经收尾，下一条更有价值的 Claude-style 主线是工具系统。
 - Claude Code 的核心之一是工具定义、工具可见性、权限和执行边界分离；本项目已经有这些形状，但需要复查是否仍然轻量。
 - 先 review，不急着新增工具或复杂权限。
+
+结果：
+
+- 工具链路保持清楚：`Tool` 定义工具，`ToolRegistry` 管工具集合，`tool_policy` 管可见性，`ToolTurnExecutor` 管权限、执行和结果包装。
+- `ToolRegistry.read_only()` 只用于子 Agent 只读工具集过滤，当前不暴露依赖输入才可能只读的 `run_shell`。
+- 新增测试固定只读工具集过滤边界。
+- 暂不新增 Git 工具、MCP、复杂权限或插件系统。
 
 ### 已完成 / `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
 

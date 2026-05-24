@@ -82,3 +82,17 @@ def test_registry_hides_list_files_for_direct_file_tasks(tmp_path: Path):
     assert "list_files" not in tool_names
     assert "write_file" in tool_names
     assert "run_shell" in tool_names
+
+
+def test_registry_read_only_filter_excludes_input_dependent_shell_tools(tmp_path: Path):
+    registry = ToolRegistry.with_builtin_tools(tmp_path, TaskState())
+
+    read_only_tools = registry.read_only().all()
+
+    assert "list_files" in read_only_tools
+    assert "read_file" in read_only_tools
+    assert "search_text" in read_only_tools
+    assert "preview_edit" in read_only_tools
+    assert "list_tasks" in read_only_tools
+    assert "run_shell" not in read_only_tools
+    assert "write_file" not in read_only_tools
