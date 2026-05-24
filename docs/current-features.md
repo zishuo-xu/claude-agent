@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.15.2`
+当前版本：`0.16.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`132 tests`
+当前测试：`133 tests`
 
 ## LLM Provider
 
@@ -63,6 +63,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 空响应兜底
 - 伪工具调用标记兼容，解析逻辑独立在 `pseudo_tools.py`
 - 系统提示只保留高层运行原则，具体场景约束由 intent prompt 注入
+- 模型输入按固定边界拼接：base system -> workspace -> intent -> historical summary -> live task state -> messages
 - 当前用户请求内的工具轮次计数独立命名为 `current_turn_tool_rounds`
 - `reasoning_content` 续传
 - task/todo 状态注入 system prompt
@@ -176,6 +177,7 @@ deny -> allow -> ask -> mode fallback
 - full compact 摘要会注入后续 system prompt
 - full compact 摘要提示会要求保留目标、决策、路径、命令和未完成事项，同时避免复制长工具输出、闲聊和重复细节
 - `TaskState` 作为 live task state 独立注入；summary 作为 historical context 独立注入
+- system prompt 中 historical summary 先于 live task state 注入，二者标签清楚且不合并
 - 边界测试覆盖孤立 tool_result、旧目标摘要 prompt、最近消息保留
 - 真实长任务测试覆盖用户目标、文件路径、命令、未完成事项和 summary 注入
 

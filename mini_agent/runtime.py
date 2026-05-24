@@ -202,14 +202,19 @@ class AgentRuntime:
         return final_response
 
     def _system_prompt(self) -> str:
-        summary = (
-            f"\nConversation summary so far (historical context, not the current task list):\n{self.state.summary}\n"
-            if self.state.summary
-            else ""
-        )
-        intent = f"\n{intent_prompt(self.state.current_intent)}\n" if self.state.current_intent else ""
-        tasks = f"\n{self.task_state.prompt_summary()}\n"
-        return f"{self.system_prompt}\nWorkspace root: {self.config.workspace}\n{intent}{tasks}{summary}"
+        sections = [
+            self.system_prompt,
+            f"Workspace root: {self.config.workspace}",
+        ]
+        if self.state.current_intent:
+            sections.append(intent_prompt(self.state.current_intent))
+        if self.state.summary:
+            sections.append(
+                "Conversation summary so far (historical context, not the current task list):\n"
+                f"{self.state.summary}"
+            )
+        sections.append(self.task_state.prompt_summary())
+        return "\n\n".join(sections)
 
     def _available_tool_specs(self) -> list[dict[str, Any]]:
         return self.tool_registry.api_specs_for_intent(self.state.current_intent)

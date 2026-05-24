@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.15.2`
+当前版本：`0.16.0`
 
 已完成学习主线：
 
@@ -159,5 +159,6 @@ MAJOR.MINOR.PATCH
 - `0.15.0`: Real Usage Acceptance Review / 真实使用验收复查
 - `0.15.1`: Acceptance Follow-up Review / 验收跟进复查
 - `0.15.2`: Acceptance Summary / 验收阶段总结
+- `0.16.0`: Prompt / Context Boundary Review / 提示词与上下文边界复查
 
 详细说明以 `CHANGELOG.md` 为准。

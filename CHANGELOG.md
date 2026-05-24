@@ -10,6 +10,29 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.16.0 - 2026-05-24
+
+当前学习阶段：Prompt / Context Boundary Review / 提示词与上下文边界复查。
+
+变更级别：大特性。
+
+### Changed
+
+- `_system_prompt()` 改为显式分段拼接
+- 固定模型输入拼接顺序：base system -> workspace -> intent -> historical summary -> live task state
+- historical summary 继续标记为历史上下文，不是当前任务列表
+- TaskState 继续标记为 live task state，不合并进 summary
+
+### Tests
+
+- 更新 summary / TaskState 边界测试，固定 summary 先于 live task state 注入
+- 新增 prompt/context 动态拼接顺序测试
+
+### Verified
+
+- `tests/test_runtime_prompt.py tests/test_runtime_intent.py tests/test_context.py tests/test_tasks.py` passed
+- `133 passed`
+
 ## 0.15.2 - 2026-05-24
 
 当前学习阶段：Acceptance Summary / 验收阶段总结。

@@ -762,10 +762,26 @@ def test_runtime_prompt_keeps_task_state_and_summary_separate(tmp_path: Path):
 
     task_index = prompt.index("Current tasks (live task state):")
     summary_index = prompt.index("Conversation summary so far (historical context, not the current task list):")
-    assert task_index < summary_index
+    assert summary_index < task_index
     assert "t1 [in_progress] Run tests - pytest running" in prompt
     assert "t2 [todo] Update docs" in prompt
     assert "Historical decision: keep context compaction lightweight." in prompt
+
+
+def test_runtime_prompt_orders_dynamic_context_sections(tmp_path: Path):
+    runtime = make_runtime(tmp_path)
+    runtime.state.current_intent = classify_intent("解释当前项目架构")
+    runtime.state.summary = "Historical decision: keep prompt context lightweight."
+    runtime.task_state.set_tasks(["Verify prompt boundary"])
+
+    prompt = runtime._system_prompt()
+
+    assert prompt.index("Operating principles:") < prompt.index("Workspace root:")
+    assert prompt.index("Workspace root:") < prompt.index("Current user intent: project_question")
+    assert prompt.index("Current user intent: project_question") < prompt.index(
+        "Conversation summary so far (historical context, not the current task list):"
+    )
+    assert prompt.index("Conversation summary so far") < prompt.index("Current tasks (live task state):")
 
 
 def test_project_question_prompt_prefers_doc_entry_points(tmp_path: Path):

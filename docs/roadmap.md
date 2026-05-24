@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.15.2`
+当前版本：`0.16.0`
 
 ## 已完成主线
 
@@ -68,6 +68,7 @@
 - `0.15.0`: Real Usage Acceptance Review / 真实使用验收复查
 - `0.15.1`: Acceptance Follow-up Review / 验收跟进复查
 - `0.15.2`: Acceptance Summary / 验收阶段总结
+- `0.16.0`: Prompt / Context Boundary Review / 提示词与上下文边界复查
 
 ## 架构减重审视
 
@@ -131,15 +132,32 @@
 
 ## 下一步
 
-### P1 / `0.16.0`: Next Architecture Line Decision / 下一架构主线决策
+### P1 / `0.16.1`: Prompt / Context Acceptance Review / 提示词与上下文验收复查
 
-目标：决定下一条 Claude-style 架构主线是否值得开启，或继续真实使用验收。
+目标：用少量真实问题验证 0.16.0 的 prompt/context 拼接边界是否稳定。
 
 作用：
 
-- 0.15.x 已完成一轮真实 CLI 验收和阶段总结。
-- 下一步不直接加功能，先判断最高收益方向。
-- 候选方向包括权限体验复查、LLM 适配边界复查、CLI 输出协议复查；若没有明确收益，继续真实场景验收。
+- 0.16.0 已固定拼接顺序和测试边界。
+- 下一步只观察真实问答是否受影响，不急着继续加 prompt 规则。
+- 如果没有问题，结束这条主线；如果有问题，只做轻量修正。
+
+### 已完成 / `0.16.0`: Prompt / Context Boundary Review / 提示词与上下文边界复查
+
+目标：复查模型输入的动态拼接边界，避免 system、intent、summary、TaskState 和 messages 互相混杂。
+
+作用：
+
+- Prompt 和 Context 是 Agent 的中枢，会影响工具使用、回答质量和上下文压缩。
+- 当前不需要新 prompt engine，只需要固定清楚顺序和职责。
+- 代码能保证的规则继续由代码保证，不靠 prompt 堆料。
+
+结果：
+
+- `_system_prompt()` 改为显式分段拼接。
+- 拼接顺序固定为 base system -> workspace -> intent -> historical summary -> live task state。
+- 测试固定 summary 与 TaskState 独立且顺序稳定。
+- 不引入模板系统、prompt DSL、复杂 token budget 或新模块。
 
 ### 已完成 / `0.15.2`: Acceptance Summary / 验收阶段总结
 
@@ -157,6 +175,16 @@
 - 已修复：Agent Loop 问答误走泛化回答；泛学习默认回答偏长；CLI 项目交付流程误写为“启动/重启”。
 - 暂缓：偶尔使用表格这类轻微风格问题，不为此增加复杂约束。
 - 阶段结论：当前没有必须马上改代码的问题，下一步应先做架构主线决策，而不是继续堆小版本。
+
+### 已调整 / Next Architecture Line Decision / 下一架构主线决策
+
+目标：决定下一条 Claude-style 架构主线是否值得开启，或继续真实使用验收。
+
+作用：
+
+- 0.15.x 已完成一轮真实 CLI 验收和阶段总结。
+- 下一步不直接加功能，先判断最高收益方向。
+- 候选方向包括权限体验复查、LLM 适配边界复查、CLI 输出协议复查；若没有明确收益，继续真实场景验收。
 
 ### 已完成 / `0.15.1`: Acceptance Follow-up Review / 验收跟进复查
 
