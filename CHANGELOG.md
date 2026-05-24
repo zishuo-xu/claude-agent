@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.12.1 - 2026-05-24
+
+当前学习阶段：Runtime Prompt Boundary Review / Runtime 提示词边界复查。
+
+变更级别：小特性。
+
+### Changed
+
+- 收敛 `SYSTEM_PROMPT`，移除已由 intent 边界覆盖的寒暄和泛学习细则
+- system prompt 增加高层原则：遵循当前 intent guidance
+- 保持具体场景规则在 `intent_prompt()` 中注入，不新增 prompt builder
+
+### Tests
+
+- 更新 runtime prompt 测试，固定系统提示只保留高层运行原则
+- 新增测试确认系统提示不重复 intent-specific 规则
+
+### Verified
+
+- `122 passed`
+
 ## 0.12.0 - 2026-05-24
 
 当前学习阶段：Runtime Boundary Slim Review / Runtime 边界减重复查。

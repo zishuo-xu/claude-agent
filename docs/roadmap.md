@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.12.0`
+当前版本：`0.12.1`
 
 ## 已完成主线
 
@@ -53,6 +53,7 @@
 - `0.11.3`: Context / TaskState Relationship Review / 上下文与任务状态关系复查
 - `0.11.4`: Context Line Review / 上下文主线收尾复查
 - `0.12.0`: Runtime Boundary Slim Review / Runtime 边界减重复查
+- `0.12.1`: Runtime Prompt Boundary Review / Runtime 提示词边界复查
 
 ## 架构减重审视
 
@@ -116,15 +117,31 @@
 
 ## 下一步
 
-### P1 / `0.12.1`: Runtime Prompt Boundary Review / Runtime 提示词边界复查
+### P1 / `0.12.2`: Runtime State Boundary Review / Runtime 状态边界复查
+
+目标：复查 `AgentState` 当前保存的状态是否仍然必要、清楚，避免后续把临时流程变量都塞进 state。
+
+作用：
+
+- 0.12.0 和 0.12.1 分别收敛了兼容逻辑和提示词边界，下一步自然轮到 runtime 内部状态。
+- Claude-style agent loop 需要清楚区分对话历史、运行事件、当前 intent、上下文摘要和任务状态。
+- 先复查和补边界测试，不急着拆 state 模块。
+
+### 已完成 / `0.12.1`: Runtime Prompt Boundary Review / Runtime 提示词边界复查
 
 目标：复查 `SYSTEM_PROMPT` 是否承担了过多行为约束，判断是否需要把稳定策略移到更清楚的策略边界。
 
 作用：
 
-- 0.12.0 已经把伪工具调用兼容从 runtime 拆出，下一步看 prompt 是否也开始变成“第二个 runtime”。
-- Claude-style agent 会有清晰的系统提示、工具描述和运行时策略边界；本项目需要保持这些边界轻量但清楚。
-- 先复查，不急着新增 prompt builder。
+- 防止把复杂度从 runtime 代码转移到一段越来越长的系统提示里。
+- 让 system prompt 只保留高层运行原则，具体寒暄、泛学习、项目问答等场景约束继续由 `intent_prompt()` 注入。
+- 不新增 prompt builder，避免为了整理 prompt 引入新抽象。
+
+结果：
+
+- 删除 system prompt 中已经由 intent 边界覆盖的寒暄和泛学习细则。
+- 增加“遵循当前 intent guidance”的高层原则。
+- 新增测试固定：system prompt 保持高层原则，不重复 intent-specific 规则。
 
 ### 已完成 / `0.12.0`: Runtime Boundary Slim Review / Runtime 边界减重复查
 

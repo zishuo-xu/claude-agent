@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.12.0`
+当前版本：`0.12.1`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`121 tests`
+当前测试：`122 tests`
 
 ## LLM Provider
 
@@ -60,6 +60,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 最大轮次限制
 - 空响应兜底
 - 伪工具调用标记兼容，解析逻辑独立在 `pseudo_tools.py`
+- 系统提示只保留高层运行原则，具体场景约束由 intent prompt 注入
 - `reasoning_content` 续传
 - task/todo 状态注入 system prompt
 - micro-compact 和 full compact
