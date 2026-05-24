@@ -10,6 +10,26 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.12.2 - 2026-05-24
+
+当前学习阶段：Runtime State Boundary Review / Runtime 状态边界复查。
+
+变更级别：小特性。
+
+### Changed
+
+- 将 `AgentState.project_question_tool_rounds` 重命名为 `current_turn_tool_rounds`
+- 明确该字段是当前用户请求内的工具轮次计数，不是跨对话长期状态
+- 保持 `AgentState` 在 runtime 内，不新增 state 模块
+
+### Tests
+
+- 新增 runtime state 边界测试，确认当前请求内工具轮次计数会在新用户请求开始时重置
+
+### Verified
+
+- `123 passed`
+
 ## 0.12.1 - 2026-05-24
 
 当前学习阶段：Runtime Prompt Boundary Review / Runtime 提示词边界复查。

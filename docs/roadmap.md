@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.12.1`
+当前版本：`0.12.2`
 
 ## 已完成主线
 
@@ -54,6 +54,7 @@
 - `0.11.4`: Context Line Review / 上下文主线收尾复查
 - `0.12.0`: Runtime Boundary Slim Review / Runtime 边界减重复查
 - `0.12.1`: Runtime Prompt Boundary Review / Runtime 提示词边界复查
+- `0.12.2`: Runtime State Boundary Review / Runtime 状态边界复查
 
 ## 架构减重审视
 
@@ -117,15 +118,31 @@
 
 ## 下一步
 
-### P1 / `0.12.2`: Runtime State Boundary Review / Runtime 状态边界复查
+### P1 / `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
+
+目标：复查 0.12.x 对 runtime 的减重是否已经足够，决定是否暂停继续改 runtime。
+
+作用：
+
+- 0.12.x 已经收敛了伪工具兼容、system prompt 和 state 命名，下一步应避免继续为了优化而优化。
+- 用测试、代码行数和文档检查确认 runtime 主线是否稳定。
+- 如果没有明显复杂度压力，结束 0.12 runtime 主线，转向更有价值的下一条 Claude-style 主线。
+
+### 已完成 / `0.12.2`: Runtime State Boundary Review / Runtime 状态边界复查
 
 目标：复查 `AgentState` 当前保存的状态是否仍然必要、清楚，避免后续把临时流程变量都塞进 state。
 
 作用：
 
-- 0.12.0 和 0.12.1 分别收敛了兼容逻辑和提示词边界，下一步自然轮到 runtime 内部状态。
-- Claude-style agent loop 需要清楚区分对话历史、运行事件、当前 intent、上下文摘要和任务状态。
-- 先复查和补边界测试，不急着拆 state 模块。
+- 防止 `AgentState` 变成临时变量堆放处。
+- Claude-style agent loop 需要清楚区分对话历史、运行事件、当前 intent、上下文摘要、当前请求内计数和任务状态。
+- 不新增 state 模块，只做命名收敛和边界测试。
+
+结果：
+
+- `project_question_tool_rounds` 改名为 `current_turn_tool_rounds`，表达它是当前用户请求内的工具轮次计数。
+- 每次 `run_user_turn()` 开始都会重置该计数。
+- 新增 runtime state 测试，固定当前请求内状态不会跨用户请求泄漏。
 
 ### 已完成 / `0.12.1`: Runtime Prompt Boundary Review / Runtime 提示词边界复查
 

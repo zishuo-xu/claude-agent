@@ -45,7 +45,7 @@ class AgentState:
     messages: list[dict[str, Any]] = field(default_factory=list)
     events: list[RuntimeEvent] = field(default_factory=list)
     turn_count: int = 0
-    project_question_tool_rounds: int = 0
+    current_turn_tool_rounds: int = 0
     summary: str | None = None
     current_intent: IntentDecision | None = None
 
@@ -76,7 +76,7 @@ class AgentRuntime:
 
     def run_user_turn(self, user_input: str, intent_override: IntentDecision | None = None) -> str:
         self.state.current_intent = intent_override or classify_intent(user_input)
-        self.state.project_question_tool_rounds = 0
+        self.state.current_turn_tool_rounds = 0
         self.state.messages.append({"role": "user", "content": user_input})
         for _ in range(self.config.max_turns):
             self._begin_turn()
@@ -223,9 +223,9 @@ class AgentRuntime:
             return
         if decision.requested_tool and not any(tool_use.name == decision.requested_tool for tool_use in tool_uses):
             return
-        self.state.project_question_tool_rounds += 1
+        self.state.current_turn_tool_rounds += 1
         used_names = {tool_use.name for tool_use in tool_uses}
-        if not decision.requested_tool and used_names <= {"list_files"} and self.state.project_question_tool_rounds < 2:
+        if not decision.requested_tool and used_names <= {"list_files"} and self.state.current_turn_tool_rounds < 2:
             return
         self.state.current_intent = IntentDecision(
             intent=decision.intent,
