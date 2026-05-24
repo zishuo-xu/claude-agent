@@ -23,6 +23,20 @@ def test_builtin_tool_set_shape_stays_focused(tmp_path: Path):
     }
 
 
+def test_builtin_tool_schemas_stay_consistent(tmp_path: Path):
+    tools = default_tools(tmp_path)
+
+    for tool in tools.values():
+        schema = tool.input_schema
+        properties = schema.get("properties")
+        required = schema.get("required", [])
+        assert schema.get("type") == "object"
+        assert isinstance(properties, dict)
+        assert set(required) <= set(properties)
+
+    assert "include_hidden" not in tools["list_files"].input_schema["properties"]
+
+
 def test_shell_read_only_classifier_allows_simple_read_commands():
     assert is_read_only_shell_command("pwd")
     assert is_read_only_shell_command("ls -la")

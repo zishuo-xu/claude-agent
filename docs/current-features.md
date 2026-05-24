@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.13.1`
+当前版本：`0.13.2`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`125 tests`
+当前测试：`128 tests`
 
 ## LLM Provider
 
@@ -122,7 +122,7 @@ CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runt
 已支持工具元信息：
 
 - JSON schema
-- 严格输入校验：缺少必填字段或传入 schema 以外字段会被拒绝
+- 严格输入校验：缺少必填字段、传入 schema 以外字段、基础类型不匹配或 enum 不匹配会被拒绝
 - 只读/写入/危险标记
 - 工具结果预算和截断
 - 权限判断

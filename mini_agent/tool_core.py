@@ -41,6 +41,18 @@ class Tool:
             if missing_fields:
                 return f"missing required input field(s): {', '.join(missing_fields)}"
 
+        if isinstance(properties, dict):
+            for field, value in tool_input.items():
+                field_schema = properties.get(field)
+                if not isinstance(field_schema, dict):
+                    continue
+                enum_values = field_schema.get("enum")
+                if isinstance(enum_values, list) and value not in enum_values:
+                    return f"invalid value for {field}: expected one of {', '.join(map(str, enum_values))}"
+                expected_type = field_schema.get("type")
+                if isinstance(expected_type, str) and not _matches_json_type(value, expected_type, field_schema):
+                    return f"invalid type for {field}: expected {expected_type}"
+
         return self.validate_input(tool_input)
 
     def run(self, tool_input: dict[str, Any]) -> str:
@@ -50,6 +62,26 @@ class Tool:
 
 def build_tool(**kwargs: Any) -> Tool:
     return Tool(**kwargs)
+
+
+def _matches_json_type(value: Any, expected_type: str, schema: dict[str, Any]) -> bool:
+    if expected_type == "string":
+        return isinstance(value, str)
+    if expected_type == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected_type == "boolean":
+        return isinstance(value, bool)
+    if expected_type == "array":
+        if not isinstance(value, list):
+            return False
+        item_schema = schema.get("items")
+        item_type = item_schema.get("type") if isinstance(item_schema, dict) else None
+        if not isinstance(item_type, str):
+            return True
+        return all(_matches_json_type(item, item_type, item_schema) for item in value)
+    if expected_type == "object":
+        return isinstance(value, dict)
+    return True
 
 
 def truncate_tool_result(result: str, max_chars: int) -> str:

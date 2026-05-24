@@ -10,6 +10,28 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.13.2 - 2026-05-24
+
+当前学习阶段：Tool Input Schema Review / 工具输入 Schema 复查。
+
+变更级别：小特性。
+
+### Changed
+
+- `Tool.validation_error()` 增加基础 JSON schema 类型校验：string、integer、boolean、array、object
+- `Tool.validation_error()` 增加 enum 校验
+- 保持轻量实现，不引入完整 JSON Schema 框架
+
+### Tests
+
+- 新增工具输入类型不匹配测试
+- 新增工具输入 enum 不匹配测试
+- 新增内置工具 schema 形态测试
+
+### Verified
+
+- `128 passed`
+
 ## 0.13.1 - 2026-05-24
 
 当前学习阶段：Builtin Tools Shape Review / 内置工具形态复查。

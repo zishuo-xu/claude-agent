@@ -109,6 +109,64 @@ def test_tool_turn_executor_rejects_missing_required_input_fields():
     assert result[0]["content"] == "Invalid tool input: missing required input field(s): path"
 
 
+def test_tool_turn_executor_rejects_schema_type_mismatches():
+    tool = build_tool(
+        name="run_shell",
+        description="Run",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "command": {"type": "string"},
+                "timeout_seconds": {"type": "integer"},
+            },
+            "required": ["command"],
+        },
+        call=lambda _input: "ran",
+        read_only=lambda _input: True,
+    )
+    executor = ToolTurnExecutor(
+        tools={"run_shell": tool},
+        permission_context=PermissionContext(mode=PermissionMode.BYPASS),
+        emit=lambda _event_type, **_payload: None,
+        permission_handler=lambda _name, _input, _reason: True,
+    )
+
+    result = executor.execute([ToolUseBlock(id="call_1", name="run_shell", input={"command": "pwd", "timeout_seconds": "5"})])
+
+    assert result[0]["is_error"] is True
+    assert result[0]["content"] == "Invalid tool input: invalid type for timeout_seconds: expected integer"
+
+
+def test_tool_turn_executor_rejects_schema_enum_mismatches():
+    tool = build_tool(
+        name="update_task",
+        description="Update",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "status": {"type": "string", "enum": ["todo", "in_progress", "done", "blocked"]},
+            },
+            "required": ["id", "status"],
+        },
+        call=lambda _input: "updated",
+        read_only=lambda _input: True,
+    )
+    executor = ToolTurnExecutor(
+        tools={"update_task": tool},
+        permission_context=PermissionContext(mode=PermissionMode.BYPASS),
+        emit=lambda _event_type, **_payload: None,
+        permission_handler=lambda _name, _input, _reason: True,
+    )
+
+    result = executor.execute([ToolUseBlock(id="call_1", name="update_task", input={"id": "t1", "status": "later"})])
+
+    assert result[0]["is_error"] is True
+    assert result[0]["content"] == (
+        "Invalid tool input: invalid value for status: expected one of todo, in_progress, done, blocked"
+    )
+
+
 def test_tool_turn_executor_partitions_contiguous_parallel_safe_tools():
     executor = ToolTurnExecutor(
         tools={

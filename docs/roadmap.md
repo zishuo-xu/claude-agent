@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.13.1`
+当前版本：`0.13.2`
 
 ## 已完成主线
 
@@ -58,6 +58,7 @@
 - `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
 - `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
 - `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
+- `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
 
 ## 架构减重审视
 
@@ -121,15 +122,31 @@
 
 ## 下一步
 
-### P1 / `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
+### P1 / `0.13.3`: Tool Error Surface Review / 工具错误表现复查
+
+目标：复查工具输入错误、权限错误、执行异常在 CLI 和模型上下文中的表现是否清楚。
+
+作用：
+
+- 0.13.2 已让 schema 校验更贴近工具声明。
+- 下一步要看错误返回是否足够可理解，避免模型或用户看到含糊的工具失败。
+- 先 review 和测试，不引入复杂错误类型系统。
+
+### 已完成 / `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
 
 目标：复查内置工具的 JSON schema 是否清楚、一致，并与严格输入校验保持匹配。
 
 作用：
 
 - 0.13.1 已确认 `builtin_tools.py` 当前只是较长，不急着拆。
-- 下一步更有价值的是检查工具 schema 是否足够稳定，避免模型传入无效参数或隐藏参数。
-- 先 review 和测试，不引入复杂 schema 框架。
+- 检查工具 schema 是否足够稳定，避免模型传入无效参数或隐藏参数。
+- 不引入复杂 schema 框架，只做基础类型和 enum 校验。
+
+结果：
+
+- `Tool.validation_error()` 增加基础 JSON 类型校验：string、integer、boolean、array、object。
+- `Tool.validation_error()` 增加 enum 校验。
+- 新增测试覆盖类型不匹配、enum 不匹配和内置工具 schema 形态。
 
 ### 已完成 / `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
 

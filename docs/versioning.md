@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.13.1`
+当前版本：`0.13.2`
 
 已完成学习主线：
 
@@ -149,5 +149,6 @@ MAJOR.MINOR.PATCH
 - `0.12.3`: Runtime Line Review / Runtime 主线收尾复查
 - `0.13.0`: Tool Boundary Line Review / 工具系统边界主线复查
 - `0.13.1`: Builtin Tools Shape Review / 内置工具形态复查
+- `0.13.2`: Tool Input Schema Review / 工具输入 Schema 复查
 
 详细说明以 `CHANGELOG.md` 为准。
