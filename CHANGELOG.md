@@ -10,6 +10,24 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.15.2 - 2026-05-24
+
+当前学习阶段：Acceptance Summary / 验收阶段总结。
+
+变更级别：复查版本。
+
+### Review
+
+- 总结 0.15.x 真实 CLI 验收结果
+- 确认项目功能问答、Agent Loop 项目问答、明确文件任务、错误命令反馈、泛学习短回答已通过
+- 确认已修复 Agent Loop 问答误走泛化回答、泛学习偏长、CLI 项目交付流程误写为启动/重启
+- 暂缓偶尔使用表格这类轻微风格问题，不为此增加复杂约束
+- 下一步转向下一架构主线决策，而不是继续堆小版本
+
+### Verified
+
+- `tests/test_docs.py tests/test_current_features.py` passed
+
 ## 0.15.1 - 2026-05-24
 
 当前学习阶段：Acceptance Follow-up Review / 验收跟进复查。
