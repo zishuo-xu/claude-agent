@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.14.0`
+当前版本：`0.14.1`
 
 ## 已完成主线
 
@@ -62,6 +62,7 @@
 - `0.13.3`: Tool Error Surface Review / 工具错误表现复查
 - `0.13.4`: Tool Line Review / 工具系统主线收尾复查
 - `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
+- `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
 
 ## 架构减重审视
 
@@ -125,7 +126,17 @@
 
 ## 下一步
 
-### P1 / `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
+### P1 / `0.14.2`: Subagent Finalization Review / 子 Agent 兜底总结复查
+
+目标：复查子 Agent 达到轮次上限后的 finalization 是否仍然简单可靠。
+
+作用：
+
+- 0.14.0 固定运行隔离，0.14.1 固定 prompt 边界。
+- 下一步只看“到达轮次上限后如何给主 Agent 一个可用总结”，避免隐藏失败或输出过长 transcript。
+- 不新增复杂状态机，不做后台重试，不做多模型路由。
+
+### 已完成 / `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
 
 目标：复查 Explore / Plan / Verification 的 prompt 是否仍然短、稳定、角色清楚。
 
@@ -134,6 +145,12 @@
 - 0.14.0 已固定子 Agent 的运行隔离边界。
 - 下一步只看 prompt contract 是否足够清楚，避免通过提示词偷偷增加复杂流程。
 - 不新增 Agent 类型，不做 JSON 输出解析，不做自定义 markdown agent。
+
+结果：
+
+- 三个子 Agent prompt 明确“不委托其他 Agent”。
+- 继续使用短文本结构化输出，不改成 JSON 解析。
+- 不抽象 prompt builder，避免为了消除少量重复而增加概念。
 
 ### 已完成 / `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
 

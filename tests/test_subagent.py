@@ -176,6 +176,12 @@ def test_subagent_default_turn_limit_matches_tool_call_budget():
     assert VERIFY_AGENT.max_turns == 4
 
 
+def test_subagent_prompts_keep_non_delegation_boundary():
+    for definition in (EXPLORE_AGENT, PLAN_AGENT, VERIFY_AGENT):
+        assert "Do not delegate to other agents." in definition.system_prompt
+        assert "JSON" not in definition.system_prompt
+
+
 def test_plan_subagent_prompt_has_structured_output_contract(tmp_path: Path):
     registry = ToolRegistry(default_tools(tmp_path, TaskState()))
     client = RecordingClient()

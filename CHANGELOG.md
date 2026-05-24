@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.14.1 - 2026-05-24
+
+当前学习阶段：Subagent Prompt Boundary Review / 子 Agent 提示词边界复查。
+
+变更级别：小特性。
+
+### Changed
+
+- Explore / Plan / Verification 三个子 Agent prompt 明确不委托其他 Agent
+- 保持短文本结构化输出，不改成 JSON 解析
+- 不引入 prompt builder，避免为了消除少量重复而增加概念
+
+### Tests
+
+- 新增测试固定子 Agent prompt 的不委托边界
+- 新增测试确认当前子 Agent prompt 不使用 JSON contract
+
+### Verified
+
+- `130 passed`
+
 ## 0.14.0 - 2026-05-24
 
 当前学习阶段：Subagent Boundary Line Review / 子 Agent 边界主线复查。

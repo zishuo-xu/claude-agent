@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.14.0`
+当前版本：`0.14.1`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`129 tests`
+当前测试：`130 tests`
 
 ## LLM Provider
 
@@ -197,6 +197,7 @@ deny -> allow -> ask -> mode fallback
 - 独立 `AgentState` / `TaskState`
 - 只暴露只读工具
 - 不向子 Agent 暴露子 Agent 工具自身，避免递归调用
+- 提示词明确不委托其他 Agent，保持单次只读子任务边界
 - 内部工具历史不进入主 Agent
 - 最终只返回总结
 - 显式调用后单次收敛

@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.14.0`
+当前版本：`0.14.1`
 
 已完成学习主线：
 
@@ -153,5 +153,6 @@ MAJOR.MINOR.PATCH
 - `0.13.3`: Tool Error Surface Review / 工具错误表现复查
 - `0.13.4`: Tool Line Review / 工具系统主线收尾复查
 - `0.14.0`: Subagent Boundary Line Review / 子 Agent 边界主线复查
+- `0.14.1`: Subagent Prompt Boundary Review / 子 Agent 提示词边界复查
 
 详细说明以 `CHANGELOG.md` 为准。
