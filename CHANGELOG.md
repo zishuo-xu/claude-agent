@@ -10,6 +10,22 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.11.4 - 2026-05-24
+
+当前学习阶段：Context Line Review / 上下文主线收尾复查。
+
+变更级别：复查版本。
+
+### Review
+
+- 复查 0.11.x 上下文管理主线：tool result budget、micro-compact、full compact、summary 注入、错误结果保留、TaskState 边界
+- 确认当前实现仍保持轻量，不引入向量库、长期记忆、复杂 token 预算器或新模块
+- 下一条主线转向 Runtime 边界减重复查
+
+### Verified
+
+- `116 passed`
+
 ## 0.11.3 - 2026-05-23
 
 当前学习阶段：Context / TaskState Relationship Review / 上下文与任务状态关系复查。
