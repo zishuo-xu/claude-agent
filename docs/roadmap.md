@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.16.1`
+当前版本：`0.16.2`
 
 ## 已完成主线
 
@@ -70,6 +70,7 @@
 - `0.15.2`: Acceptance Summary / 验收阶段总结
 - `0.16.0`: Prompt / Context Boundary Review / 提示词与上下文边界复查
 - `0.16.1`: Prompt / Context Acceptance Review / 提示词与上下文验收复查
+- `0.16.2`: Prompt / Context Line Review / 提示词与上下文主线收尾复查
 
 ## 架构减重审视
 
@@ -133,7 +134,17 @@
 
 ## 下一步
 
-### P1 / `0.16.2`: Prompt / Context Line Review / 提示词与上下文主线收尾复查
+### P1 / `0.17.0`: Permission UX Review / 权限体验复查
+
+目标：复查当前 `plan/default/acceptEdits/dontAsk/bypassPermissions` 的用户体验是否清楚。
+
+作用：
+
+- 权限是 Claude Code 的核心边界之一，直接影响用户是否放心让 agent 操作本地环境。
+- 当前实现已有轻量 Permission Pipeline，但用户看到的提示还比较粗。
+- 先复查体验和边界，不直接做复杂规则系统。
+
+### 已完成 / `0.16.2`: Prompt / Context Line Review / 提示词与上下文主线收尾复查
 
 目标：复查 0.16.x 是否已经足够稳定，决定是否结束 prompt/context 边界主线。
 
@@ -142,6 +153,13 @@
 - 0.16.0 已固定拼接边界，0.16.1 已完成真实 CLI 验收。
 - 如果没有新问题，不继续增加 prompt 规则。
 - 下一步只做收尾判断，再决定是否进入权限体验、CLI 输出或 LLM 适配边界。
+
+结果：
+
+- Prompt / Context 当前边界清楚：base system、workspace、intent、historical summary、live task state、messages/tool results。
+- 0.16.1 真实 CLI 验收未发现需要改代码的问题。
+- 暂不增加 prompt builder、模板系统、prompt DSL、更多 prompt 规则或复杂 token budget。
+- 下一条主线转向权限体验复查。
 
 ### 已完成 / `0.16.1`: Prompt / Context Acceptance Review / 提示词与上下文验收复查
 

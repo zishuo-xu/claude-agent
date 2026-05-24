@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.16.1`
+当前版本：`0.16.2`
 
 ## 启动
 
@@ -64,6 +64,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 伪工具调用标记兼容，解析逻辑独立在 `pseudo_tools.py`
 - 系统提示只保留高层运行原则，具体场景约束由 intent prompt 注入
 - 模型输入按固定边界拼接：base system -> workspace -> intent -> historical summary -> live task state -> messages
+- Prompt / Context 0.16 主线已收尾，暂不增加 prompt 规则或模板系统
 - 当前用户请求内的工具轮次计数独立命名为 `current_turn_tool_rounds`
 - `reasoning_content` 续传
 - task/todo 状态注入 system prompt

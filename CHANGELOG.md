@@ -10,6 +10,23 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.16.2 - 2026-05-24
+
+当前学习阶段：Prompt / Context Line Review / 提示词与上下文主线收尾复查。
+
+变更级别：复查版本。
+
+### Review
+
+- 复查 0.16.x prompt/context 主线：拼接顺序、summary / TaskState 边界、真实 CLI 验收结果
+- 确认当前边界足够清楚，暂不继续增加 prompt 规则
+- 暂不引入 prompt builder、模板系统、prompt DSL 或复杂 token budget
+- 下一条主线转向权限体验复查
+
+### Verified
+
+- `tests/test_docs.py tests/test_current_features.py` passed
+
 ## 0.16.1 - 2026-05-24
 
 当前学习阶段：Prompt / Context Acceptance Review / 提示词与上下文验收复查。
