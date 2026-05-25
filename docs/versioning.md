@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.21.0`
+当前版本：`0.21.1`
 
 已完成学习主线：
 
@@ -170,5 +170,6 @@ MAJOR.MINOR.PATCH
 - `0.20.0`: Tool Choice Strategy / 工具选择策略
 - `0.20.1`: Tool Choice Acceptance / 工具选择验收
 - `0.21.0`: LLM Adapter Protocol Review / 模型适配协议复查
+- `0.21.1`: LLM Adapter Acceptance / 模型适配验收
 
 详细说明以 `CHANGELOG.md` 为准。

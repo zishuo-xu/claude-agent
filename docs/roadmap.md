@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.21.0`
+当前版本：`0.21.1`
 
 ## 当前进展
 
@@ -64,7 +64,17 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.21.1`: LLM Adapter Acceptance / 模型适配验收
+### P1 / `0.22.0`: Context Budget Policy / 上下文预算策略
+
+目标：复查当前 context budget、tool result budget、micro-compact 和 full compact 的策略边界。
+
+作用：
+
+- LLM Adapter 主线已稳定，下一条更贴近 agent 核心的是上下文预算。
+- Claude Code 对上下文预算、工具结果裁剪和摘要注入非常重视；mini-claude 已有轻量实现，但策略还可以更清楚。
+- 下一步应优先复查策略和测试，不引入向量库、长期记忆或复杂 token 预算器。
+
+### 已完成 / `0.21.1`: LLM Adapter Acceptance / 模型适配验收
 
 目标：用现有测试和少量模拟场景验收 LLM Adapter 协议边界是否足够稳定。
 
@@ -72,6 +82,12 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 - 0.21.0 已补协议护栏测试，下一步只确认真实/模拟路径是否覆盖当前风险。
 - 如果没有新问题，结束 LLM Adapter 主线，不做 provider 框架或多模型路由。
+
+结果：
+
+- `tests/test_llm_adapter.py` 覆盖消息转换、工具调用、工具结果、reasoning 续传、streaming 空 `choices`、无效工具参数降级。
+- 手动模拟 streaming 同时包含 text、reasoning、tool_call 和空 `choices`，最终内部 blocks 重建正常。
+- LLM Adapter 主线当前够用，暂不新增 provider 框架、多模型路由或复杂 retry/backoff。
 
 ### 已完成 / `0.21.0`: LLM Adapter Protocol Review / 模型适配协议复查
 
