@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.24.3`
+当前版本：`0.25.0`
 
 ## 当前进展
 
@@ -66,7 +66,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.25.0`: Focused Streaming Review / 流式边界复查
+### P1 / `0.26.0`: Focused Streaming Review / 流式边界复查
 
 目标：复查当前“文本流式 + 工具整轮执行”的边界是否需要继续保持。
 
@@ -74,6 +74,22 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 - 当前不是完整 Claude StreamingToolExecutor，而是轻量半流式。
 - 下一步只做边界评估和测试，不急着实现流中工具执行。
+
+### 已完成 / `0.25.0`: Context Stress Acceptance / 上下文压力验收
+
+目标：验收长对话、工具结果压缩、WorkingState、TaskState 和 summary 注入是否能稳定共存。
+
+作用：
+
+- 上下文管理是 Claude-style agent 长任务能力的核心。
+- 当前已有 micro-compact、full compact、summary、TaskState 和 WorkingState，本次只验证组合稳定性，不新增 memory 系统。
+
+结果：
+
+- 新增压力测试：compact 后 pending task 仍能继承 coding task。
+- 新增压力测试：full compact 后 TaskState 仍作为 live task state 独立注入，不与 historical summary 混合。
+- 验证 micro/full compact 可以和 WorkingState、TaskState 一起工作。
+- 不新增长期记忆、向量库、session resume 或复杂 token 预算器。
 
 ### 已完成 / `0.24.3`: Architecture Slim Review / 架构减重复查
 

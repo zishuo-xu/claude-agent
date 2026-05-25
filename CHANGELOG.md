@@ -10,6 +10,30 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.25.0 - 2026-05-25
+
+当前学习阶段：Context Stress Acceptance / 上下文压力验收。
+
+变更级别：复查版本。
+
+### Added
+
+- 新增上下文压力测试，验证 compact 后 `WorkingState` 仍可继承 pending coding task
+- 新增上下文压力测试，验证 full compact 后 `TaskState` 仍作为 live task state 独立注入，不与 historical summary 混合
+
+### Review
+
+- 保持现有 micro-compact / full compact 策略，不新增长期记忆、向量库、session resume 或复杂 token 预算器
+- 验证上下文压缩、短期任务状态和任务清单能稳定共存
+
+### Verified
+
+- `tests/test_runtime_intent.py -k "context_stress or compact"` passed
+
+### Next
+
+- 下一步建议 `0.26.0 Focused Streaming Review / 流式边界复查`
+
 ## 0.24.3 - 2026-05-25
 
 当前学习阶段：Architecture Slim Review / 架构减重复查。

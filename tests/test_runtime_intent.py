@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from mini_agent.config import AgentConfig
-from mini_agent.intent import classify_intent
+from mini_agent.intent import Intent, classify_intent
 from mini_agent.llm import FinalResponseEvent, LLMResponse, ReasoningBlock, TextBlock, TextDeltaEvent, ToolUseBlock
 from mini_agent.permissions import PermissionMode
 from mini_agent.runtime import AgentRuntime
@@ -951,6 +951,120 @@ def test_runtime_compacts_realistic_long_task_without_losing_key_context(tmp_pat
         {"role": "user", "content": "Unresolved: verify summary injection still works."},
         {"role": "assistant", "content": "Next step is running the compact tests."},
     ]
+
+
+def test_runtime_context_stress_keeps_pending_task_across_compaction(tmp_path: Path):
+    runtime = make_runtime(tmp_path)
+    runtime.config.context_char_budget = 500
+    runtime.working_state.mark_waiting(intent=classify_intent("保存为文件，先问我风格和文件名"), goal="write story")
+    runtime.state.messages = [
+        {"role": "user", "content": "User goal: write tmp/story.md after collecting style and filename."},
+        {"role": "assistant", "content": "请确认风格和文件名？"},
+    ]
+    for index in range(8):
+        tool_use_id = f"call_{index}"
+        runtime.state.messages.append(
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": tool_use_id,
+                        "name": "read_file",
+                        "input": {"path": "docs/current-features.md"},
+                    }
+                ],
+            }
+        )
+        runtime.state.messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": f"large read result {index} " + ("x" * 300),
+                        "is_error": False,
+                    }
+                ],
+            }
+        )
+    runtime.state.messages.extend(
+        [
+            {"role": "user", "content": "Recent user supplied style: 温馨, filename: tmp/story.md."},
+            {"role": "assistant", "content": "I will write the first chunk next."},
+            {"role": "user", "content": "Recent user says: continue after first chunk."},
+            {"role": "assistant", "content": "Continuation should keep the file task active."},
+        ]
+    )
+
+    runtime._compact_if_needed()
+    decision = runtime.working_state.resolve_intent("温馨，文件名 tmp/story.md，先写一小段")
+
+    assert runtime.working_state.waiting_for_user is True
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools is True
+    assert runtime.state.summary == "summary"
+    assert len(runtime.state.messages) == 4
+
+
+def test_runtime_context_stress_keeps_task_state_separate_after_full_compact(tmp_path: Path):
+    client = RecordingCompactClient()
+    runtime = make_runtime_with_client(tmp_path, client)
+    runtime.config.context_char_budget = 500
+    runtime.task_state.set_tasks(["Write first chunk", "Append second chunk"])
+    runtime.task_state.update_task("t1", "done", "tmp/story.md created")
+    runtime.task_state.update_task("t2", "in_progress", "waiting for continue")
+    runtime.state.messages = [
+        {"role": "user", "content": "User goal: write a long story to tmp/story.md in chunks."},
+        {"role": "assistant", "content": "I will create a todo list and write in batches."},
+    ]
+    for index in range(7):
+        tool_use_id = f"call_{index}"
+        runtime.state.messages.append(
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": tool_use_id,
+                        "name": "write_file" if index == 0 else "read_file",
+                        "input": {"path": "tmp/story.md"},
+                    }
+                ],
+            }
+        )
+        runtime.state.messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": f"chunk evidence {index} " + ("x" * 350),
+                        "is_error": False,
+                    }
+                ],
+            }
+        )
+    runtime.state.messages.extend(
+        [
+            {"role": "user", "content": "Recent: keep writing after context compaction."},
+            {"role": "assistant", "content": "I will preserve the task state separately."},
+            {"role": "user", "content": "Recent: verify tmp/story.md remains the target."},
+            {"role": "assistant", "content": "Next action is appending to tmp/story.md."},
+        ]
+    )
+
+    runtime._compact_if_needed()
+    prompt = runtime._system_prompt()
+
+    assert runtime.state.summary == "summary preserving old goal"
+    assert "Current tasks (live task state):" in prompt
+    assert "Conversation summary so far (historical context, not the current task list):" in prompt
+    assert "t1 [done] Write first chunk - tmp/story.md created" in prompt
+    assert "t2 [in_progress] Append second chunk - waiting for continue" in prompt
+    assert prompt.index("Conversation summary so far") < prompt.index("Current tasks (live task state):")
 
 
 def test_runtime_injects_full_compact_summary_into_system_prompt(tmp_path: Path):
