@@ -1,4 +1,4 @@
-from mini_agent.intent import Intent, classify_intent, intent_prompt
+from mini_agent.intent import Intent, classify_intent, intent_prompt, tool_choice_guidance
 
 
 def test_classifies_greeting_as_casual_without_tools():
@@ -40,6 +40,15 @@ def test_documented_project_question_without_project_word_uses_docs():
     assert decision.hidden_tools == frozenset({"list_files", "search_text"})
 
 
+def test_startup_question_without_project_word_uses_current_features():
+    decision = classify_intent("怎么启动？")
+
+    assert decision.intent == Intent.PROJECT_QUESTION
+    assert decision.allow_tools
+    assert decision.hidden_tools == frozenset({"list_files", "search_text"})
+    assert "docs/current-features.md" in tool_choice_guidance(decision)
+
+
 def test_agent_loop_question_uses_project_docs():
     decision = classify_intent("现在的 Agent Loop 是怎么做的？")
 
@@ -77,10 +86,22 @@ def test_intent_prompt_includes_tool_guidance():
     prompt = intent_prompt(decision)
 
     assert "general_learning" in prompt
+    assert "Tool choice strategy" in prompt
     assert "Do not use tools" in prompt
     assert "3-5 short lines" in prompt
     assert "Do not use emoji" in prompt
     assert "unless the user asks for resources" in prompt
+
+
+def test_project_question_tool_choice_guidance_names_doc_entrypoints():
+    decision = classify_intent("当前架构上分为几层？")
+
+    guidance = tool_choice_guidance(decision)
+
+    assert "docs/architecture.md" in guidance
+    assert "docs/current-features.md" in guidance
+    assert "docs/roadmap.md" in guidance
+    assert "Use list_files only when the target file is unclear" in guidance
 
 
 def test_coding_task_prompt_avoids_listing_when_path_and_content_are_explicit():

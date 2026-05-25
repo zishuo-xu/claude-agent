@@ -170,6 +170,9 @@ def _looks_like_documented_project_question(text: str) -> bool:
             "当前架构",
             "当前功能",
             "当前版本",
+            "怎么启动",
+            "如何启动",
+            "启动方式",
             "下一步",
             "agent loop",
             "主循环",
@@ -181,7 +184,10 @@ def _looks_like_documented_project_question(text: str) -> bool:
     )
 
 
-def intent_prompt(decision: IntentDecision) -> str:
+def tool_choice_guidance(decision: IntentDecision) -> str:
+    if decision.requested_tool:
+        return f"Only use the explicitly requested tool: {decision.requested_tool}."
+
     guidance = {
         Intent.CASUAL_CHAT: "Reply briefly. Do not use tools. Do not describe project architecture unless asked.",
         Intent.GENERAL_LEARNING: (
@@ -192,8 +198,9 @@ def intent_prompt(decision: IntentDecision) -> str:
         Intent.PROJECT_QUESTION: (
             "Use the smallest useful read path. Choose the most relevant documentation entry first: "
             "architecture questions use docs/architecture.md; feature or version questions use "
-            "docs/current-features.md; next-step or roadmap questions use docs/roadmap.md; broad project "
-            "overview questions use README.md or docs/context-map.md. Use list_files only when the "
+            "docs/current-features.md; startup or usage questions use docs/current-features.md; "
+            "next-step or roadmap questions use docs/roadmap.md; broad project overview questions use "
+            "README.md or docs/context-map.md. Use list_files only when the "
             "target file is unclear, and stop using tools once enough context is available. Answer the user's "
             "specific question directly and concisely. Do not restate whole documents, long histories, or broad "
             "feature lists unless the user explicitly asks for detail. When the document states an explicit "
@@ -209,4 +216,11 @@ def intent_prompt(decision: IntentDecision) -> str:
         ),
         Intent.DANGEROUS_REQUEST: "Do not use tools. Explain the safety concern and ask for a safer, more specific goal.",
     }[decision.intent]
-    return f"Current user intent: {decision.intent.value}. Reason: {decision.reason}. Tool guidance: {guidance}"
+    return guidance
+
+
+def intent_prompt(decision: IntentDecision) -> str:
+    return (
+        f"Current user intent: {decision.intent.value}. Reason: {decision.reason}. "
+        f"Tool choice strategy: {tool_choice_guidance(decision)}"
+    )

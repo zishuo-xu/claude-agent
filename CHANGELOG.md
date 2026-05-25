@@ -10,6 +10,30 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.20.0 - 2026-05-25
+
+当前学习阶段：Tool Choice Strategy / 工具选择策略。
+
+变更级别：小特性。
+
+### Changed
+
+- 新增 `tool_choice_guidance()`，把工具选择策略从 `intent_prompt()` 中拆出为明确边界
+- `intent_prompt()` 改为注入 `Tool choice strategy`，让模型按当前 intent 选择工具
+- “怎么启动 / 如何启动 / 启动方式”归类为项目文档入口问题，隐藏 `list_files` / `search_text`
+- 启动和用法问题的工具选择策略优先指向 `docs/current-features.md`
+- 显式请求某个工具时，策略提示只使用该工具
+
+### Tests
+
+- 新增启动问题归类和文档入口策略测试
+- 新增项目问答工具选择策略入口文档测试
+
+### Verified
+
+- `tests/test_intent.py tests/test_tool_registry.py tests/test_runtime_intent.py tests/test_runtime_prompt.py` passed
+- `145 passed`
+
 ## 0.19.0 - 2026-05-25
 
 当前学习阶段：Task Plan UX / 任务计划体验。

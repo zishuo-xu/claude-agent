@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.19.0`
+当前版本：`0.20.0`
 
 ## 当前进展
 
@@ -11,6 +11,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - Agent Loop：多轮模型调用、工具调用、工具结果回传、轻量错误恢复。
 - LLM Adapter：Anthropic / OpenAI-compatible 适配，支持 streaming 和 `reasoning_content` 续传。
 - Tool System：统一 `Tool` 抽象、schema、输入校验、工具注册、工具可见性和工具执行器。
+- Tool Choice：intent prompt 注入轻量工具选择策略，项目入口问题优先读对应文档。
 - Permission Pipeline：工作区边界、权限模式、权限规则、危险操作确认和拒绝后防绕路。
 - Context：tool result budget、micro-compact、full compact、summary 注入。
 - Sub Agents：固定内置的 `explore_agent`、`plan_agent`、`verify_agent`，只读隔离执行。
@@ -63,7 +64,17 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.20.0`: Tool Choice Strategy / 工具选择策略
+### P1 / `0.20.1`: Tool Choice Acceptance / 工具选择验收
+
+目标：用真实 CLI 场景验收工具选择策略是否减少了无意义工具调用。
+
+作用：
+
+- 0.20.0 已把策略从散落 prompt 收敛为 `tool_choice_guidance()`。
+- 下一步应观察真实问题：项目架构、当前功能、怎么启动、明确文件创建、泛学习。
+- 如果真实体验稳定，就结束工具选择主线，不继续加 planner。
+
+### 已完成 / `0.20.0`: Tool Choice Strategy / 工具选择策略
 
 目标：让 agent 更清楚什么时候该用工具、该暴露哪些工具、该优先读什么上下文。
 
@@ -71,21 +82,15 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 - 这是 agent 核心设计，不是外围工程能力。
 - 当前已经有 `intent.py`、`tool_policy.py` 和项目问答读取策略，但规则散在多个位置。
-- 下一步应把“意图 -> 工具可见性 -> 工具选择提示”这条链路收紧，减少不必要工具调用和错误工具顺序。
+- 本次把“意图 -> 工具可见性 -> 工具选择提示”这条链路收紧，减少不必要工具调用和错误工具顺序。
 
-计划范围：
+结果：
 
-- 不新增工具。
-- 不新增 planner 架构层。
-- 不做 session save / resume。
-- 优先补轻量策略说明和边界测试。
-- 重点固定这些行为：
-  - 寒暄和泛学习不暴露工具。
-  - 项目架构问题优先读 `docs/architecture.md`。
-  - 当前功能问题优先读 `docs/current-features.md`。
-  - 下一步计划问题优先读 `docs/roadmap.md`。
-  - 明确文件创建任务不先 `list_files`。
-  - 路径或目标不清楚时才使用 `list_files` / `search_text`。
+- 新增 `tool_choice_guidance()`，由 `intent_prompt()` 注入模型上下文。
+- 项目入口问题继续隐藏 `list_files` / `search_text`，优先用 `read_file` 读文档。
+- “怎么启动 / 如何启动 / 启动方式”会稳定归类为项目文档入口问题，优先读 `docs/current-features.md`。
+- 显式请求某个工具时，策略提示只使用该工具。
+- 未新增工具、planner 架构层或 session resume。
 
 ## 暂缓项
 

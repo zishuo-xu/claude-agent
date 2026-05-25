@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.19.0`
+当前版本：`0.20.0`
 
 已完成学习主线：
 
@@ -167,5 +167,6 @@ MAJOR.MINOR.PATCH
 - `0.17.2`: Permission Line Review / 权限体验主线收尾复查
 - `0.18.0`: CLI Output Protocol Review / CLI 输出协议复查
 - `0.19.0`: Task Plan UX / 任务计划体验
+- `0.20.0`: Tool Choice Strategy / 工具选择策略
 
 详细说明以 `CHANGELOG.md` 为准。
