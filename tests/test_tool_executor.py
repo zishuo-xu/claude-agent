@@ -56,6 +56,28 @@ def test_tool_turn_executor_uses_permission_handler_for_rejection():
     ]
 
 
+def test_tool_turn_executor_accept_edits_allows_apply_edit_without_prompt():
+    events = []
+    tool = build_tool(
+        name="apply_edit",
+        description="Apply edit",
+        input_schema={"type": "object"},
+        call=lambda _input: "applied",
+    )
+    executor = ToolTurnExecutor(
+        tools={"apply_edit": tool},
+        permission_context=PermissionContext(mode=PermissionMode.ACCEPT_EDITS),
+        emit=lambda event_type, **payload: events.append((event_type, payload)),
+        permission_handler=lambda _name, _input, _reason: (_ for _ in ()).throw(AssertionError("should not ask")),
+    )
+
+    result = executor.execute([ToolUseBlock(id="call_1", name="apply_edit", input={"path": "story.md"})])
+
+    assert result[0]["is_error"] is False
+    assert result[0]["content"] == "applied"
+    assert "permission_request" not in [event[0] for event in events]
+
+
 def test_tool_turn_executor_denial_discourages_retrying_with_another_tool():
     tool = build_tool(
         name="write_file",

@@ -109,7 +109,7 @@ def decide_permission(
     if context.mode == PermissionMode.ACCEPT_EDITS:
         if read_only and not destructive:
             return PermissionDecision(PermissionBehavior.ALLOW, "read-only")
-        if tool_name in {"write_file", "edit_file"} and not destructive:
+        if tool_name in {"write_file", "edit_file", "apply_edit"} and not destructive:
             return PermissionDecision(PermissionBehavior.ALLOW, "workspace edit in acceptEdits mode")
         return PermissionDecision(PermissionBehavior.ASK, "non-edit action in acceptEdits mode")
 

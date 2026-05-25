@@ -54,3 +54,37 @@ def test_plan_mode_allows_read_only_and_asks_for_write():
     assert read_decision.behavior == PermissionBehavior.ALLOW
     assert write_decision.behavior == PermissionBehavior.ASK
 
+
+def test_accept_edits_mode_allows_workspace_edit_tools():
+    context = PermissionContext(mode=PermissionMode.ACCEPT_EDITS)
+
+    decisions = [
+        decide_permission(
+            context=context,
+            tool_name=tool_name,
+            tool_input={"path": "story.md", "old": "a", "new": "b"},
+            read_only=False,
+            destructive=False,
+        )
+        for tool_name in ["write_file", "edit_file", "apply_edit"]
+    ]
+
+    assert [decision.behavior for decision in decisions] == [
+        PermissionBehavior.ALLOW,
+        PermissionBehavior.ALLOW,
+        PermissionBehavior.ALLOW,
+    ]
+
+
+def test_accept_edits_mode_still_asks_for_shell():
+    context = PermissionContext(mode=PermissionMode.ACCEPT_EDITS)
+
+    decision = decide_permission(
+        context=context,
+        tool_name="run_shell",
+        tool_input={"command": "python3 script.py"},
+        read_only=False,
+        destructive=False,
+    )
+
+    assert decision.behavior == PermissionBehavior.ASK

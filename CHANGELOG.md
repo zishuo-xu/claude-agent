@@ -10,6 +10,32 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.24.2 - 2026-05-25
+
+当前学习阶段：Permission Edit Acceptance / 编辑权限体验验收。
+
+变更级别：小特性修复。
+
+### Changed
+
+- `acceptEdits` 模式自动允许 `apply_edit`
+- 保持 `write_file`、`edit_file` 自动允许，Shell 和其他非编辑操作仍按原策略确认
+
+### Review
+
+- `apply_edit` 是工作区编辑工具，应该与 `write_file`、`edit_file` 处在同一权限层级
+- 不新增权限模式，不改复杂权限规则
+
+### Verified
+
+- `tests/test_permissions.py tests/test_tool_executor.py` passed
+- `160 passed`
+- Runtime 模拟确认 `apply_edit` 在 `acceptEdits` 下不触发 `permission_request`，并能实际修改文件
+
+### Next
+
+- 下一步建议 `0.24.3 Real CLI Long Dialogue Acceptance / 真实 CLI 长对话验收`
+
 ## 0.24.1 - 2026-05-25
 
 当前学习阶段：Pending Task Real Usage Fix / 短期任务真实使用修复。

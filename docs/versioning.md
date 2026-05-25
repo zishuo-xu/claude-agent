@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.24.1`
+当前版本：`0.24.2`
 
 已完成学习主线：
 
@@ -176,5 +176,6 @@ MAJOR.MINOR.PATCH
 - `0.23.0`: Subagent Context Policy / 子 Agent 上下文策略
 - `0.24.0`: Working State For Pending Task / 短期任务意图延续
 - `0.24.1`: Pending Task Real Usage Fix / 短期任务真实使用修复
+- `0.24.2`: Permission Edit Acceptance / 编辑权限体验验收
 
 详细说明以 `CHANGELOG.md` 为准。

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.24.1`
+当前版本：`0.24.2`
 
 ## 当前进展
 
@@ -66,14 +66,30 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.24.2`: Permission Edit Acceptance / 编辑权限体验验收
+### P1 / `0.24.3`: Real CLI Long Dialogue Acceptance / 真实 CLI 长对话验收
 
-目标：复查 `acceptEdits` 下 `apply_edit` 的权限体验是否符合预期。
+目标：再次用真实 CLI 跑保存文件、继续追加、切换项目问题的长对话。
 
 作用：
 
-- 本次真实 CLI 验收发现 `acceptEdits` 下 `apply_edit` 仍会提示确认，容易打断管道式长对话。
-- 下一步只复查权限体验，不扩大到复杂权限系统。
+- 0.24.1 和 0.24.2 分别修复 pending task 和编辑权限体验。
+- 下一步只做验收，不新增功能。
+
+### 已完成 / `0.24.2`: Permission Edit Acceptance / 编辑权限体验验收
+
+目标：复查并修复 `acceptEdits` 下 `apply_edit` 的权限体验。
+
+作用：
+
+- `apply_edit` 是工作区编辑工具，和 `write_file`、`edit_file` 一样应在 `acceptEdits` 下自动允许。
+- 这能避免长对话续写时被权限确认打断。
+
+结果：
+
+- `acceptEdits` 自动允许 `write_file`、`edit_file`、`apply_edit`。
+- Shell 和其他非编辑操作仍按原策略确认。
+- 新增权限和工具执行测试，确认 `apply_edit` 不触发 `permission_request`。
+- 不新增权限模式，不改复杂权限系统。
 
 ### 已完成 / `0.24.1`: Pending Task Real Usage Fix / 短期任务真实使用修复
 
