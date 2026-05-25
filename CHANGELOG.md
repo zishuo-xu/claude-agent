@@ -10,6 +10,23 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.17.2 - 2026-05-25
+
+当前学习阶段：Permission Line Review / 权限体验主线收尾复查。
+
+变更级别：复查版本。
+
+### Review
+
+- 复查 0.17.x 权限体验主线：确认提示、权限模式验收、拒绝后防绕路行为
+- 确认当前轻量 Permission Pipeline 已足够支撑 mini-claude，不继续扩展复杂权限规则
+- 暂不新增自动白名单、复杂规则合并、权限配置 UI 或 TUI
+- 下一条主线转向 CLI 输出协议复查
+
+### Verified
+
+- `tests/test_docs.py tests/test_current_features.py` passed
+
 ## 0.17.1 - 2026-05-25
 
 当前学习阶段：Permission Mode Acceptance Review / 权限模式验收复查。

@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.17.1`
+当前版本：`0.17.2`
 
 ## 启动
 
@@ -163,6 +163,7 @@ deny -> allow -> ask -> mode fallback
 - 权限确认提示显示工具名、原因、目标和默认拒绝说明
 - 权限拒绝后同一轮会关闭工具暴露，避免换工具绕路重试
 - `preview_edit` 只读预览，`apply_edit` 写入
+- 权限体验 0.17 主线已收尾，暂不新增复杂权限规则或 TUI
 
 相关文件：`mini_agent/permissions.py`、`mini_agent/workspace.py`
 
