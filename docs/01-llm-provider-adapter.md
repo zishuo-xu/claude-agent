@@ -19,10 +19,11 @@ messages -> model -> tool_use -> tool_result -> model
 
 ## 当前结构
 
-- `LLMClient`: runtime 依赖的最小协议，只暴露 `complete()`
+- `LLMClient`: runtime 依赖的最小协议，暴露 `complete()` 和 `stream_complete()`
 - `AnthropicLLM`: Anthropic Messages API 适配器
 - `OpenAICompatibleLLM`: OpenAI-compatible `/v1/chat/completions` 适配器
-- `TextBlock` / `ToolUseBlock` / `LLMResponse`: agent 内部统一格式
+- `TextBlock` / `ToolUseBlock` / `ReasoningBlock` / `LLMResponse`: agent 内部统一格式
+- `TextDeltaEvent` / `FinalResponseEvent`: runtime 看到的统一 streaming 事件
 
 ## OpenAI-compatible 转换规则
 
@@ -37,8 +38,16 @@ messages -> model -> tool_use -> tool_result -> model
 - `message.content` 转成 `TextBlock`
 - `message.tool_calls` 转成 `ToolUseBlock`
 - `message.reasoning_content` 转成内部 `ReasoningBlock`
+- `model_extra.reasoning_content` 也会转成内部 `ReasoningBlock`
+- 无效 JSON 工具参数保留为 `{"raw_arguments": "..."}`
 
 这样 `AgentRuntime` 不需要知道底层 provider 是 Anthropic 还是 OpenAI-compatible。
+
+## Streaming 边界
+
+OpenAI-compatible streaming 会把文本 delta、reasoning delta 和工具调用 delta 分块返回。适配层使用 `OpenAIStreamAccumulator` 重建内部最终响应。
+
+一些 provider 会返回 `choices=[]` 的 usage 或结束 chunk。适配层会跳过这类 chunk，避免 runtime 访问 `choices[0]` 崩溃。
 
 ## reasoning_content 续传
 
@@ -73,7 +82,6 @@ LLM_MODEL_NAME=your-model-name
 
 为了保持学习友好，当前还没有实现：
 
-- streaming
 - provider 能力探测
 - tool calling 兼容性降级
 - 多模态输入

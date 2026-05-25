@@ -10,6 +10,29 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.21.0 - 2026-05-25
+
+当前学习阶段：LLM Adapter Protocol Review / 模型适配协议复查。
+
+变更级别：小特性。
+
+### Changed
+
+- 补充 OpenAI-compatible `model_extra.reasoning_content` 转内部 `ReasoningBlock` 的协议测试
+- 补充无效 JSON 工具参数降级为 `raw_arguments` 的协议测试
+- 更新 LLM Adapter 文档，明确当前已支持 `stream_complete()`、streaming event、`ReasoningBlock` 和空 `choices` chunk 跳过
+- 修正 LLM Adapter 文档中过期的“未实现 streaming”描述
+
+### Review
+
+- 当前 `llm.py` 职责仍清楚，暂不拆文件
+- 暂不新增 provider、provider 能力探测、多模型路由或复杂 retry/backoff
+
+### Verified
+
+- `tests/test_llm_adapter.py` passed
+- `147 passed`
+
 ## 0.20.1 - 2026-05-25
 
 当前学习阶段：Tool Choice Acceptance / 工具选择验收。

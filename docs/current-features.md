@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.20.1`
+当前版本：`0.21.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`145 tests`
+当前测试：`147 tests`
 
 ## LLM Provider
 
@@ -33,6 +33,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - `anthropic`
 
 当前本地 `.env` 使用 OpenAI-compatible `/v1` 服务和 `mimo-v2-omni` 模型。
+适配层统一内部消息、工具调用、工具结果、streaming event 和 `reasoning_content` 续传；无效工具参数会保留为 `raw_arguments`，避免 provider 格式问题直接打断 agent loop。
 
 ## 架构取舍
 

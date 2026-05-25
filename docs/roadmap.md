@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.20.1`
+当前版本：`0.21.0`
 
 ## 当前进展
 
@@ -64,7 +64,16 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.21.0`: LLM Adapter Protocol Review / 模型适配协议复查
+### P1 / `0.21.1`: LLM Adapter Acceptance / 模型适配验收
+
+目标：用现有测试和少量模拟场景验收 LLM Adapter 协议边界是否足够稳定。
+
+作用：
+
+- 0.21.0 已补协议护栏测试，下一步只确认真实/模拟路径是否覆盖当前风险。
+- 如果没有新问题，结束 LLM Adapter 主线，不做 provider 框架或多模型路由。
+
+### 已完成 / `0.21.0`: LLM Adapter Protocol Review / 模型适配协议复查
 
 目标：复查 Anthropic / OpenAI-compatible 适配层对消息、工具调用、工具结果、streaming 和 reasoning 续传的统一边界。
 
@@ -72,7 +81,14 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 - LLM Adapter 是 agent loop 和具体模型 API 之间的协议层，直接影响工具调用是否稳定。
 - 本项目已经遇到过 `reasoning_content` 续传和 OpenAI-compatible streaming 空 `choices` 问题，说明这条边界值得系统化收紧。
-- 下一步应优先补协议边界和测试，不引入多模型路由或复杂 provider 框架。
+- 本次优先补协议边界测试，不引入多模型路由或复杂 provider 框架。
+
+结果：
+
+- 补充 `model_extra.reasoning_content` 进入 `ReasoningBlock` 的测试。
+- 补充无效 JSON 工具参数降级为 `raw_arguments` 的测试。
+- 更新 LLM Adapter 文档，修正 streaming 状态说明。
+- 未拆分 `llm.py`，未新增 provider，未引入多模型路由。
 
 ### 已完成 / `0.20.1`: Tool Choice Acceptance / 工具选择验收
 

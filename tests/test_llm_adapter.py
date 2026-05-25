@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from mini_agent.llm import FinalResponseEvent, OpenAICompatibleLLM, OpenAIStreamAccumulator, TextDeltaEvent
+from mini_agent.llm import FinalResponseEvent, OpenAICompatibleLLM, OpenAIStreamAccumulator, ReasoningBlock, TextDeltaEvent
 
 
 def test_openai_adapter_converts_tool_use_and_tool_result_messages():
@@ -52,6 +52,20 @@ def test_openai_adapter_preserves_reasoning_content_for_next_turn():
     assert converted[1]["tool_calls"][0]["id"] == "call_1"
 
 
+def test_openai_adapter_reads_reasoning_content_from_model_extra():
+    message = SimpleNamespace(
+        content="answer",
+        tool_calls=[],
+        model_extra={"reasoning_content": "provider reasoning"},
+    )
+
+    blocks = OpenAICompatibleLLM._blocks_from_message(message)
+
+    assert isinstance(blocks[0], ReasoningBlock)
+    assert blocks[0].content == "provider reasoning"
+    assert blocks[1].text == "answer"
+
+
 def test_openai_adapter_converts_anthropic_tool_schema_to_function_schema():
     tools = [
         {
@@ -99,6 +113,23 @@ def test_openai_stream_accumulator_rebuilds_text_and_tool_call():
     assert response.content[1].text == "hello"
     assert response.content[2].name == "read_file"
     assert response.content[2].input == {"path": "README.md"}
+
+
+def test_openai_stream_accumulator_preserves_invalid_tool_arguments_as_raw():
+    accumulator = OpenAIStreamAccumulator()
+
+    accumulator.add_tool_call_delta(
+        SimpleNamespace(
+            index=0,
+            id="call_1",
+            function=SimpleNamespace(name="read_file", arguments="{not-json"),
+        )
+    )
+
+    response = accumulator.to_response()
+
+    assert response.content[0].name == "read_file"
+    assert response.content[0].input == {"raw_arguments": "{not-json"}
 
 
 def test_streaming_code_should_ignore_empty_choices_chunks():
