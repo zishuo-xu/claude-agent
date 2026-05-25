@@ -10,6 +10,29 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.17.0 - 2026-05-25
+
+当前学习阶段：Permission UX Review / 权限体验复查。
+
+变更级别：大特性。
+
+### Changed
+
+- 权限确认提示改为集中展示工具名、原因、目标和默认拒绝说明
+- `permission_request` 事件不再单独打印粗糙原因，避免和确认输入重复
+- 文件路径类操作只展示目标路径，不把完整写入内容塞进确认提示
+
+### Tests
+
+- 新增权限提示格式测试
+- 新增 permission request 事件不打印测试
+
+### Verified
+
+- `tests/test_events.py tests/test_permissions.py tests/test_tool_executor.py tests/test_runtime_intent.py` passed
+- `136 passed`
+- 真实 CLI 验收写文件和运行命令通过
+
 ## 0.16.2 - 2026-05-24
 
 当前学习阶段：Prompt / Context Line Review / 提示词与上下文主线收尾复查。

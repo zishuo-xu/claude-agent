@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.16.2`
+当前版本：`0.17.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`133 tests`
+当前测试：`136 tests`
 
 ## LLM Provider
 
@@ -160,6 +160,7 @@ deny -> allow -> ask -> mode fallback
 - 阻止 `../` 逃逸
 - shell 基础风险识别
 - 写入类操作按权限模式确认
+- 权限确认提示显示工具名、原因、目标和默认拒绝说明
 - `preview_edit` 只读预览，`apply_edit` 写入
 
 相关文件：`mini_agent/permissions.py`、`mini_agent/workspace.py`

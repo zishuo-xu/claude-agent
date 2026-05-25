@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.16.2`
+当前版本：`0.17.0`
 
 ## 已完成主线
 
@@ -71,6 +71,7 @@
 - `0.16.0`: Prompt / Context Boundary Review / 提示词与上下文边界复查
 - `0.16.1`: Prompt / Context Acceptance Review / 提示词与上下文验收复查
 - `0.16.2`: Prompt / Context Line Review / 提示词与上下文主线收尾复查
+- `0.17.0`: Permission UX Review / 权限体验复查
 
 ## 架构减重审视
 
@@ -134,7 +135,17 @@
 
 ## 下一步
 
-### P1 / `0.17.0`: Permission UX Review / 权限体验复查
+### P1 / `0.17.1`: Permission Mode Acceptance Review / 权限模式验收复查
+
+目标：用真实 CLI 场景验收 `plan`、`acceptEdits`、`dontAsk` 等权限模式的用户体验。
+
+作用：
+
+- 0.17.0 已改善确认提示本身。
+- 下一步验证不同权限模式是否符合用户预期。
+- 不增加复杂权限规则系统，只观察真实体验。
+
+### 已完成 / `0.17.0`: Permission UX Review / 权限体验复查
 
 目标：复查当前 `plan/default/acceptEdits/dontAsk/bypassPermissions` 的用户体验是否清楚。
 
@@ -143,6 +154,13 @@
 - 权限是 Claude Code 的核心边界之一，直接影响用户是否放心让 agent 操作本地环境。
 - 当前实现已有轻量 Permission Pipeline，但用户看到的提示还比较粗。
 - 先复查体验和边界，不直接做复杂规则系统。
+
+结果：
+
+- 权限确认提示改为集中展示工具名、原因、目标和默认拒绝说明。
+- `permission_request` 事件不再单独打印粗糙原因，避免终端出现两段重复提示。
+- 真实 CLI 验收写文件和运行命令，提示更清楚，工具执行正常。
+- 未改变权限决策逻辑、权限模式或规则系统。
 
 ### 已完成 / `0.16.2`: Prompt / Context Line Review / 提示词与上下文主线收尾复查
 

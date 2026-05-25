@@ -24,7 +24,7 @@ def print_runtime_event(event: RuntimeEvent) -> None:
     elif event.type == "tool_result":
         print(_format_tool_result_for_display(event.payload))
     elif event.type == "permission_request":
-        print(f"[permission] {event.payload['reason']}")
+        return
     elif event.type == "context_notice":
         print(f"\n[context] {event.payload['message']}\n")
     elif event.type == "model_fallback":
@@ -35,9 +35,35 @@ def print_runtime_event(event: RuntimeEvent) -> None:
         print(f"\nStopped after {event.payload['max_turns']} turns.")
 
 
-def prompt_permission_request(name: str, tool_input: dict[str, Any], _reason: str) -> bool:
-    answer = input(f"Allow {name} {tool_input}? [y/N] ").strip().lower()
+def prompt_permission_request(name: str, tool_input: dict[str, Any], reason: str) -> bool:
+    answer = input(_format_permission_prompt(name=name, tool_input=tool_input, reason=reason)).strip().lower()
     return answer in {"y", "yes"}
+
+
+def _format_permission_prompt(*, name: str, tool_input: dict[str, Any], reason: str) -> str:
+    lines = [
+        "",
+        "[permission request]",
+        f"Tool: {name}",
+        f"Reason: {reason}",
+    ]
+    target = _permission_target(name, tool_input)
+    if target:
+        lines.append(f"Target: {target}")
+    lines.append("Allow this operation? Type y to allow, anything else to reject [y/N]: ")
+    return "\n".join(lines)
+
+
+def _permission_target(name: str, tool_input: dict[str, Any]) -> str:
+    if name == "run_shell":
+        return str(tool_input.get("command", ""))
+    if "path" in tool_input:
+        return str(tool_input["path"])
+    if "pattern" in tool_input:
+        return str(tool_input["pattern"])
+    if not tool_input:
+        return ""
+    return json.dumps(tool_input, ensure_ascii=False)
 
 
 def _format_tool_result_for_display(payload: dict[str, Any]) -> str:

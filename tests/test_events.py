@@ -1,4 +1,4 @@
-from mini_agent.events import RuntimeEvent, print_runtime_event
+from mini_agent.events import RuntimeEvent, _format_permission_prompt, print_runtime_event
 
 
 def test_print_runtime_event_hides_tool_batch_events_by_default(capsys):
@@ -11,6 +11,44 @@ def test_print_runtime_event_hides_tool_batch_events_by_default(capsys):
 
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_print_runtime_event_does_not_print_permission_request(capsys):
+    print_runtime_event(
+        RuntimeEvent(
+            "permission_request",
+            {"name": "run_shell", "input": {"command": "python3 hello.py"}, "reason": "write/destructive action in plan mode"},
+        )
+    )
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_format_permission_prompt_for_shell_command():
+    prompt = _format_permission_prompt(
+        name="run_shell",
+        tool_input={"command": "python3 hello.py"},
+        reason="write/destructive action in plan mode",
+    )
+
+    assert "[permission request]" in prompt
+    assert "Tool: run_shell" in prompt
+    assert "Reason: write/destructive action in plan mode" in prompt
+    assert "Target: python3 hello.py" in prompt
+    assert "anything else to reject [y/N]:" in prompt
+
+
+def test_format_permission_prompt_for_file_path():
+    prompt = _format_permission_prompt(
+        name="write_file",
+        tool_input={"path": "tmp/hello.py", "content": "print('hello')"},
+        reason="write/destructive action in plan mode",
+    )
+
+    assert "Tool: write_file" in prompt
+    assert "Target: tmp/hello.py" in prompt
+    assert "print('hello')" not in prompt
 
 
 def test_print_runtime_event_hides_long_successful_tool_result(capsys):
