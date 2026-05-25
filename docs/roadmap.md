@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.20.0`
+当前版本：`0.20.1`
 
 ## 当前进展
 
@@ -64,7 +64,17 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.20.1`: Tool Choice Acceptance / 工具选择验收
+### P1 / `0.21.0`: LLM Adapter Protocol Review / 模型适配协议复查
+
+目标：复查 Anthropic / OpenAI-compatible 适配层对消息、工具调用、工具结果、streaming 和 reasoning 续传的统一边界。
+
+作用：
+
+- LLM Adapter 是 agent loop 和具体模型 API 之间的协议层，直接影响工具调用是否稳定。
+- 本项目已经遇到过 `reasoning_content` 续传和 OpenAI-compatible streaming 空 `choices` 问题，说明这条边界值得系统化收紧。
+- 下一步应优先补协议边界和测试，不引入多模型路由或复杂 provider 框架。
+
+### 已完成 / `0.20.1`: Tool Choice Acceptance / 工具选择验收
 
 目标：用真实 CLI 场景验收工具选择策略是否减少了无意义工具调用。
 
@@ -73,6 +83,15 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - 0.20.0 已把策略从散落 prompt 收敛为 `tool_choice_guidance()`。
 - 下一步应观察真实问题：项目架构、当前功能、怎么启动、明确文件创建、泛学习。
 - 如果真实体验稳定，就结束工具选择主线，不继续加 planner。
+
+结果：
+
+- 泛学习请求没有调用工具。
+- “怎么启动”直接读取 `docs/current-features.md`，没有先 `list_files` 或 `search_text`。
+- “当前架构上分为几层”直接读取 `docs/architecture.md`，回答保留明确数字。
+- “当前功能有哪些”直接读取 `docs/current-features.md`。
+- 明确文件创建并运行任务直接使用 `write_file` 和 `run_shell`，没有先 `list_files`。
+- 工具选择主线当前够用，暂不继续加 planner。
 
 ### 已完成 / `0.20.0`: Tool Choice Strategy / 工具选择策略
 

@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.20.0`
+当前版本：`0.20.1`
 
 已完成学习主线：
 
@@ -168,5 +168,6 @@ MAJOR.MINOR.PATCH
 - `0.18.0`: CLI Output Protocol Review / CLI 输出协议复查
 - `0.19.0`: Task Plan UX / 任务计划体验
 - `0.20.0`: Tool Choice Strategy / 工具选择策略
+- `0.20.1`: Tool Choice Acceptance / 工具选择验收
 
 详细说明以 `CHANGELOG.md` 为准。

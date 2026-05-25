@@ -10,6 +10,30 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.20.1 - 2026-05-25
+
+当前学习阶段：Tool Choice Acceptance / 工具选择验收。
+
+变更级别：复查版本。
+
+### Review
+
+- 真实 CLI 验收泛学习请求：未调用工具
+- 真实 CLI 验收“怎么启动”：直接读取 `docs/current-features.md`
+- 真实 CLI 验收“当前架构上分为几层”：直接读取 `docs/architecture.md`
+- 真实 CLI 验收“当前功能有哪些”：直接读取 `docs/current-features.md`
+- 真实 CLI 验收明确文件创建并运行：直接使用 `write_file` 和 `run_shell`，未先 `list_files`
+- 确认工具选择主线当前够用，暂不新增 planner
+
+### Verified
+
+- `tests/test_docs.py tests/test_current_features.py` passed
+- 真实 CLI 验收通过
+
+### Next
+
+- 下一条主线转向 `0.21.0 LLM Adapter Protocol Review / 模型适配协议复查`
+
 ## 0.20.0 - 2026-05-25
 
 当前学习阶段：Tool Choice Strategy / 工具选择策略。
