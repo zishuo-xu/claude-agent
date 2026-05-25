@@ -4,18 +4,18 @@
 
 当前版本：`0.24.3`
 
-项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
+项目长期原则见 [PROJECT_PRINCIPLES.md](PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
 文档必须跟随项目变化及时更新：代码、功能、架构、配置、测试或规划发生变化后，都要检查并同步对应文档。
 
 长期文档入口：
 
-- [Context Map](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/context-map.md): 文档和代码阅读导航
-- [Architecture](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/architecture.md): 当前架构和模块职责
-- [Current Features](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/current-features.md): 当前功能清单
-- [Roadmap](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/roadmap.md): 下一步工作和优先级
-- [Versioning](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/versioning.md): 版本规则和学习阶段
-- [Learning Notes](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/docs/learning-qa.md): 独立学习沉淀，默认不参与日常上下文加载
+- [Context Map](docs/context-map.md): 文档和代码阅读导航
+- [Architecture](docs/architecture.md): 当前架构和模块职责
+- [Current Features](docs/current-features.md): 当前功能清单
+- [Roadmap](docs/roadmap.md): 下一步工作和优先级
+- [Versioning](docs/versioning.md): 版本规则和学习阶段
+- [Learning Notes](docs/learning-qa.md): 独立学习沉淀，默认不参与日常上下文加载
 
 核心闭环：
 
@@ -55,7 +55,7 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 - **上下文压缩**：历史过大时先 micro-compact，仍超预算再摘要旧消息
 - **模型降级**：主模型失败时可切 fallback model
 
-版本记录见 [CHANGELOG.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/CHANGELOG.md)。
+版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
