@@ -10,6 +10,36 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.19.0 - 2026-05-25
+
+当前学习阶段：Task Plan UX / 任务计划体验。
+
+变更级别：小特性。
+
+### Design
+
+- 参考 Claude-Code-Source-Study 的任务系统资料和 CoreCoder Agent Loop 解读，确认本项目只吸收“任务状态辅助长任务推进”的核心思想
+- 不复刻 Claude 的后台任务、任务通知、并发任务引擎、UI 面板或任务持久化
+- 继续复用已有 `TaskState`、task 工具和 runtime prompt 注入边界
+
+### Changed
+
+- system prompt 明确多步骤 coding task 应创建 3-6 项短 todo，并在阶段开始或完成时更新
+- system prompt 明确寒暄、泛学习和简单单步请求不使用 task 工具
+- task 工具成功结果在 CLI 中显示为 `[tasks]` 区块，提升计划进度可见性
+- 模型上下文中的 task 工具结果不变，仍保留原始任务状态文本
+
+### Tests
+
+- 新增 task 工具结果 CLI 格式化测试
+- 新增空 task 状态 CLI 格式化测试
+
+### Verified
+
+- `tests/test_events.py tests/test_runtime_prompt.py tests/test_tasks.py tests/test_tools.py` passed
+- `143 passed`
+- 事件打印模拟通过：task 工具结果显示为 `[tasks]` 区块
+
 ## 0.18.0 - 2026-05-25
 
 当前学习阶段：CLI Output Protocol Review / CLI 输出协议复查。

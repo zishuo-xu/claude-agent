@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.18.0`
+当前版本：`0.19.0`
 
 ## 已完成主线
 
@@ -75,6 +75,7 @@
 - `0.17.1`: Permission Mode Acceptance Review / 权限模式验收复查
 - `0.17.2`: Permission Line Review / 权限体验主线收尾复查
 - `0.18.0`: CLI Output Protocol Review / CLI 输出协议复查
+- `0.19.0`: Task Plan UX / 任务计划体验
 
 ## 架构减重审视
 
@@ -138,15 +139,32 @@
 
 ## 下一步
 
-### P1 / `0.18.1`: CLI Output Acceptance Review / CLI 输出验收复查
+### P1 / `0.20.0`: Session Save / Resume / 会话保存与恢复
 
-目标：用真实 CLI 场景验收 0.18.0 的输出规则是否更清楚。
+目标：增加最小会话保存与恢复能力，让 agent 可以在下次启动时继续同一个工作上下文。
 
 作用：
 
-- 0.18.0 已收紧 `read_file` / `search_text` 的过程展示，下一步需要确认真实使用里不会信息过少。
-- 验收重点是“用户能看懂 agent 做了什么”，不是继续加展示层。
-- 如果通过，CLI 输出主线可以继续保持轻量，不进入 TUI 或复杂事件系统。
+- Claude Code 和 CoreCoder 都重视会话/上下文延续；当前 mini-claude 退出后会丢失消息、summary 和 task state。
+- 这会让长任务只能在单次进程里完成，不利于真实使用。
+- 先做一个轻量 JSON 会话文件，不做数据库、云同步、复杂多会话 UI。
+
+### 已完成 / `0.19.0`: Task Plan UX / 任务计划体验
+
+目标：让多步骤任务的计划和进度在 CLI 中更可见，同时保持 TaskState 轻量。
+
+作用：
+
+- Claude 的任务系统很重，包含后台任务、通知、清理和多 Agent 协调；mini-claude 只吸收“任务状态辅助 Agent Loop”这个核心思想。
+- 当前已有 `TaskState` 和 task 工具，本次不新增架构层，只增强触发指引和用户可见性。
+- 让多步骤 coding task 更像有计划地推进，而不是只输出一串工具日志。
+
+结果：
+
+- system prompt 明确多步骤 coding task 应创建 3-6 项短 todo，并在阶段开始或完成时更新。
+- 明确不为寒暄、泛学习和简单单步请求使用 task 工具。
+- task 工具结果在 CLI 中渲染为 `[tasks]` 区块，模型上下文仍保留原始任务状态文本。
+- 未实现后台任务、任务持久化、任务通知或并发任务引擎。
 
 ### 已完成 / `0.18.0`: CLI Output Protocol Review / CLI 输出协议复查
 

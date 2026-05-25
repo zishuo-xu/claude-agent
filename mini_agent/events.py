@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -15,6 +16,7 @@ EventHandler = Callable[[RuntimeEvent], None]
 PermissionRequestHandler = Callable[[str, dict[str, Any], str], bool]
 MAX_DISPLAY_TOOL_RESULT_CHARS = 1_200
 SUMMARY_ONLY_TOOL_RESULTS = {"read_file", "search_text"}
+TASK_TOOL_RESULTS = {"set_tasks", "update_task", "list_tasks"}
 
 
 def print_runtime_event(event: RuntimeEvent) -> None:
@@ -76,6 +78,8 @@ def _format_tool_result_for_display(payload: dict[str, Any]) -> str:
             return shell_result
     if name == "list_files" and not payload.get("is_error"):
         return _format_list_files_result_for_display(content)
+    if name in TASK_TOOL_RESULTS and not payload.get("is_error"):
+        return _format_task_result_for_display(content)
 
     if payload.get("is_error"):
         return f"[tool_error] {name}: {content}"
@@ -122,3 +126,19 @@ def _format_summary_only_tool_result(name: str, content: str) -> str:
     if name == "search_text" and content == "(no matches)":
         return "[tool_result] search_text returned no matches."
     return f"[tool_result] {name} returned {len(content)} chars; hidden from display."
+
+
+def _format_task_result_for_display(content: str) -> str:
+    if content == "(no tasks)":
+        return "[tasks] none"
+
+    lines = []
+    for raw_line in content.splitlines():
+        match = re.match(r"^(t\d+) \[([a-z_]+)\] (.*)$", raw_line.strip())
+        if not match:
+            return content
+        task_id, status, title = match.groups()
+        lines.append(f"- {task_id} {status}: {title}")
+    if not lines:
+        return "[tasks] none"
+    return "[tasks]\n" + "\n".join(lines)

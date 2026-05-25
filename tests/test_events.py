@@ -91,6 +91,29 @@ def test_print_runtime_event_summarizes_search_text_no_matches(capsys):
     assert captured.out == "[tool_result] search_text returned no matches.\n"
 
 
+def test_print_runtime_event_formats_task_results(capsys):
+    print_runtime_event(
+        RuntimeEvent(
+            "tool_result",
+            {
+                "name": "update_task",
+                "content": "t1 [done] Inspect files - ok\nt2 [in_progress] Run tests",
+                "is_error": False,
+            },
+        )
+    )
+
+    captured = capsys.readouterr()
+    assert captured.out == "[tasks]\n- t1 done: Inspect files - ok\n- t2 in_progress: Run tests\n"
+
+
+def test_print_runtime_event_formats_empty_task_result(capsys):
+    print_runtime_event(RuntimeEvent("tool_result", {"name": "list_tasks", "content": "(no tasks)", "is_error": False}))
+
+    captured = capsys.readouterr()
+    assert captured.out == "[tasks] none\n"
+
+
 def test_print_runtime_event_keeps_error_tool_result_visible(capsys):
     print_runtime_event(RuntimeEvent("tool_result", {"name": "read_file", "content": "error" * 400, "is_error": True}))
 

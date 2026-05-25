@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.18.0`
+当前版本：`0.19.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`141 tests`
+当前测试：`143 tests`
 
 ## LLM Provider
 
@@ -224,6 +224,8 @@ deny -> allow -> ask -> mode fallback
 - `set_tasks`
 - `update_task`
 - `list_tasks`
+- 多步骤 coding task 的 system prompt 会要求先创建 3-6 项短 todo，并在阶段开始或完成时更新
+- CLI 中 task 工具结果显示为 `[tasks]` 区块，模型上下文仍保留原始任务状态文本
 
 相关文件：`mini_agent/tasks.py`
 
