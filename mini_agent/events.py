@@ -14,6 +14,7 @@ class RuntimeEvent:
 EventHandler = Callable[[RuntimeEvent], None]
 PermissionRequestHandler = Callable[[str, dict[str, Any], str], bool]
 MAX_DISPLAY_TOOL_RESULT_CHARS = 1_200
+SUMMARY_ONLY_TOOL_RESULTS = {"read_file", "search_text"}
 
 
 def print_runtime_event(event: RuntimeEvent) -> None:
@@ -68,20 +69,23 @@ def _permission_target(name: str, tool_input: dict[str, Any]) -> str:
 
 def _format_tool_result_for_display(payload: dict[str, Any]) -> str:
     content = str(payload.get("content", ""))
-    if payload.get("name") == "run_shell":
+    name = payload.get("name", "tool")
+    if name == "run_shell":
         shell_result = _format_shell_result_for_display(content)
         if shell_result is not None:
             return shell_result
-    if payload.get("name") == "list_files" and not payload.get("is_error"):
+    if name == "list_files" and not payload.get("is_error"):
         return _format_list_files_result_for_display(content)
 
     if payload.get("is_error"):
-        return f"[tool_error] {payload.get('name', 'tool')}: {content}"
+        return f"[tool_error] {name}: {content}"
+
+    if name in SUMMARY_ONLY_TOOL_RESULTS:
+        return _format_summary_only_tool_result(name, content)
 
     if len(content) <= MAX_DISPLAY_TOOL_RESULT_CHARS:
         return content
 
-    name = payload.get("name", "tool")
     return f"[tool_result] {name} returned {len(content)} chars; hidden from display."
 
 
@@ -112,3 +116,9 @@ def _format_list_files_result_for_display(content: str) -> str:
     preview = ", ".join(entries[:5])
     suffix = "" if len(entries) <= 5 else f", ... +{len(entries) - 5} more"
     return f"[tool_result] list_files returned {len(entries)} entries: {preview}{suffix}"
+
+
+def _format_summary_only_tool_result(name: str, content: str) -> str:
+    if name == "search_text" and content == "(no matches)":
+        return "[tool_result] search_text returned no matches."
+    return f"[tool_result] {name} returned {len(content)} chars; hidden from display."

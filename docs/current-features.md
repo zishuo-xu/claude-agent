@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.17.2`
+当前版本：`0.18.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`138 tests`
+当前测试：`141 tests`
 
 ## LLM Provider
 
@@ -92,7 +92,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - `final_answer`
 
 CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runtime 同时保留事件列表，方便测试和后续演进。
-`tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。长工具结果仍完整进入模型上下文，但 CLI 只显示一行摘要；错误结果在 CLI 中带 `[tool_error]` 前缀完整展示，模型上下文仍保留原始错误 `tool_result`。`run_shell` 结果在 CLI 中按 exit/stdout/stderr 展示，不再原样打印 JSON。`list_files` 结果在 CLI 中显示摘要，避免目录列表刷屏。
+`tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。工具结果仍完整进入模型上下文，但 CLI 会按工具类型控制展示：`read_file` 和 `search_text` 成功结果只显示摘要，错误结果带 `[tool_error]` 前缀完整展示。`run_shell` 结果在 CLI 中按 exit/stdout/stderr 展示，不再原样打印 JSON。`list_files` 结果在 CLI 中显示摘要，避免目录列表刷屏。写入、编辑、任务类短结果仍直接显示，方便确认动作结果。
 
 相关文件：`mini_agent/runtime.py`、`mini_agent/pseudo_tools.py`、`mini_agent/tool_executor.py`、`mini_agent/events.py`、`mini_agent/intent.py`、`mini_agent/tool_policy.py`
 

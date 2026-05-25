@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.17.2`
+当前版本：`0.18.0`
 
 ## 已完成主线
 
@@ -74,6 +74,7 @@
 - `0.17.0`: Permission UX Review / 权限体验复查
 - `0.17.1`: Permission Mode Acceptance Review / 权限模式验收复查
 - `0.17.2`: Permission Line Review / 权限体验主线收尾复查
+- `0.18.0`: CLI Output Protocol Review / CLI 输出协议复查
 
 ## 架构减重审视
 
@@ -137,7 +138,17 @@
 
 ## 下一步
 
-### P1 / `0.18.0`: CLI Output Protocol Review / CLI 输出协议复查
+### P1 / `0.18.1`: CLI Output Acceptance Review / CLI 输出验收复查
+
+目标：用真实 CLI 场景验收 0.18.0 的输出规则是否更清楚。
+
+作用：
+
+- 0.18.0 已收紧 `read_file` / `search_text` 的过程展示，下一步需要确认真实使用里不会信息过少。
+- 验收重点是“用户能看懂 agent 做了什么”，不是继续加展示层。
+- 如果通过，CLI 输出主线可以继续保持轻量，不进入 TUI 或复杂事件系统。
+
+### 已完成 / `0.18.0`: CLI Output Protocol Review / CLI 输出协议复查
 
 目标：复查终端输出里工具调用、工具结果、权限提示、错误和最终回答的展示边界。
 
@@ -146,6 +157,13 @@
 - 0.17.x 已把权限提示变清楚，下一步应看整个 CLI 输出是否一致。
 - CLI 输出是用户直接感知 Agent Loop 的地方，过吵会让工具过程像“思考噪音”，过少又不利于理解和调试。
 - 先做协议复查，不直接引入 TUI、完整事件总线或复杂展示层。
+
+结果：
+
+- `read_file` 和 `search_text` 的成功结果改为 CLI 摘要展示，避免短文件或少量搜索结果直接刷屏。
+- 写入、编辑、任务类短结果仍直接显示，保留动作确认感。
+- `run_shell`、`list_files`、权限提示和错误展示继续沿用已有专门格式。
+- 模型上下文中的工具结果不变，只改变终端展示层。
 
 ### 已完成 / `0.17.2`: Permission Line Review / 权限体验主线收尾复查
 

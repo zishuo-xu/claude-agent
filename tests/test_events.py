@@ -58,11 +58,37 @@ def test_print_runtime_event_hides_long_successful_tool_result(capsys):
     assert captured.out == "[tool_result] read_file returned 2000 chars; hidden from display.\n"
 
 
-def test_print_runtime_event_keeps_short_tool_result_visible(capsys):
+def test_print_runtime_event_hides_short_read_file_result(capsys):
     print_runtime_event(RuntimeEvent("tool_result", {"name": "read_file", "content": "short result", "is_error": False}))
 
     captured = capsys.readouterr()
-    assert captured.out == "short result\n"
+    assert captured.out == "[tool_result] read_file returned 12 chars; hidden from display.\n"
+
+
+def test_print_runtime_event_keeps_short_write_file_result_visible(capsys):
+    print_runtime_event(RuntimeEvent("tool_result", {"name": "write_file", "content": "wrote tmp/a.py (10 bytes)", "is_error": False}))
+
+    captured = capsys.readouterr()
+    assert captured.out == "wrote tmp/a.py (10 bytes)\n"
+
+
+def test_print_runtime_event_hides_search_text_matches(capsys):
+    print_runtime_event(
+        RuntimeEvent(
+            "tool_result",
+            {"name": "search_text", "content": "README.md:1:# Mini-Claude\n", "is_error": False},
+        )
+    )
+
+    captured = capsys.readouterr()
+    assert captured.out == "[tool_result] search_text returned 26 chars; hidden from display.\n"
+
+
+def test_print_runtime_event_summarizes_search_text_no_matches(capsys):
+    print_runtime_event(RuntimeEvent("tool_result", {"name": "search_text", "content": "(no matches)", "is_error": False}))
+
+    captured = capsys.readouterr()
+    assert captured.out == "[tool_result] search_text returned no matches.\n"
 
 
 def test_print_runtime_event_keeps_error_tool_result_visible(capsys):

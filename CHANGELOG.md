@@ -10,6 +10,32 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.18.0 - 2026-05-25
+
+当前学习阶段：CLI Output Protocol Review / CLI 输出协议复查。
+
+变更级别：小特性。
+
+### Changed
+
+- `read_file` 成功结果在 CLI 中统一显示摘要，不再因为内容较短就直接打印文件内容
+- `search_text` 成功匹配结果在 CLI 中统一显示摘要，`(no matches)` 显示为明确的无匹配提示
+- 写入、编辑、任务类短结果继续直接展示，保持动作结果可见
+- 模型上下文中的工具结果不变，只调整终端展示协议
+
+### Tests
+
+- 新增 `read_file` 短结果摘要展示测试
+- 新增 `search_text` 匹配结果摘要展示测试
+- 新增 `search_text` 无匹配提示测试
+- 保留写入类短结果直接展示测试
+
+### Verified
+
+- `tests/test_events.py` passed
+- `141 passed`
+- 事件打印模拟通过：`read_file` / `search_text` 摘要展示，`write_file` 短结果直接展示
+
 ## 0.17.2 - 2026-05-25
 
 当前学习阶段：Permission Line Review / 权限体验主线收尾复查。
