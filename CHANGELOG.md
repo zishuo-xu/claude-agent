@@ -10,6 +10,33 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.24.1 - 2026-05-25
+
+当前学习阶段：Pending Task Real Usage Fix / 短期任务真实使用修复。
+
+变更级别：小特性修复。
+
+### Changed
+
+- Runtime 区分只读工具和非只读工具，`list_files` / `read_file` / `search_text` 这类只读预检不会阻止进入 pending task
+- 写入类工具会标记当前轮次为 mutating，避免任务完成后无边界继承
+- WorkingState 增加继续/追加信号识别，支持文件写作任务完成一批后继续追加
+
+### Review
+
+- 这仍是当前 runtime 内的短期工作状态，不是长期记忆、session resume、任务队列或 planner
+- 真实 CLI 验收发现 `acceptEdits` 下 `apply_edit` 仍会确认，暂记录为后续权限体验复查，不混入本次修复
+
+### Verified
+
+- pending task 针对性测试 passed
+- `157 passed`
+- 真实 CLI 长对话验收通过：补充参数后真实写文件，继续后真实追加写入，切换项目问题正常回答
+
+### Next
+
+- 下一步建议 `0.24.2 Permission Edit Acceptance / 编辑权限体验验收`
+
 ## 0.24.0 - 2026-05-25
 
 当前学习阶段：Working State For Pending Task / 短期任务意图延续。

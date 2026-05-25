@@ -48,7 +48,7 @@ class AgentState:
     events: list[RuntimeEvent] = field(default_factory=list)
     turn_count: int = 0
     current_turn_tool_rounds: int = 0
-    current_turn_used_tools: bool = False
+    current_turn_mutating_tools: bool = False
     summary: str | None = None
     current_intent: IntentDecision | None = None
 
@@ -81,7 +81,7 @@ class AgentRuntime:
     def run_user_turn(self, user_input: str, intent_override: IntentDecision | None = None) -> str:
         self.state.current_intent = intent_override or self.working_state.resolve_intent(user_input)
         self.state.current_turn_tool_rounds = 0
-        self.state.current_turn_used_tools = False
+        self.state.current_turn_mutating_tools = False
         self.state.messages.append({"role": "user", "content": user_input})
         for _ in range(self.config.max_turns):
             self._begin_turn()
@@ -133,8 +133,9 @@ class AgentRuntime:
         return text
 
     def _handle_tool_turn(self, tool_uses: list[Any]) -> None:
-        self.state.current_turn_used_tools = True
-        self.working_state.clear()
+        if self._has_mutating_tool_use(tool_uses):
+            self.state.current_turn_mutating_tools = True
+            self.working_state.clear()
         self._emit(
             "turn_transition",
             reason="tool_use",
@@ -148,10 +149,19 @@ class AgentRuntime:
         self._emit("turn_transition", reason="next_turn", turn=self.state.turn_count)
 
     def _update_working_state_after_final_answer(self, text: str, user_input: str) -> None:
-        if should_wait_for_user(self.state.current_intent, text, self.state.current_turn_used_tools):
+        if should_wait_for_user(self.state.current_intent, text, self.state.current_turn_mutating_tools):
             self.working_state.mark_waiting(intent=self.state.current_intent, goal=user_input)
             return
         self.working_state.clear()
+
+    def _has_mutating_tool_use(self, tool_uses: list[Any]) -> bool:
+        for tool_use in tool_uses:
+            tool = self.tools.get(tool_use.name)
+            if not tool:
+                continue
+            if not tool.read_only(tool_use.input):
+                return True
+        return False
 
     def _call_model(self, model: str) -> Any:
         tools = self._available_tool_specs()

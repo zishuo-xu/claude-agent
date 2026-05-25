@@ -24,6 +24,17 @@ CLARIFICATION_MARKERS = {
     "please provide",
 }
 
+CONTINUATION_MARKERS = {
+    "继续",
+    "追加",
+    "扩展",
+    "接着",
+    "下一段",
+    "后续",
+    "continue",
+    "append",
+}
+
 CANCEL_MARKERS = {
     "算了",
     "不用了",
@@ -73,12 +84,14 @@ class WorkingState:
         self.waiting_for_user = False
 
 
-def should_wait_for_user(intent: IntentDecision | None, final_text: str, used_tools: bool) -> bool:
-    if used_tools or not intent or intent.intent != Intent.CODING_TASK:
+def should_wait_for_user(intent: IntentDecision | None, final_text: str, used_mutating_tools: bool) -> bool:
+    if not intent or intent.intent != Intent.CODING_TASK:
         return False
     lowered = final_text.lower()
     has_question = "?" in final_text or "？" in final_text
-    return has_question and any(marker in lowered for marker in CLARIFICATION_MARKERS)
+    asks_for_clarification = has_question and any(marker in lowered for marker in CLARIFICATION_MARKERS)
+    offers_continuation = any(marker in lowered for marker in CONTINUATION_MARKERS)
+    return offers_continuation or (asks_for_clarification and not used_mutating_tools)
 
 
 def _is_cancel(user_input: str) -> bool:

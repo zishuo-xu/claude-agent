@@ -256,6 +256,82 @@ class ClarifyThenWriteClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class ReadOnlyThenClarifyThenWriteClient:
+    def __init__(self):
+        self.stream_calls = 0
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls += 1
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        if self.stream_calls == 1:
+            yield FinalResponseEvent(LLMResponse([ToolUseBlock(id="call_1", name="list_files", input={"path": "."})]))
+        elif self.stream_calls == 2:
+            yield FinalResponseEvent(LLMResponse([TextBlock("请确认风格、设定、长度和文件名？")]))
+        elif self.stream_calls == 3:
+            yield FinalResponseEvent(
+                LLMResponse(
+                    [
+                        ToolUseBlock(
+                            id="call_2",
+                            name="write_file",
+                            input={"path": "novel.md", "content": "# 第一批\n"},
+                        )
+                    ]
+                )
+            )
+        else:
+            yield FinalResponseEvent(LLMResponse([TextBlock("已创建 novel.md，后续可以继续追加。")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
+class ContinueAfterWriteClient:
+    def __init__(self):
+        self.stream_calls = 0
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls += 1
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        if self.stream_calls == 1:
+            yield FinalResponseEvent(
+                LLMResponse(
+                    [
+                        ToolUseBlock(
+                            id="call_1",
+                            name="write_file",
+                            input={"path": "novel.md", "content": "# 第一批\n"},
+                        )
+                    ]
+                )
+            )
+        elif self.stream_calls == 2:
+            yield FinalResponseEvent(LLMResponse([TextBlock("已创建 novel.md，后续可以继续追加。")]))
+        elif self.stream_calls == 3:
+            yield FinalResponseEvent(
+                LLMResponse(
+                    [
+                        ToolUseBlock(
+                            id="call_2",
+                            name="edit_file",
+                            input={
+                                "path": "novel.md",
+                                "old": "# 第一批\n",
+                                "new": "# 第一批\n\n第二批正文。\n",
+                            },
+                        )
+                    ]
+                )
+            )
+        else:
+            yield FinalResponseEvent(LLMResponse([TextBlock("已追加第二批。")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 class ClarifyClient:
     def stream_complete(self, **_kwargs):
         yield FinalResponseEvent(LLMResponse([TextBlock("请确认文件名和内容风格？")]))
@@ -326,10 +402,42 @@ def test_runtime_inherits_pending_coding_task_for_supplemental_reply(tmp_path: P
 
     assert first == "请确认风格、设定、长度和文件名？"
     assert second == "已创建 novel.md，后续可以继续追加。"
-    assert runtime.working_state.waiting_for_user is False
+    assert runtime.working_state.waiting_for_user is True
     assert client.tool_names_by_call[0]
     assert "write_file" in client.tool_names_by_call[1]
     assert (tmp_path / "novel.md").exists()
+
+
+def test_runtime_keeps_pending_task_after_read_only_precheck_then_clarification(tmp_path: Path):
+    client = ReadOnlyThenClarifyThenWriteClient()
+    runtime = make_silent_runtime_with_client(tmp_path, client)
+    runtime.config.max_turns = 3
+    runtime.permission_handler = lambda _name, _input, _reason: True
+
+    first = runtime.run_user_turn("保存为文件，要求至少2个角色，先问我风格和文件名")
+    second = runtime.run_user_turn("温馨，文件名 novel.md，先写一小段")
+
+    assert first == "请确认风格、设定、长度和文件名？"
+    assert second == "已创建 novel.md，后续可以继续追加。"
+    assert "list_files" in client.tool_names_by_call[0]
+    assert "write_file" in client.tool_names_by_call[2]
+    assert (tmp_path / "novel.md").exists()
+
+
+def test_runtime_allows_continue_after_completed_file_chunk(tmp_path: Path):
+    client = ContinueAfterWriteClient()
+    runtime = make_silent_runtime_with_client(tmp_path, client)
+    runtime.config.max_turns = 2
+    runtime.permission_handler = lambda _name, _input, _reason: True
+
+    first = runtime.run_user_turn("保存为文件，文件名 novel.md，先写一小段")
+    second = runtime.run_user_turn("继续，追加一小段")
+
+    assert first == "已创建 novel.md，后续可以继续追加。"
+    assert second == "已追加第二批。"
+    assert "write_file" in client.tool_names_by_call[0]
+    assert "edit_file" in client.tool_names_by_call[2]
+    assert "第二批正文" in (tmp_path / "novel.md").read_text(encoding="utf-8")
 
 
 def test_runtime_clears_pending_task_when_user_cancels(tmp_path: Path):

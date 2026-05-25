@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.24.0`
+当前版本：`0.24.1`
 
 ## 当前进展
 
@@ -12,7 +12,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - LLM Adapter：Anthropic / OpenAI-compatible 适配，支持 streaming 和 `reasoning_content` 续传。
 - Tool System：统一 `Tool` 抽象、schema、输入校验、工具注册、工具可见性和工具执行器。
 - Tool Choice：intent prompt 注入轻量工具选择策略，项目入口问题优先读对应文档。
-- Working State：澄清问题后的用户补充可继承上一轮任务意图。
+- Working State：澄清问题后的用户补充、写作任务继续追加可继承上一轮任务意图。
 - Permission Pipeline：工作区边界、权限模式、权限规则、危险操作确认和拒绝后防绕路。
 - Context：tool result budget、micro-compact、full compact、summary 注入。
 - Sub Agents：固定内置的 `explore_agent`、`plan_agent`、`verify_agent`，只读隔离执行。
@@ -66,14 +66,31 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.24.1`: Pending Task Acceptance / 短期任务延续验收
+### P1 / `0.24.2`: Permission Edit Acceptance / 编辑权限体验验收
 
-目标：用真实 CLI 场景验收“保存为文件 -> 澄清 -> 用户补充 -> 写文件”的体验。
+目标：复查 `acceptEdits` 下 `apply_edit` 的权限体验是否符合预期。
 
 作用：
 
-- 0.24.0 已加入 WorkingState 和 intent 延续。
-- 下一步只做验收，不扩展为长期记忆、任务队列或 planner。
+- 本次真实 CLI 验收发现 `acceptEdits` 下 `apply_edit` 仍会提示确认，容易打断管道式长对话。
+- 下一步只复查权限体验，不扩大到复杂权限系统。
+
+### 已完成 / `0.24.1`: Pending Task Real Usage Fix / 短期任务真实使用修复
+
+目标：修复真实 CLI 长对话中“只读预检后追问”和“继续追加”导致 pending task 断掉的问题。
+
+作用：
+
+- 0.24.0 已加入 WorkingState，但真实模型可能先 `list_files` 再追问，不能把只读工具当成任务完成。
+- 写作任务完成一批后，用户说“继续/追加”也应该继承当前文件任务。
+
+结果：
+
+- Runtime 改为区分只读工具和非只读工具；只读预检不会阻止进入 pending。
+- 写入类工具仍会标记为 mutating，避免无边界继承。
+- final answer 中出现继续/追加信号时，会保留短期 pending，支持下一轮继续写。
+- 真实 CLI 长对话验收通过：补充参数后真实 `write_file`，继续后真实追加写入，切换项目问题正常读架构文档。
+- 不做长期记忆、任务队列或 planner。
 
 ### 已完成 / `0.24.0`: Working State For Pending Task / 短期任务意图延续
 

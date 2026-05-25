@@ -2,7 +2,7 @@
 
 这是一个参考 Claude Code 设计思想实现的轻量级工程化 agent。它不复刻任何非公开源码，而是在较小代码量里保留 Claude-style agent 的核心架构边界。
 
-当前版本：`0.24.0`
+当前版本：`0.24.1`
 
 项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
@@ -35,7 +35,7 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 - **伪工具调用兼容边界**：`mini_agent/pseudo_tools.py` 负责解析模型误输出的工具标记，runtime 只负责调用
 - **Task/Todo 状态**：`mini_agent/tasks.py` 保存多步骤任务进度，并通过工具更新
 - **意图识别 / 工具门控**：`mini_agent/intent.py` 先判断用户输入，再决定是否暴露工具
-- **短期工作状态**：澄清问题后的用户补充会继承上一轮任务意图，避免多轮文件任务断掉
+- **短期工作状态**：澄清问题和继续追加会继承上一轮任务意图，避免多轮文件任务断掉
 - **项目问答策略**：明确文档入口的问题会隐藏并拒绝执行 `list_files`，优先读架构、功能或路线图文档
 - **Diff 预览和 patch 工具**：`preview_edit` 先看差异，`apply_edit` 应用修改并返回 diff
 - **模型适配层**：`mini_agent/llm.py` 把不同 LLM API 转成统一的 agent 内部格式
