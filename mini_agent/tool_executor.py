@@ -83,7 +83,10 @@ class ToolTurnExecutor:
             destructive=tool.destructive(tool_input),
         )
         if decision.behavior == PermissionBehavior.DENY:
-            result = f"Permission denied: {decision.reason}"
+            result = (
+                f"Permission denied: {decision.reason}. "
+                "Do not retry the same action with another tool; explain the permission boundary to the user."
+            )
             return self._tool_error_result(tool_use.id, name=name, content=result, category="permission_denied")
         if decision.behavior == PermissionBehavior.ASK and not self._confirm_tool(name, tool_input, decision.reason):
             result = "Permission rejected by user"

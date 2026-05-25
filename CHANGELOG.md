@@ -10,6 +10,33 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.17.1 - 2026-05-25
+
+当前学习阶段：Permission Mode Acceptance Review / 权限模式验收复查。
+
+变更级别：小特性。
+
+### Changed
+
+- 权限拒绝结果明确提示模型不要换工具重试同一操作
+- runtime 在权限拒绝或用户拒绝后关闭本轮工具暴露，让模型解释权限边界
+
+### Review
+
+- 真实 CLI 验收 `plan` 模式：写文件和运行命令都会询问
+- 真实 CLI 验收 `acceptEdits` 模式：文件写入自动允许，shell 仍确认
+- 真实 CLI 验收 `dontAsk` 模式：写入直接拒绝，拒绝后不再绕路重试
+
+### Tests
+
+- 新增权限拒绝结果提示测试
+- 新增权限拒绝后 runtime 关闭工具暴露测试
+
+### Verified
+
+- `tests/test_tool_executor.py tests/test_runtime_intent.py tests/test_events.py tests/test_permissions.py` passed
+- 真实 CLI 验收 `plan`、`acceptEdits`、`dontAsk` 通过
+
 ## 0.17.0 - 2026-05-25
 
 当前学习阶段：Permission UX Review / 权限体验复查。

@@ -52,6 +52,25 @@ class WriteFileToolClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class PermissionDeniedThenAnswerClient:
+    def __init__(self):
+        self.stream_calls = 0
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls += 1
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        if self.stream_calls == 1:
+            yield FinalResponseEvent(
+                LLMResponse([ToolUseBlock(id="call_1", name="write_file", input={"path": "x.txt", "content": "x"})])
+            )
+        else:
+            yield FinalResponseEvent(LLMResponse([TextBlock("permission boundary explained")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 class UnknownToolClient:
     def stream_complete(self, **_kwargs):
         yield FinalResponseEvent(LLMResponse([ToolUseBlock(id="call_1", name="missing_tool", input={})]))
@@ -449,6 +468,23 @@ def test_runtime_uses_permission_handler_for_ask_decisions(tmp_path: Path, capsy
     assert tool_results[0]["is_error"] is True
     assert tool_results[0]["content"] == "Permission rejected by user"
     assert not (tmp_path / "x.txt").exists()
+
+
+def test_runtime_disables_tools_after_permission_denial(tmp_path: Path):
+    client = PermissionDeniedThenAnswerClient()
+    runtime = make_silent_runtime_with_client(tmp_path, client)
+    runtime.config.max_turns = 2
+    runtime.config.permission_mode = PermissionMode.DONT_ASK
+    runtime.permission_context.mode = PermissionMode.DONT_ASK
+
+    result = runtime.run_user_turn("新增 x.txt，内容是 x")
+
+    assert result == "permission boundary explained"
+    assert client.tool_names_by_call[0]
+    assert client.tool_names_by_call[1] == []
+    tool_results = runtime.state.messages[-2]["content"]
+    assert tool_results[0]["is_error"] is True
+    assert "Do not retry the same action with another tool" in tool_results[0]["content"]
 
 
 def test_runtime_emits_tool_error_for_invalid_tool_input(tmp_path: Path):

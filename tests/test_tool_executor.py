@@ -56,6 +56,27 @@ def test_tool_turn_executor_uses_permission_handler_for_rejection():
     ]
 
 
+def test_tool_turn_executor_denial_discourages_retrying_with_another_tool():
+    tool = build_tool(
+        name="write_file",
+        description="Write file",
+        input_schema={"type": "object"},
+        call=lambda _input: "written",
+    )
+    executor = ToolTurnExecutor(
+        tools={"write_file": tool},
+        permission_context=PermissionContext(mode=PermissionMode.DONT_ASK),
+        emit=lambda _event_type, **_payload: None,
+        permission_handler=lambda _name, _input, _reason: True,
+    )
+
+    result = executor.execute([ToolUseBlock(id="call_1", name="write_file", input={"path": "x.txt"})])
+
+    assert result[0]["is_error"] is True
+    assert result[0]["content"].startswith("Permission denied: dontAsk mode refuses actions that need confirmation.")
+    assert "Do not retry the same action with another tool" in result[0]["content"]
+
+
 def test_tool_turn_executor_rejects_unknown_input_fields():
     events = []
     tool = build_tool(

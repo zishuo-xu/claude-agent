@@ -135,6 +135,7 @@ class AgentRuntime:
         )
         tool_results = self._execute_tool_uses(tool_uses)
         self.state.messages.append({"role": "user", "content": tool_results})
+        self._disable_tools_after_permission_denial(tool_results)
         self._disable_tools_after_project_question_use(tool_uses)
         self._emit("turn_transition", reason="next_turn", turn=self.state.turn_count)
 
@@ -235,6 +236,23 @@ class AgentRuntime:
         self.state.current_intent = IntentDecision(
             intent=decision.intent,
             reason=f"{decision.reason}; project question tools already ran",
+            allow_tools=False,
+        )
+
+    def _disable_tools_after_permission_denial(self, tool_results: list[dict[str, Any]]) -> None:
+        if not self.state.current_intent:
+            return
+        denied = any(
+            result.get("is_error") is True
+            and str(result.get("content", "")).startswith(("Permission denied:", "Permission rejected by user"))
+            for result in tool_results
+        )
+        if not denied:
+            return
+        decision = self.state.current_intent
+        self.state.current_intent = IntentDecision(
+            intent=decision.intent,
+            reason=f"{decision.reason}; permission denied, tools disabled for this turn",
             allow_tools=False,
         )
 

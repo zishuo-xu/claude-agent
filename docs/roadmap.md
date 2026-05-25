@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.17.0`
+当前版本：`0.17.1`
 
 ## 已完成主线
 
@@ -72,6 +72,7 @@
 - `0.16.1`: Prompt / Context Acceptance Review / 提示词与上下文验收复查
 - `0.16.2`: Prompt / Context Line Review / 提示词与上下文主线收尾复查
 - `0.17.0`: Permission UX Review / 权限体验复查
+- `0.17.1`: Permission Mode Acceptance Review / 权限模式验收复查
 
 ## 架构减重审视
 
@@ -135,7 +136,17 @@
 
 ## 下一步
 
-### P1 / `0.17.1`: Permission Mode Acceptance Review / 权限模式验收复查
+### P1 / `0.17.2`: Permission Line Review / 权限体验主线收尾复查
+
+目标：复查 0.17.x 权限体验是否已经足够清楚，决定是否结束权限体验主线。
+
+作用：
+
+- 0.17.0 改善了确认提示，0.17.1 验证并收紧了权限拒绝后的行为。
+- 如果没有新问题，不继续加复杂权限规则。
+- 下一步只做收尾判断，再决定是否进入 CLI 输出协议或 LLM 适配边界。
+
+### 已完成 / `0.17.1`: Permission Mode Acceptance Review / 权限模式验收复查
 
 目标：用真实 CLI 场景验收 `plan`、`acceptEdits`、`dontAsk` 等权限模式的用户体验。
 
@@ -144,6 +155,13 @@
 - 0.17.0 已改善确认提示本身。
 - 下一步验证不同权限模式是否符合用户预期。
 - 不增加复杂权限规则系统，只观察真实体验。
+
+结果：
+
+- `plan` 模式：写文件和运行命令都会询问，提示清楚。
+- `acceptEdits` 模式：文件写入自动允许，shell 仍会确认，符合预期。
+- `dontAsk` 模式：需要确认的写入直接拒绝；发现模型会尝试换工具绕路，已修复为拒绝后关闭本轮工具暴露。
+- 未新增权限模式、自动白名单、复杂规则语言或 TUI。
 
 ### 已完成 / `0.17.0`: Permission UX Review / 权限体验复查
 
