@@ -5,7 +5,10 @@ from typing import Any
 
 
 MICRO_COMPACT_PLACEHOLDER = "[old tool result cleared by micro-compact"
+DEFAULT_KEEP_RECENT_TOOL_RESULTS = 6
 
+# High-noise successful tool outputs can be cheaply cleared before asking the
+# model to summarize older history. Task/todo and error results stay intact.
 COMPACTABLE_TOOL_NAMES = {
     "list_files",
     "read_file",
@@ -43,7 +46,7 @@ def count_message_chars(messages: list[dict[str, Any]]) -> int:
 def micro_compact_messages(
     messages: list[dict[str, Any]],
     *,
-    keep_recent_tool_results: int = 6,
+    keep_recent_tool_results: int = DEFAULT_KEEP_RECENT_TOOL_RESULTS,
     compactable_tool_names: set[str] | None = None,
 ) -> MicroCompactResult:
     tool_names = compactable_tool_names or COMPACTABLE_TOOL_NAMES

@@ -1,4 +1,4 @@
-from mini_agent.context import MICRO_COMPACT_PLACEHOLDER, micro_compact_messages
+from mini_agent.context import COMPACTABLE_TOOL_NAMES, DEFAULT_KEEP_RECENT_TOOL_RESULTS, MICRO_COMPACT_PLACEHOLDER, micro_compact_messages
 
 
 def assistant_tool_use(tool_use_id: str, name: str) -> dict:
@@ -106,6 +106,7 @@ def test_micro_compact_keeps_default_recent_six_compactable_results():
     result = micro_compact_messages(messages)
 
     assert result.compacted_count == 2
+    assert DEFAULT_KEEP_RECENT_TOOL_RESULTS == 6
     assert result.messages[1]["content"][0]["content"].startswith(MICRO_COMPACT_PLACEHOLDER)
     assert result.messages[3]["content"][0]["content"].startswith(MICRO_COMPACT_PLACEHOLDER)
     assert [result.messages[index]["content"][0]["content"] for index in range(5, 16, 2)] == [
@@ -130,3 +131,8 @@ def test_micro_compact_does_not_clear_tool_result_without_matching_tool_use():
     assert result.compacted_count == 1
     assert result.messages[0]["content"][0]["content"] == "manual tool result should stay"
     assert result.messages[2]["content"][0]["content"].startswith(MICRO_COMPACT_PLACEHOLDER)
+
+
+def test_default_compactable_tool_set_excludes_task_tools():
+    assert {"set_tasks", "update_task", "list_tasks"}.isdisjoint(COMPACTABLE_TOOL_NAMES)
+    assert {"read_file", "search_text", "run_shell"}.issubset(COMPACTABLE_TOOL_NAMES)

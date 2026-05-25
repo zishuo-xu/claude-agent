@@ -10,6 +10,29 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.22.0 - 2026-05-25
+
+当前学习阶段：Context Budget Policy / 上下文预算策略。
+
+变更级别：小特性。
+
+### Changed
+
+- 新增 `DEFAULT_KEEP_RECENT_TOOL_RESULTS`，明确 micro-compact 默认保留最近 6 个可压缩工具结果
+- 为 `COMPACTABLE_TOOL_NAMES` 增加策略说明，强调只压缩高噪音成功工具输出
+- 新增测试固定 task/todo 工具不在默认可压缩集合中
+- 同步文档，明确上下文预算顺序：tool result budget -> micro-compact -> full compact -> summary / TaskState 注入
+
+### Review
+
+- 保持现有 compact 流程，不引入 token 精确预算、向量库、长期记忆或 session resume
+- 继续保持 summary 和 TaskState 分离：summary 保存历史上下文，TaskState 保存当前任务进度
+
+### Verified
+
+- `tests/test_context.py tests/test_runtime_intent.py -k 'compact or summary or context'` passed
+- `148 passed`
+
 ## 0.21.1 - 2026-05-25
 
 当前学习阶段：LLM Adapter Acceptance / 模型适配验收。

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.21.1`
+当前版本：`0.22.0`
 
 ## 当前进展
 
@@ -64,7 +64,16 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.22.0`: Context Budget Policy / 上下文预算策略
+### P1 / `0.22.1`: Context Budget Acceptance / 上下文预算验收
+
+目标：用现有测试和少量模拟长任务验收上下文预算策略是否足够稳定。
+
+作用：
+
+- 0.22.0 已集中表达 micro-compact 的默认保留数量和可压缩工具集合。
+- 下一步只验收长任务、错误结果、task state 和 summary 注入，不新增复杂 memory 系统。
+
+### 已完成 / `0.22.0`: Context Budget Policy / 上下文预算策略
 
 目标：复查当前 context budget、tool result budget、micro-compact 和 full compact 的策略边界。
 
@@ -72,7 +81,14 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 - LLM Adapter 主线已稳定，下一条更贴近 agent 核心的是上下文预算。
 - Claude Code 对上下文预算、工具结果裁剪和摘要注入非常重视；mini-claude 已有轻量实现，但策略还可以更清楚。
-- 下一步应优先复查策略和测试，不引入向量库、长期记忆或复杂 token 预算器。
+- 本次优先复查策略和测试，不引入向量库、长期记忆或复杂 token 预算器。
+
+结果：
+
+- 新增 `DEFAULT_KEEP_RECENT_TOOL_RESULTS`，明确 micro-compact 默认保留最近 6 个可压缩工具结果。
+- `COMPACTABLE_TOOL_NAMES` 增加注释，明确只包含高噪音成功工具结果。
+- 新增测试固定 task/todo 工具不在默认可压缩集合中。
+- 不改变 compact 流程，不引入 token 精确预算、长期记忆或向量库。
 
 ### 已完成 / `0.21.1`: LLM Adapter Acceptance / 模型适配验收
 

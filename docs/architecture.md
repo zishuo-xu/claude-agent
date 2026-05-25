@@ -172,6 +172,7 @@ OpenAI-compatible 无效工具参数会降级为 `raw_arguments`，streaming 空
 
 - tool result budget：工具结果进入上下文前先截断
 - micro-compact：不调用模型，只压缩旧工具结果
+- 可压缩工具集合集中在 `COMPACTABLE_TOOL_NAMES`，默认保留最近 `DEFAULT_KEEP_RECENT_TOOL_RESULTS` 个结果
 - full compact：仍超预算时让模型总结旧历史
 - summary 注入：full compact 摘要会进入后续 system prompt
 - TaskState 注入：当前任务状态独立进入 system prompt，不合并进 summary
