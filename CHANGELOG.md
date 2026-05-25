@@ -10,6 +10,39 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.24.0 - 2026-05-25
+
+当前学习阶段：Working State For Pending Task / 短期任务意图延续。
+
+变更级别：小特性。
+
+### Added
+
+- 新增 `mini_agent/working_state.py`，保存当前 runtime 内的单个 pending task
+- Runtime 使用 `WorkingState.resolve_intent()`，让澄清问题后的用户补充可以继承上一轮 coding task
+- 新增创作型文件任务识别：“保存为文件 / 保持为文件 / 写成文件 / 输出到文件”等表达进入 coding task
+- coding task guidance 增加超长内容分批写入文件策略
+
+### Changed
+
+- 工具执行时会清空 pending task，避免任务完成后错误继承
+- 用户取消时会清空 pending task
+
+### Review
+
+- 这是 Claude-style agent loop 的轻量工作状态边界，不是长期记忆系统
+- 不做 session resume、多任务队列、planner 或专用小说生成器
+
+### Verified
+
+- pending task 针对性测试 passed
+- `155 passed`
+- 文档测试 passed
+
+### Next
+
+- 下一步建议 `0.24.1 Pending Task Acceptance / 短期任务延续验收`
+
 ## 0.23.0 - 2026-05-25
 
 当前学习阶段：Subagent Context Policy / 子 Agent 上下文策略。

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.23.0`
+当前版本：`0.24.0`
 
 ## 当前进展
 
@@ -12,6 +12,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - LLM Adapter：Anthropic / OpenAI-compatible 适配，支持 streaming 和 `reasoning_content` 续传。
 - Tool System：统一 `Tool` 抽象、schema、输入校验、工具注册、工具可见性和工具执行器。
 - Tool Choice：intent prompt 注入轻量工具选择策略，项目入口问题优先读对应文档。
+- Working State：澄清问题后的用户补充可继承上一轮任务意图。
 - Permission Pipeline：工作区边界、权限模式、权限规则、危险操作确认和拒绝后防绕路。
 - Context：tool result budget、micro-compact、full compact、summary 注入。
 - Sub Agents：固定内置的 `explore_agent`、`plan_agent`、`verify_agent`，只读隔离执行。
@@ -29,6 +30,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - 上下文压缩分层：原始消息、工具结果预算、历史 summary、当前 task state。
 - AgentTool 风格子 Agent：隔离上下文，只返回精炼结果。
 - 任务状态辅助长任务推进。
+- 当前任务状态参与下一轮 intent resolution，避免把补充参数误判成新闲聊。
 
 ## 与 Claude 的差异
 
@@ -64,14 +66,41 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.23.1`: Subagent Context Acceptance / 子 Agent 上下文验收
+### P1 / `0.24.1`: Pending Task Acceptance / 短期任务延续验收
+
+目标：用真实 CLI 场景验收“保存为文件 -> 澄清 -> 用户补充 -> 写文件”的体验。
+
+作用：
+
+- 0.24.0 已加入 WorkingState 和 intent 延续。
+- 下一步只做验收，不扩展为长期记忆、任务队列或 planner。
+
+### 已完成 / `0.24.0`: Working State For Pending Task / 短期任务意图延续
+
+目标：让 Agent 能理解“用户第二轮是在补充上一轮未完成任务”，尤其是创作型保存文件任务。
+
+作用：
+
+- 这更贴近 Claude-style agent loop：当前任务状态参与下一轮决策，而不是每轮孤立分类。
+- 修复“保存为文件后追问，用户补充参数却被当成闲聊”的问题。
+
+结果：
+
+- 新增 `mini_agent/working_state.py`，保存当前 runtime 内的单个 pending task。
+- Runtime 使用 `WorkingState.resolve_intent()`，在用户补充参数时继承上一轮 coding task。
+- 工具执行、用户取消或任务完成后清空 pending 状态。
+- “保存为文件 / 写成文件 / 输出到文件”等创作型文件请求会进入 coding task。
+- coding task guidance 增加超长内容分批写入文件策略。
+- 不做长期记忆、session resume、多任务队列、planner 或专用小说生成器。
+
+### 候选 / `0.23.1`: Subagent Context Acceptance / 子 Agent 上下文验收
 
 目标：用测试和一次真实模拟任务验收子 Agent 上下文策略是否足够稳定。
 
 作用：
 
 - 0.23.0 已把子任务输入、内部 transcript 和返回结果预算写进代码。
-- 下一步只验证真实项目问答和长 transcript 情况，不新增子 Agent 类型或复杂多 Agent 能力。
+- 后续可验证真实项目问答和长 transcript 情况，不新增子 Agent 类型或复杂多 Agent 能力。
 
 ### 已完成 / `0.23.0`: Subagent Context Policy / 子 Agent 上下文策略
 

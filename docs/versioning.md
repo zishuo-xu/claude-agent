@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.23.0`
+当前版本：`0.24.0`
 
 已完成学习主线：
 
@@ -174,5 +174,6 @@ MAJOR.MINOR.PATCH
 - `0.22.0`: Context Budget Policy / 上下文预算策略
 - `0.22.1`: Context Budget Acceptance / 上下文预算验收
 - `0.23.0`: Subagent Context Policy / 子 Agent 上下文策略
+- `0.24.0`: Working State For Pending Task / 短期任务意图延续
 
 详细说明以 `CHANGELOG.md` 为准。

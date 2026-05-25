@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.23.0`
+当前版本：`0.24.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`151 tests`
+当前测试：`155 tests`
 
 ## LLM Provider
 
@@ -50,6 +50,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 多轮消息历史
 - 阶段化主循环：begin turn、record assistant、final answer、tool turn
 - 意图识别和工具门控
+- 短期 working state：澄清问题后的用户补充可以继承上一轮任务意图
 - 流式文本输出
 - 工具调用、工具执行、工具结果回传
 - 工具轮次执行器
@@ -71,7 +72,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - task/todo 状态注入 system prompt
 - micro-compact 和 full compact
 
-普通寒暄、泛学习请求默认不读项目、不调用工具；泛学习默认保持 3-5 行，不主动给链接或 emoji。项目问题和编码任务才进入工具循环。中文“创建文件并给出内容”的请求会进入 coding task。明确给出目标路径和内容的 coding task 会隐藏 `list_files`，让模型直接创建或编辑文件。
+普通寒暄、泛学习请求默认不读项目、不调用工具；泛学习默认保持 3-5 行，不主动给链接或 emoji。项目问题和编码任务才进入工具循环。中文“创建文件并给出内容”的请求会进入 coding task；“保存为文件 / 写成文件 / 输出到文件”等创作型文件请求也会进入 coding task。明确给出目标路径和内容的 coding task 会隐藏 `list_files`，让模型直接创建或编辑文件。若上一轮 coding task 回复是在等待用户补充，下一轮补充参数会继承上一轮任务意图；工具执行、用户取消或任务完成后会清空该短期状态。超长内容生成会被提示分批写入文件，避免单轮硬写。
 项目问题会按问题选择最相关文档入口：架构和 Agent Loop 问题读 `docs/architecture.md`，功能、版本、启动和用法问题读 `docs/current-features.md`，下一步/roadmap 问题读 `docs/roadmap.md`，宽泛项目概览再读 `README.md` 或 `docs/context-map.md`。项目结构、架构、Agent Loop、当前功能、当前版本、怎么启动、下一步这类问题会隐藏 `list_files` 和 `search_text`，直接读文档；即使问题没有显式出现“项目”二字，只要命中文档入口问题，也按项目问答处理。隐藏工具即使被模型输出，也会在执行层转成内部引导结果，不按普通未知工具错误展示。目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；默认用短段落或 3-6 条短要点，不主动使用 emoji、表格、目录树或额外学习链接。
 
 当前运行时事件包括：
@@ -95,7 +96,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 CLI 通过事件打印输出；权限确认通过可注入 handler 处理；runtime 同时保留事件列表，方便测试和后续演进。
 `tool_batch_start` / `tool_batch_end` 是内部可观测事件，默认 CLI 不打印。工具结果仍完整进入模型上下文，但 CLI 会按工具类型控制展示：`read_file` 和 `search_text` 成功结果只显示摘要，错误结果带 `[tool_error]` 前缀完整展示。`run_shell` 结果在 CLI 中按 exit/stdout/stderr 展示，不再原样打印 JSON。`list_files` 结果在 CLI 中显示摘要，避免目录列表刷屏。写入、编辑、任务类短结果仍直接显示，方便确认动作结果。
 
-相关文件：`mini_agent/runtime.py`、`mini_agent/pseudo_tools.py`、`mini_agent/tool_executor.py`、`mini_agent/events.py`、`mini_agent/intent.py`、`mini_agent/tool_policy.py`
+相关文件：`mini_agent/runtime.py`、`mini_agent/working_state.py`、`mini_agent/pseudo_tools.py`、`mini_agent/tool_executor.py`、`mini_agent/events.py`、`mini_agent/intent.py`、`mini_agent/tool_policy.py`
 
 ## 工具系统
 

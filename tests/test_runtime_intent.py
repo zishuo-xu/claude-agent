@@ -224,6 +224,46 @@ class HiddenProjectListFilesClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class ClarifyThenWriteClient:
+    def __init__(self):
+        self.stream_calls = 0
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls += 1
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        if self.stream_calls == 1:
+            yield FinalResponseEvent(LLMResponse([TextBlock("请确认风格、设定、长度和文件名？")]))
+        elif self.stream_calls == 2:
+            yield FinalResponseEvent(
+                LLMResponse(
+                    [
+                        ToolUseBlock(
+                            id="call_1",
+                            name="write_file",
+                            input={
+                                "path": "novel.md",
+                                "content": "# 校园长篇\n\n人物设定和第一批正文。",
+                            },
+                        )
+                    ]
+                )
+            )
+        else:
+            yield FinalResponseEvent(LLMResponse([TextBlock("已创建 novel.md，后续可以继续追加。")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
+class ClarifyClient:
+    def stream_complete(self, **_kwargs):
+        yield FinalResponseEvent(LLMResponse([TextBlock("请确认文件名和内容风格？")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 def make_runtime(tmp_path: Path) -> AgentRuntime:
     task_state = TaskState()
     return AgentRuntime(
@@ -273,6 +313,33 @@ def test_runtime_hides_tools_for_general_learning(tmp_path: Path):
     runtime.state.current_intent = classify_intent("我想学习 Python")
 
     assert runtime._available_tool_specs() == []
+
+
+def test_runtime_inherits_pending_coding_task_for_supplemental_reply(tmp_path: Path):
+    client = ClarifyThenWriteClient()
+    runtime = make_silent_runtime_with_client(tmp_path, client)
+    runtime.config.max_turns = 2
+    runtime.permission_handler = lambda _name, _input, _reason: True
+
+    first = runtime.run_user_turn("可以，并且保持为文件，要求至少5个女主角")
+    second = runtime.run_user_turn("温馨、1+5、大学、长篇、目标50w字、先写5w字")
+
+    assert first == "请确认风格、设定、长度和文件名？"
+    assert second == "已创建 novel.md，后续可以继续追加。"
+    assert runtime.working_state.waiting_for_user is False
+    assert client.tool_names_by_call[0]
+    assert "write_file" in client.tool_names_by_call[1]
+    assert (tmp_path / "novel.md").exists()
+
+
+def test_runtime_clears_pending_task_when_user_cancels(tmp_path: Path):
+    runtime = make_silent_runtime_with_client(tmp_path, ClarifyClient())
+
+    runtime.run_user_turn("保存为文件，要求至少5个女主角")
+    decision = runtime.working_state.resolve_intent("算了")
+
+    assert decision.intent == classify_intent("算了").intent
+    assert runtime.working_state.waiting_for_user is False
 
 
 def test_runtime_exposes_tools_for_project_question(tmp_path: Path):

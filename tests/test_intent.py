@@ -123,6 +123,22 @@ def test_classifies_create_file_with_content_as_coding_task():
     assert decision.hidden_tools == frozenset({"list_files"})
 
 
+def test_classifies_save_as_file_request_as_coding_task():
+    decision = classify_intent("可以，并且保持为文件，要求至少5个女主角")
+
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools
+
+
+def test_coding_task_prompt_guides_long_content_batches():
+    decision = classify_intent("保存为文件，目标50w字，先写5w字")
+
+    guidance = tool_choice_guidance(decision)
+
+    assert "very long generated content" in guidance
+    assert "in batches" in guidance
+
+
 def test_create_keyword_without_file_path_does_not_hide_list_files():
     decision = classify_intent("创建一个简单的 Python 示例")
 

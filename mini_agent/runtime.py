@@ -12,7 +12,7 @@ from .events import (
     print_runtime_event,
     prompt_permission_request,
 )
-from .intent import Intent, IntentDecision, classify_intent, intent_prompt
+from .intent import Intent, IntentDecision, intent_prompt
 from .llm import FinalResponseEvent, LLMClient, TextBlock
 from .permissions import PermissionContext, PermissionRule
 from .pseudo_tools import contains_pseudo_tool_call, normalize_pseudo_tool_call
@@ -20,6 +20,7 @@ from .tasks import TaskState
 from .tool_core import Tool
 from .tool_executor import ToolTurnExecutor
 from .tool_registry import ToolRegistry
+from .working_state import WorkingState, should_wait_for_user
 
 
 SYSTEM_PROMPT = """You are a Claude Code inspired learning agent.
@@ -47,6 +48,7 @@ class AgentState:
     events: list[RuntimeEvent] = field(default_factory=list)
     turn_count: int = 0
     current_turn_tool_rounds: int = 0
+    current_turn_used_tools: bool = False
     summary: str | None = None
     current_intent: IntentDecision | None = None
 
@@ -71,13 +73,15 @@ class AgentRuntime:
         self.tools = self.tool_registry.all()
         self.task_state = task_state or TaskState()
         self.state = AgentState()
+        self.working_state = WorkingState()
         self.permission_context = PermissionContext(mode=config.permission_mode, rules=permission_rules or [])
         self.event_handler = event_handler
         self.permission_handler = permission_handler
 
     def run_user_turn(self, user_input: str, intent_override: IntentDecision | None = None) -> str:
-        self.state.current_intent = intent_override or classify_intent(user_input)
+        self.state.current_intent = intent_override or self.working_state.resolve_intent(user_input)
         self.state.current_turn_tool_rounds = 0
+        self.state.current_turn_used_tools = False
         self.state.messages.append({"role": "user", "content": user_input})
         for _ in range(self.config.max_turns):
             self._begin_turn()
@@ -123,11 +127,14 @@ class AgentRuntime:
         if not text:
             text = self._empty_response_fallback(user_input)
             self._emit("text_delta", text=text)
+        self._update_working_state_after_final_answer(text, user_input)
         self._emit("turn_transition", reason="final_answer", turn=self.state.turn_count)
         self._emit("final_answer", text=text)
         return text
 
     def _handle_tool_turn(self, tool_uses: list[Any]) -> None:
+        self.state.current_turn_used_tools = True
+        self.working_state.clear()
         self._emit(
             "turn_transition",
             reason="tool_use",
@@ -139,6 +146,12 @@ class AgentRuntime:
         self._disable_tools_after_permission_denial(tool_results)
         self._disable_tools_after_project_question_use(tool_uses)
         self._emit("turn_transition", reason="next_turn", turn=self.state.turn_count)
+
+    def _update_working_state_after_final_answer(self, text: str, user_input: str) -> None:
+        if should_wait_for_user(self.state.current_intent, text, self.state.current_turn_used_tools):
+            self.working_state.mark_waiting(intent=self.state.current_intent, goal=user_input)
+            return
+        self.working_state.clear()
 
     def _call_model(self, model: str) -> Any:
         tools = self._available_tool_specs()

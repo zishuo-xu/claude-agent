@@ -18,6 +18,7 @@
 | 历史变化 | `CHANGELOG.md` |
 | LLM provider 适配 | `docs/01-llm-provider-adapter.md` |
 | Agent Loop | `mini_agent/runtime.py` |
+| 短期工作状态 | `mini_agent/working_state.py` |
 | 运行时事件 | `mini_agent/events.py` |
 | LLM API 边界 | `mini_agent/llm.py` |
 | 伪工具调用兼容 | `mini_agent/pseudo_tools.py` |

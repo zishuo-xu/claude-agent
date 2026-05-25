@@ -82,6 +82,18 @@ CODING_KEYWORDS = {
     "refactor",
 }
 
+FILE_GENERATION_KEYWORDS = {
+    "保存为文件",
+    "保持为文件",
+    "写成文件",
+    "生成文件",
+    "输出到文件",
+    "写入文件",
+    "存成文件",
+    "save to file",
+    "write to file",
+}
+
 DANGEROUS_KEYWORDS = {
     "删除所有",
     "清空",
@@ -135,6 +147,9 @@ def classify_intent(user_input: str) -> IntentDecision:
 
     if mentions_project:
         return IntentDecision(Intent.PROJECT_QUESTION, "project-specific question", allow_tools=True)
+
+    if any(keyword in lowered for keyword in FILE_GENERATION_KEYWORDS):
+        return IntentDecision(Intent.CODING_TASK, "file generation task", allow_tools=True)
 
     if any(keyword in lowered for keyword in CODING_KEYWORDS):
         if _looks_like_direct_file_task(lowered):
@@ -212,7 +227,9 @@ def tool_choice_guidance(decision: IntentDecision) -> str:
         Intent.CODING_TASK: (
             "You may use tools to inspect, edit, run tests, and verify changes. If the user gives an explicit "
             "file path and exact content, create or edit that file directly; do not call list_files first unless "
-            "the target path is ambiguous or you need to discover existing files."
+            "the target path is ambiguous or you need to discover existing files. If the user asks for very long "
+            "generated content, create or update a file in batches instead of trying to produce everything in one "
+            "response. Start with outline, metadata, or the first useful chunk, then explain how to continue."
         ),
         Intent.DANGEROUS_REQUEST: "Do not use tools. Explain the safety concern and ask for a safer, more specific goal.",
     }[decision.intent]
