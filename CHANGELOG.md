@@ -10,6 +10,35 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.23.0 - 2026-05-25
+
+当前学习阶段：Subagent Context Policy / 子 Agent 上下文策略。
+
+变更级别：小特性。
+
+### Changed
+
+- 新增子 Agent 上下文策略提示，明确内部探索留在子 Agent，只把最终结构化摘要返回主 Agent
+- 新增 `SUBAGENT_TASK_CHAR_BUDGET`，对子任务输入做轻量截断，避免主 Agent 把过长上下文直接塞给子 Agent
+- 新增 `SUBAGENT_TRANSCRIPT_CHAR_BUDGET`，对子 Agent 超限后的 captured transcript 做截断，再交给 finalizer 总结
+- 新增 `SUBAGENT_RESULT_CHAR_BUDGET`，对子 Agent 工具返回做较小预算，避免最终摘要污染主上下文
+- 新增测试覆盖 oversized assigned task、trimmed finalizer transcript 和 compact subagent tool result budget
+
+### Review
+
+- 保持固定 `explore_agent`、`plan_agent`、`verify_agent` 三个只读角色
+- 不新增自定义 agent、后台并行、独立模型、worktree 隔离或子 Agent 间通信
+
+### Verified
+
+- `tests/test_subagent.py` passed
+- `151 passed`
+- 文档测试 passed
+
+### Next
+
+- 下一步建议 `0.23.1 Subagent Context Acceptance / 子 Agent 上下文验收`
+
 ## 0.22.1 - 2026-05-25
 
 当前学习阶段：Context Budget Acceptance / 上下文预算验收。

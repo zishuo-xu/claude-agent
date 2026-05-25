@@ -198,7 +198,7 @@ AgentTool 风格的内置只读子 Agent：
 - `plan_agent`
 - `verify_agent`
 
-子 Agent 使用独立 runtime、独立 state、只读工具集。主 Agent 只接收最终总结；即使子 Agent 超限或 finalization 失败，也只返回短 `inconclusive` 摘要和少量最近证据，避免把探索过程全部塞进主上下文。
+子 Agent 使用独立 runtime、独立 state、只读工具集。主 Agent 只接收最终总结；子任务输入、内部 transcript 和子 Agent 工具返回都有轻量字符预算。即使子 Agent 超限或 finalization 失败，也只返回短 `inconclusive` 摘要和少量最近证据，避免把探索过程全部塞进主上下文。
 
 子 Agent 内部不会再暴露 `explore_agent`、`plan_agent`、`verify_agent` 这类子 Agent 工具自身，prompt 也明确不委托其他 Agent，避免形成递归 AgentTool 调用。当前只保留固定内置角色，不支持自定义 agent、后台并行、独立模型或 worktree 隔离。
 

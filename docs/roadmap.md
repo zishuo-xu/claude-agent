@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.22.1`
+当前版本：`0.23.0`
 
 ## 当前进展
 
@@ -64,15 +64,32 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.23.0`: Subagent Context Policy / 子 Agent 上下文策略
+### P1 / `0.23.1`: Subagent Context Acceptance / 子 Agent 上下文验收
 
-目标：复查子 Agent 的上下文隔离、工具暴露、结果回传和失败兜底策略。
+目标：用测试和一次真实模拟任务验收子 Agent 上下文策略是否足够稳定。
+
+作用：
+
+- 0.23.0 已把子任务输入、内部 transcript 和返回结果预算写进代码。
+- 下一步只验证真实项目问答和长 transcript 情况，不新增子 Agent 类型或复杂多 Agent 能力。
+
+### 已完成 / `0.23.0`: Subagent Context Policy / 子 Agent 上下文策略
+
+目标：复查并收紧子 Agent 的上下文隔离、工具暴露、结果回传和失败兜底策略。
 
 作用：
 
 - 子 Agent 是 Claude-style 架构中的重要能力，但也是最容易膨胀的一条线。
-- 当前已有固定只读 `explore_agent`、`plan_agent`、`verify_agent`，下一步应复查上下文边界是否足够清楚。
-- 只复查策略和测试，不新增 Agent 类型、自定义 markdown agent 或后台并行。
+- 本次保留固定只读 `explore_agent`、`plan_agent`、`verify_agent`，只把上下文边界显式化。
+
+结果：
+
+- 新增子 Agent 上下文策略提示：内部探索留在子 Agent，本轮只返回最终结构化摘要。
+- 新增子任务输入预算，避免主 Agent 把过长上下文直接塞给子 Agent。
+- 新增内部 transcript 预算，避免超限 finalization 再次携带过长过程。
+- 新增子 Agent 工具返回预算，避免最终摘要污染主上下文。
+- 新增测试覆盖 oversized task、trimmed transcript 和 compact result budget。
+- 不新增自定义 agent、后台并行、独立模型、worktree 隔离或子 Agent 间通信。
 
 ### 已完成 / `0.22.1`: Context Budget Acceptance / 上下文预算验收
 

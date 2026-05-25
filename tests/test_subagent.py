@@ -3,7 +3,16 @@ from pathlib import Path
 from mini_agent.config import AgentConfig
 from mini_agent.llm import FinalResponseEvent, LLMResponse, TextBlock, TextDeltaEvent, ToolUseBlock
 from mini_agent.permissions import PermissionMode
-from mini_agent.subagent import EXPLORE_AGENT, PLAN_AGENT, VERIFY_AGENT, build_subagent_tools, run_subagent
+from mini_agent.subagent import (
+    EXPLORE_AGENT,
+    PLAN_AGENT,
+    SUBAGENT_RESULT_CHAR_BUDGET,
+    SUBAGENT_TASK_CHAR_BUDGET,
+    SUBAGENT_TRANSCRIPT_CHAR_BUDGET,
+    VERIFY_AGENT,
+    build_subagent_tools,
+    run_subagent,
+)
 from mini_agent.tasks import TaskState
 from mini_agent.tool_registry import ToolRegistry
 from mini_agent.tools import default_tools
@@ -46,6 +55,13 @@ class LoopingToolClient:
     def stream_complete(self, **kwargs):
         self.stream_calls.append(kwargs)
         yield FinalResponseEvent(LLMResponse([ToolUseBlock(id=f"call_{len(self.stream_calls)}", name="list_files", input={"path": "."})]))
+
+
+class LongTranscriptClient(LoopingToolClient):
+    def stream_complete(self, **kwargs):
+        self.stream_calls.append(kwargs)
+        yield TextDeltaEvent("transcript evidence\n" + ("x" * SUBAGENT_TRANSCRIPT_CHAR_BUDGET))
+        yield FinalResponseEvent(LLMResponse([ToolUseBlock(id=f"call_{len(self.stream_calls)}", name="read_file", input={"path": "huge.txt"})]))
 
 
 class FailingFinalizerClient(LoopingToolClient):
@@ -192,6 +208,52 @@ def test_subagent_uses_agent_specific_system_prompt(tmp_path: Path):
     assert "return a final answer" in system_prompt
     assert "Use at most 3 focused tool calls" in system_prompt
     assert "If evidence is incomplete" in system_prompt
+    assert "Subagent context policy:" in system_prompt
+    assert "Keep internal investigation local to this subagent." in system_prompt
+    assert "Return only the final structured summary to the main agent." in system_prompt
+
+
+def test_subagent_trims_oversized_assigned_task(tmp_path: Path):
+    registry = ToolRegistry(default_tools(tmp_path, TaskState()))
+    client = RecordingClient()
+    long_prompt = "inspect this\n" + ("x" * (SUBAGENT_TASK_CHAR_BUDGET + 500))
+
+    run_subagent(
+        definition=EXPLORE_AGENT,
+        prompt=long_prompt,
+        client=client,
+        config=make_config(tmp_path),
+        tool_registry=registry,
+    )
+
+    user_message = client.stream_calls[0]["messages"][0]["content"]
+    assert len(user_message) <= SUBAGENT_TASK_CHAR_BUDGET
+    assert "truncated assigned task" in user_message
+
+
+def test_subagent_finalizer_receives_trimmed_transcript(tmp_path: Path):
+    (tmp_path / "huge.txt").write_text("evidence\n" + ("x" * (SUBAGENT_TRANSCRIPT_CHAR_BUDGET * 3)))
+    registry = ToolRegistry(default_tools(tmp_path, TaskState()))
+    client = LongTranscriptClient()
+
+    run_subagent(
+        definition=EXPLORE_AGENT,
+        prompt="inspect huge file",
+        client=client,
+        config=make_config(tmp_path),
+        tool_registry=registry,
+    )
+
+    finalizer_message = client.complete_calls[0]["messages"][0]["content"]
+    assert "truncated captured transcript" in finalizer_message
+    assert len(finalizer_message) < SUBAGENT_TRANSCRIPT_CHAR_BUDGET + 300
+
+
+def test_subagent_tool_has_compact_result_budget(tmp_path: Path):
+    registry = ToolRegistry(default_tools(tmp_path, TaskState()))
+    tools = build_subagent_tools(client=RecordingClient(), config=make_config(tmp_path), tool_registry=registry)
+
+    assert tools["explore_agent"].max_result_chars == SUBAGENT_RESULT_CHAR_BUDGET
 
 
 def test_subagent_default_turn_limit_matches_tool_call_budget():

@@ -96,6 +96,16 @@ VERIFY_AGENT = AgentDefinition(
 )
 
 SUBAGENT_TOOL_NAMES = {"explore_agent", "plan_agent", "verify_agent"}
+SUBAGENT_TASK_CHAR_BUDGET = 4_000
+SUBAGENT_TRANSCRIPT_CHAR_BUDGET = 4_000
+SUBAGENT_RESULT_CHAR_BUDGET = 4_000
+
+SUBAGENT_CONTEXT_POLICY = """Subagent context policy:
+- Treat the assigned task as the only task.
+- Keep internal investigation local to this subagent.
+- Return only the final structured summary to the main agent.
+- Do not include raw long tool output unless it is essential evidence.
+"""
 
 
 def build_subagent_tools(
@@ -137,6 +147,7 @@ def run_subagent(
     config: AgentConfig,
     tool_registry: ToolRegistry,
 ) -> str:
+    task_prompt = _trim_for_subagent(prompt, SUBAGENT_TASK_CHAR_BUDGET, label="assigned task")
     sub_config = AgentConfig(
         workspace=config.workspace,
         provider=config.provider,
@@ -152,7 +163,7 @@ def run_subagent(
         config=sub_config,
         tools=_read_only_workspace_tools(tool_registry),
         task_state=TaskState(),
-        system_prompt=definition.system_prompt,
+        system_prompt=_subagent_system_prompt(definition),
     )
     intent = IntentDecision(
         Intent.PROJECT_QUESTION,
@@ -161,11 +172,11 @@ def run_subagent(
     )
     stdout = io.StringIO()
     with contextlib.redirect_stdout(stdout):
-        result = runtime.run_user_turn(prompt, intent_override=intent)
+        result = runtime.run_user_turn(task_prompt, intent_override=intent)
     output = stdout.getvalue()
     return result or _finalize_subagent_result(
         definition=definition,
-        prompt=prompt,
+        prompt=task_prompt,
         output=output,
         client=client,
         config=sub_config,
@@ -180,7 +191,13 @@ def _finalize_subagent_result(
     client: LLMClient,
     config: AgentConfig,
 ) -> str:
-    fallback = _fallback_subagent_result(output)
+    captured_output = _trim_for_subagent(
+        output,
+        SUBAGENT_TRANSCRIPT_CHAR_BUDGET,
+        label="captured transcript",
+        keep_tail=True,
+    )
+    fallback = _fallback_subagent_result(captured_output)
     try:
         response = client.complete(
             model=config.model,
@@ -196,7 +213,7 @@ def _finalize_subagent_result(
                     "role": "user",
                     "content": (
                         f"Original task:\n{prompt}\n\n"
-                        f"Captured transcript:\n{output}\n\n"
+                        f"Captured transcript:\n{captured_output}\n\n"
                         "Return the final structured answer now."
                     ),
                 }
@@ -222,6 +239,22 @@ def _fallback_subagent_result(output: str) -> str:
         "Reason: subagent reached its turn limit before a final answer.\n"
         f"Recent evidence:\n{evidence}"
     )
+
+
+def _subagent_system_prompt(definition: AgentDefinition) -> str:
+    return f"{definition.system_prompt}\n{SUBAGENT_CONTEXT_POLICY}"
+
+
+def _trim_for_subagent(text: str, max_chars: int, *, label: str, keep_tail: bool = False) -> str:
+    if len(text) <= max_chars:
+        return text
+    marker = f"\n...[truncated {label} from {len(text)} to {max_chars} chars]...\n"
+    remaining = max_chars - len(marker)
+    if remaining <= 0:
+        return text[-max_chars:] if keep_tail else text[:max_chars]
+    if keep_tail:
+        return marker + text[-remaining:]
+    return text[:remaining] + marker
 
 
 def _read_only_workspace_tools(tool_registry: ToolRegistry) -> ToolRegistry:
@@ -266,6 +299,7 @@ def _build_subagent_tool(
             "required": ["prompt"],
         },
         call=call,
+        max_result_chars=SUBAGENT_RESULT_CHAR_BUDGET,
         read_only=lambda _input: True,
         concurrency_safe=lambda _input: False,
     )

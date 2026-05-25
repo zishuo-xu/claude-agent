@@ -2,7 +2,7 @@
 
 这是一个参考 Claude Code 设计思想实现的轻量级工程化 agent。它不复刻任何非公开源码，而是在较小代码量里保留 Claude-style agent 的核心架构边界。
 
-当前版本：`0.22.1`
+当前版本：`0.23.0`
 
 项目长期原则见 [PROJECT_PRINCIPLES.md](/Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent/PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
@@ -45,6 +45,7 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 - **上下文 micro-compact**：上下文过大时先清理旧工具结果，再用 full compact 兜底
 - **Explore / Plan / Verification 子 Agent**：以 AgentTool 形式运行只读子 Agent，隔离探索、规划和验证上下文
 - **子 Agent 输出结构化**：Explore / Plan / Verification 按固定小模板汇报结果
+- **子 Agent 上下文策略**：子任务输入、内部 transcript 和返回结果都有轻量预算，只把最终摘要回传主 Agent
 - **安全默认值**：工具默认不是只读、不可并发，接近 fail-closed 思路
 - **权限模式**：支持 `default`、`plan`、`acceptEdits`、`bypassPermissions`、`dontAsk`
 - **权限规则**：可用 `agent_settings.json` 配置 allow/deny/ask

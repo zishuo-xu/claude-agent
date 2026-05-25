@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.22.1`
+当前版本：`0.23.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`148 tests`
+当前测试：`151 tests`
 
 ## LLM Provider
 
@@ -203,11 +203,14 @@ deny -> allow -> ask -> mode fallback
 
 - 独立 `AgentRuntime`
 - 独立 `AgentState` / `TaskState`
+- 子任务输入有轻量字符预算，避免主 Agent 把过长上下文直接塞给子 Agent
 - 只暴露只读工具
 - 不向子 Agent 暴露子 Agent 工具自身，避免递归调用
 - 提示词明确不委托其他 Agent，保持单次只读子任务边界
 - 内部工具历史不进入主 Agent
 - 最终只返回总结
+- 子 Agent 工具返回有较小结果预算，避免最终摘要污染主上下文
+- 超限兜底 finalization 只接收截断后的内部 transcript
 - finalization 失败时返回短 `inconclusive` 摘要和少量最近证据
 - 显式调用后单次收敛
 - 子 Agent 0.14 主线已收尾，暂不扩展复杂多 Agent 能力
