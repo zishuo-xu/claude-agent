@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.22.0`
+当前版本：`0.22.1`
 
 已完成学习主线：
 
@@ -172,5 +172,6 @@ MAJOR.MINOR.PATCH
 - `0.21.0`: LLM Adapter Protocol Review / 模型适配协议复查
 - `0.21.1`: LLM Adapter Acceptance / 模型适配验收
 - `0.22.0`: Context Budget Policy / 上下文预算策略
+- `0.22.1`: Context Budget Acceptance / 上下文预算验收
 
 详细说明以 `CHANGELOG.md` 为准。

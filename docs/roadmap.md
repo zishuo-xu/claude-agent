@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.22.0`
+当前版本：`0.22.1`
 
 ## 当前进展
 
@@ -64,7 +64,17 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.22.1`: Context Budget Acceptance / 上下文预算验收
+### P1 / `0.23.0`: Subagent Context Policy / 子 Agent 上下文策略
+
+目标：复查子 Agent 的上下文隔离、工具暴露、结果回传和失败兜底策略。
+
+作用：
+
+- 子 Agent 是 Claude-style 架构中的重要能力，但也是最容易膨胀的一条线。
+- 当前已有固定只读 `explore_agent`、`plan_agent`、`verify_agent`，下一步应复查上下文边界是否足够清楚。
+- 只复查策略和测试，不新增 Agent 类型、自定义 markdown agent 或后台并行。
+
+### 已完成 / `0.22.1`: Context Budget Acceptance / 上下文预算验收
 
 目标：用现有测试和少量模拟长任务验收上下文预算策略是否足够稳定。
 
@@ -72,6 +82,13 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 - 0.22.0 已集中表达 micro-compact 的默认保留数量和可压缩工具集合。
 - 下一步只验收长任务、错误结果、task state 和 summary 注入，不新增复杂 memory 系统。
+
+结果：
+
+- 上下文相关测试覆盖旧工具结果清理、最近工具结果保留、错误结果保留、task 工具结果保留、孤立 tool_result 保留。
+- Runtime 压缩测试覆盖 micro-compact 先于 full compact、summary 注入、summary 和 TaskState 分离、真实长任务关键上下文保留。
+- 全量测试通过，确认当前上下文预算策略够用。
+- 暂不新增 token 精确预算、长期记忆、向量库或 session resume。
 
 ### 已完成 / `0.22.0`: Context Budget Policy / 上下文预算策略
 

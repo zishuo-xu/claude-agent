@@ -10,6 +10,27 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.22.1 - 2026-05-25
+
+当前学习阶段：Context Budget Acceptance / 上下文预算验收。
+
+变更级别：复查版本。
+
+### Review
+
+- 复查上下文相关测试，确认旧工具结果清理、最近工具结果保留、错误结果保留、task 工具结果保留和孤立 tool_result 保留
+- 复查 runtime 压缩测试，确认 micro-compact 先于 full compact、summary 注入、summary 和 TaskState 分离、真实长任务关键上下文保留
+- 确认上下文预算主线当前够用，暂不新增 token 精确预算、长期记忆、向量库或 session resume
+
+### Verified
+
+- `tests/test_context.py tests/test_runtime_intent.py -k 'compact or summary or context'` passed
+- `148 passed`
+
+### Next
+
+- 下一条主线转向 `0.23.0 Subagent Context Policy / 子 Agent 上下文策略`
+
 ## 0.22.0 - 2026-05-25
 
 当前学习阶段：Context Budget Policy / 上下文预算策略。
