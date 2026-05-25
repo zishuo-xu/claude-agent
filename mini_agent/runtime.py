@@ -20,7 +20,7 @@ from .tasks import TaskState
 from .tool_core import Tool
 from .tool_executor import ToolTurnExecutor
 from .tool_registry import ToolRegistry
-from .working_state import WorkingState, should_wait_for_user
+from .working_state import WorkingState, should_keep_pending_task
 
 
 SYSTEM_PROMPT = """You are a Claude Code inspired learning agent.
@@ -149,7 +149,7 @@ class AgentRuntime:
         self._emit("turn_transition", reason="next_turn", turn=self.state.turn_count)
 
     def _update_working_state_after_final_answer(self, text: str, user_input: str) -> None:
-        if should_wait_for_user(self.state.current_intent, text, self.state.current_turn_mutating_tools):
+        if should_keep_pending_task(self.state.current_intent, text, self.state.current_turn_mutating_tools):
             self.working_state.mark_waiting(intent=self.state.current_intent, goal=user_input)
             return
         self.working_state.clear()

@@ -93,7 +93,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.24.2`
+当前版本：`0.24.3`
 
 已完成学习主线：
 
@@ -177,5 +177,6 @@ MAJOR.MINOR.PATCH
 - `0.24.0`: Working State For Pending Task / 短期任务意图延续
 - `0.24.1`: Pending Task Real Usage Fix / 短期任务真实使用修复
 - `0.24.2`: Permission Edit Acceptance / 编辑权限体验验收
+- `0.24.3`: Architecture Slim Review / 架构减重复查
 
 详细说明以 `CHANGELOG.md` 为准。

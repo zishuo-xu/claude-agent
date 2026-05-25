@@ -84,7 +84,7 @@ class WorkingState:
         self.waiting_for_user = False
 
 
-def should_wait_for_user(intent: IntentDecision | None, final_text: str, used_mutating_tools: bool) -> bool:
+def should_keep_pending_task(intent: IntentDecision | None, final_text: str, used_mutating_tools: bool) -> bool:
     if not intent or intent.intent != Intent.CODING_TASK:
         return False
     lowered = final_text.lower()

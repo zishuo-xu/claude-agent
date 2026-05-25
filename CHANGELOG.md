@@ -10,6 +10,33 @@
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 
+## 0.24.3 - 2026-05-25
+
+当前学习阶段：Architecture Slim Review / 架构减重复查。
+
+变更级别：复查版本。
+
+### Changed
+
+- 将 `should_wait_for_user()` 改名为 `should_keep_pending_task()`，更准确表达澄清等待和继续追加都会保留 pending task
+- 收敛 `docs/roadmap.md`，将已完成的真实 CLI 长对话验收移出下一步
+
+### Review
+
+- 当前架构仍保持 8 层，边界清楚
+- 暂不拆 `runtime.py`、`builtin_tools.py`、`llm.py` 或 `subagent.py`
+- 下一步只建议复查流式边界，不急着实现完整 StreamingToolExecutor
+
+### Verified
+
+- `tests/test_runtime_intent.py -k pending` passed
+- `160 passed`
+- 文档测试 passed
+
+### Next
+
+- 下一步建议 `0.25.0 Focused Streaming Review / 流式边界复查`
+
 ## 0.24.2 - 2026-05-25
 
 当前学习阶段：Permission Edit Acceptance / 编辑权限体验验收。

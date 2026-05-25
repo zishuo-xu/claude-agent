@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.24.2`
+当前版本：`0.24.3`
 
 ## 当前进展
 
@@ -66,14 +66,30 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.24.3`: Real CLI Long Dialogue Acceptance / 真实 CLI 长对话验收
+### P1 / `0.25.0`: Focused Streaming Review / 流式边界复查
 
-目标：再次用真实 CLI 跑保存文件、继续追加、切换项目问题的长对话。
+目标：复查当前“文本流式 + 工具整轮执行”的边界是否需要继续保持。
 
 作用：
 
-- 0.24.1 和 0.24.2 分别修复 pending task 和编辑权限体验。
-- 下一步只做验收，不新增功能。
+- 当前不是完整 Claude StreamingToolExecutor，而是轻量半流式。
+- 下一步只做边界评估和测试，不急着实现流中工具执行。
+
+### 已完成 / `0.24.3`: Architecture Slim Review / 架构减重复查
+
+目标：审视当前分层和代码规模，做必要的小命名和路线图收敛。
+
+作用：
+
+- 保持 mini-claude 简洁，避免为了优化继续拆碎架构。
+- 让 WorkingState 的命名更准确，避免误解它只处理“等待用户”。
+
+结果：
+
+- `should_wait_for_user()` 改名为 `should_keep_pending_task()`，覆盖澄清等待和继续追加两个语义。
+- 保持 `runtime.py`、`tool_executor.py`、`working_state.py` 等现有边界，不做新层。
+- 将已完成的真实 CLI 长对话验收从下一步中移出，下一步转为流式边界复查。
+- 不拆 `runtime.py`、`builtin_tools.py`、`llm.py` 或 `subagent.py`。
 
 ### 已完成 / `0.24.2`: Permission Edit Acceptance / 编辑权限体验验收
 
