@@ -138,12 +138,11 @@ def test_classifies_save_as_file_request_with_path_as_tool_task():
     assert decision.allow_tools
 
 
-def test_classifies_document_output_followup_as_coding_task():
+def test_document_output_without_focus_is_not_project_question():
     decision = classify_intent("直接输出为文档")
 
-    assert decision.intent == Intent.CODING_TASK
-    assert decision.allow_tools
-    assert decision.hidden_tools == frozenset({"list_files", "read_file", "search_text"})
+    assert decision.intent == Intent.CASUAL_CHAT
+    assert not decision.allow_tools
 
 
 def test_coding_task_prompt_guides_long_content_batches():
@@ -153,15 +152,6 @@ def test_coding_task_prompt_guides_long_content_batches():
 
     assert "very long generated content" in guidance
     assert "in batches" in guidance
-
-
-def test_coding_task_prompt_guides_document_output_from_conversation():
-    decision = classify_intent("直接输出为文档")
-
-    guidance = tool_choice_guidance(decision)
-
-    assert "relevant content already present in the conversation" in guidance
-    assert "do not inspect project files" in guidance
 
 
 def test_create_keyword_without_file_path_does_not_hide_list_files():

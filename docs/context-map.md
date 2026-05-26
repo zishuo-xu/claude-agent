@@ -19,6 +19,7 @@
 | 维护记录 | `docs/maintenance-log.md` |
 | LLM provider 适配 | `docs/01-llm-provider-adapter.md` |
 | Agent Loop | `mini_agent/runtime.py` |
+| 会话焦点 | `mini_agent/focus.py` |
 | 短期工作状态 | `mini_agent/working_state.py` |
 | 运行时事件 | `mini_agent/events.py` |
 | LLM API 边界 | `mini_agent/llm.py` |

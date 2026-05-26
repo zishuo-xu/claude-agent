@@ -11,6 +11,31 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.27.0 - 2026-05-27
+
+当前学习阶段：Conversation Focus Boundary / 会话焦点边界。
+
+变更级别：小架构特性。
+
+### Added
+
+- 新增 `mini_agent/focus.py`，用 `ConversationFocus` 记录当前 runtime 内的会话焦点
+- 短 follow-up 会先参考会话焦点，再落到关键词规则
+- 内容生成焦点下，“输出为文档 / 整理成文档”等会使用对话已有内容并隐藏项目读取工具
+
+### Changed
+
+- `classify_intent()` 不再把单独的“文档”作为项目关键词
+- `WorkingState.resolve_intent()` 接收会话焦点，用于处理当前任务之外的短 follow-up
+
+### Verified
+
+- `tests/test_focus.py tests/test_intent.py tests/test_runtime_intent.py` passed
+
+### Next
+
+- 下一步继续做短 follow-up 验收，避免继续扩大硬编码语义词典
+
 ## 0.26.3 - 2026-05-27
 
 当前学习阶段：Document Follow-up Intent Fix / 文档输出追问意图修复。

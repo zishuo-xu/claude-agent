@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from mini_agent.config import AgentConfig
+from mini_agent.focus import FocusKind
 from mini_agent.intent import Intent, classify_intent
 from mini_agent.llm import FinalResponseEvent, LLMResponse, ReasoningBlock, TextBlock, TextDeltaEvent, ToolUseBlock
 from mini_agent.permissions import PermissionMode
@@ -476,6 +477,8 @@ def test_runtime_document_output_followup_uses_conversation_not_project_reads(tm
     client = DocumentOutputFollowupClient()
     runtime = make_silent_runtime_with_client(tmp_path, client)
     runtime.permission_handler = lambda _name, _input, _reason: True
+    runtime.focus.kind = FocusKind.CONTENT
+    runtime.focus.topic = "小说"
     runtime.state.messages.append(
         {
             "role": "assistant",

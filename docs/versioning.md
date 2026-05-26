@@ -136,7 +136,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.26.3`
+当前版本：`0.27.0`
 
 已完成学习主线：
 
@@ -226,5 +226,6 @@ MAJOR.MINOR.PATCH
 - `0.26.1`: File Generation Clarification Fix / 保存文件澄清修复
 - `0.26.2`: Friendly Tool Display Fix / 工具展示友好化修复
 - `0.26.3`: Document Follow-up Intent Fix / 文档输出追问意图修复
+- `0.27.0`: Conversation Focus Boundary / 会话焦点边界
 
 详细说明以 `CHANGELOG.md` 为准。

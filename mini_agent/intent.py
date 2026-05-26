@@ -46,7 +46,6 @@ PROJECT_KEYWORDS = {
     "当前项目",
     "本项目",
     "架构",
-    "文档",
     "readme",
     "architecture",
     "current features",
@@ -94,14 +93,6 @@ FILE_GENERATION_KEYWORDS = {
     "write to file",
 }
 
-DOCUMENT_OUTPUT_KEYWORDS = {
-    "输出为文档",
-    "整理成文档",
-    "保存成文档",
-    "写到文档",
-    "生成文档",
-}
-
 DANGEROUS_KEYWORDS = {
     "删除所有",
     "清空",
@@ -144,14 +135,6 @@ def classify_intent(user_input: str) -> IntentDecision:
 
     mentions_project = any(keyword in lowered for keyword in PROJECT_KEYWORDS)
     asks_to_use_project = any(phrase in lowered for phrase in ["用这个项目", "结合当前代码", "结合这个项目", "use this project"])
-
-    if any(keyword in lowered for keyword in DOCUMENT_OUTPUT_KEYWORDS):
-        return IntentDecision(
-            Intent.CODING_TASK,
-            "document output follow-up",
-            allow_tools=True,
-            hidden_tools=frozenset({"list_files", "read_file", "search_text"}),
-        )
 
     if _looks_like_documented_project_question(lowered):
         return IntentDecision(
@@ -249,10 +232,10 @@ def tool_choice_guidance(decision: IntentDecision) -> str:
         Intent.CODING_TASK: (
             "You may use tools to inspect, edit, run tests, and verify changes. If tools are not available for "
             "a file generation request, ask for the missing file path, scope, or content constraints; do not "
-            "invent a default file path or write the file yet. If this is a document output follow-up, use the "
-            "relevant content already present in the conversation and write it as a Markdown document; if no path "
-            "is provided, choose a concise safe filename from the topic or use output.md, and do not inspect "
-            "project files. If the user gives an explicit "
+            "invent a default file path or write the file yet. If the current intent reason says this is a "
+            "document output follow-up from conversation focus, use the relevant content already present in the "
+            "conversation and write it as a Markdown document; if no path is provided, choose a concise safe "
+            "filename from the topic or use output.md, and do not inspect project files. If the user gives an explicit "
             "file path and exact content, create or edit that file directly; do not call list_files first unless "
             "the target path is ambiguous or you need to discover existing files. If the user asks for very long "
             "generated content, create or update a file in batches instead of trying to produce everything in one "

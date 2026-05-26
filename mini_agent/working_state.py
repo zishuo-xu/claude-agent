@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .focus import ConversationFocus
 from .intent import Intent, IntentDecision, classify_intent
 
 
@@ -52,8 +53,11 @@ class WorkingState:
     pending_goal: str | None = None
     waiting_for_user: bool = False
 
-    def resolve_intent(self, user_input: str) -> IntentDecision:
+    def resolve_intent(self, user_input: str, focus: ConversationFocus | None = None) -> IntentDecision:
         current = classify_intent(user_input)
+        focused = focus.resolve_followup(user_input, current) if focus else None
+        if focused:
+            return focused
         if not self.waiting_for_user or not self.pending_intent:
             return current
         if _is_cancel(user_input):

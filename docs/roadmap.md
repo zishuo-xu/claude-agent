@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.26.3`
+当前版本：`0.27.0`
 
 ## 当前进展
 
@@ -12,6 +12,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - LLM Adapter：Anthropic / OpenAI-compatible 适配，支持 streaming 和 `reasoning_content` 续传。
 - Tool System：统一 `Tool` 抽象、schema、输入校验、工具注册、工具可见性和工具执行器。
 - Tool Choice：intent prompt 注入轻量工具选择策略，项目入口问题优先读对应文档。
+- Conversation Focus：短 follow-up 先参考当前会话焦点，减少硬编码语义词典。
 - Working State：澄清问题后的用户补充、写作任务继续追加可继承上一轮任务意图。
 - Permission Pipeline：工作区边界、权限模式、权限规则、危险操作确认和拒绝后防绕路。
 - Context：tool result budget、micro-compact、full compact、summary 注入。
@@ -27,6 +28,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - 模型 provider 适配层。
 - `buildTool()` 风格工具抽象。
 - 工具可见性和权限管线。
+- 会话焦点辅助短 follow-up，不把所有语义都前置硬编码。
 - 上下文压缩分层：原始消息、工具结果预算、历史 summary、当前 task state。
 - AgentTool 风格子 Agent：隔离上下文，只返回精炼结果。
 - 任务状态辅助长任务推进。
@@ -67,14 +69,14 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1: Tool Call Boundary Acceptance / 工具调用边界验收
+### P1: Short Follow-up Acceptance / 短追问验收
 
-目标：用真实 CLI 场景验收工具调用、权限提示、工具结果和最终回答是否仍然清楚。
+目标：用真实 CLI 场景验收“保存一下 / 继续 / 输出为文档 / 就按这个来”等短 follow-up 是否正确继承当前会话焦点。
 
 作用：
 
-- `0.26.0` 已修正文本 delta 的逐段输出，`0.26.1` 已修复保存文件澄清边界，`0.26.2` 已收敛工具展示文案，`0.26.3` 已修复文档输出 follow-up 误判。
-- 下一步更适合验收工具事件和用户体验，而不是直接实现完整 StreamingToolExecutor。
+- `0.27.0` 已引入 ConversationFocus，下一步应验证它是否足够解决真实短追问。
+- 继续靠验收发现问题，不急着引入 LLM intent classifier 或长期记忆。
 
 版本策略：
 

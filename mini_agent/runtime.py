@@ -12,6 +12,7 @@ from .events import (
     print_runtime_event,
     prompt_permission_request,
 )
+from .focus import ConversationFocus
 from .intent import Intent, IntentDecision, intent_prompt
 from .llm import FinalResponseEvent, LLMClient, TextBlock
 from .permissions import PermissionContext, PermissionRule
@@ -73,13 +74,14 @@ class AgentRuntime:
         self.tools = self.tool_registry.all()
         self.task_state = task_state or TaskState()
         self.state = AgentState()
+        self.focus = ConversationFocus()
         self.working_state = WorkingState()
         self.permission_context = PermissionContext(mode=config.permission_mode, rules=permission_rules or [])
         self.event_handler = event_handler
         self.permission_handler = permission_handler
 
     def run_user_turn(self, user_input: str, intent_override: IntentDecision | None = None) -> str:
-        self.state.current_intent = intent_override or self.working_state.resolve_intent(user_input)
+        self.state.current_intent = intent_override or self.working_state.resolve_intent(user_input, self.focus)
         self.state.current_turn_tool_rounds = 0
         self.state.current_turn_mutating_tools = False
         self.state.messages.append({"role": "user", "content": user_input})
@@ -149,6 +151,11 @@ class AgentRuntime:
         self._emit("turn_transition", reason="next_turn", turn=self.state.turn_count)
 
     def _update_working_state_after_final_answer(self, text: str, user_input: str) -> None:
+        self.focus.update_after_final_answer(
+            intent=self.state.current_intent,
+            user_input=user_input,
+            final_text=text,
+        )
         if should_keep_pending_task(self.state.current_intent, text, self.state.current_turn_mutating_tools):
             self.working_state.mark_waiting(intent=self.state.current_intent, goal=user_input)
             return
