@@ -3,6 +3,8 @@ from mini_agent.runtime import SYSTEM_PROMPT
 
 def test_system_prompt_keeps_high_level_runtime_principles():
     assert "Follow the current user intent guidance" in SYSTEM_PROMPT
+    assert "numbered steps, a checklist, or a named test case" in SYSTEM_PROMPT
+    assert "do not replace them with a different interpretation" in SYSTEM_PROMPT
     assert "Work in a tight observe-think-act loop" in SYSTEM_PROMPT
     assert "Inspect before editing" in SYSTEM_PROMPT
     assert "When you finish, summarize what changed and how it was verified" in SYSTEM_PROMPT

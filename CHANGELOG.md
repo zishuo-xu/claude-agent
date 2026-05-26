@@ -11,6 +11,28 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.27.4 - 2026-05-27
+
+当前学习阶段：Strict Step Following Fix / 严格步骤遵循修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 系统提示要求用户给出编号步骤、清单或命名测试用例时，必须按原任务执行
+- coding task guidance 要求按用户步骤完成，不替换成其他 benchmark、demo、压力测试或项目形状
+- 修复真实 CLI 压力验收中模型把 `calc.py` 用例发散成自定义 `stress_test.py` 的问题方向
+
+### Verified
+
+- `tests/test_runtime_prompt.py tests/test_intent.py` focused selection passed
+- 真实 `agent.py` CLI 复验 Stress Test Cases 案例 1：未再发散成系统压力脚本，按步骤完成 `calc.py`，外部核对 `python3 tmp_stress_code/calc.py` 输出 `ok`
+- 观察：`--max-turns 16` 下总结阶段需要用户继续一次，后续可单独优化完成后停止体验
+
+### Next
+
+- 下一步继续用真实 `agent.py` CLI 跑更多 Stress Test Cases，优先观察多步骤任务是否还会耗尽 turn limit
+
 ## 0.27.3 - 2026-05-27
 
 当前学习阶段：File Continuation After Topic Switch Fix / 切换主题后的文件续写修复。

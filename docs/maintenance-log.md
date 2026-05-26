@@ -28,6 +28,8 @@
 
 - 真实 `agent.py` CLI 压力验收开始执行 `docs/stress-test-cases.md`。案例 1 未通过：模型把“长压力测试”发散成系统压力脚本 `stress_test.py`，没有严格完成 `calc.py` 的 `add/subtract/multiply/divide` 和 `__main__` 正确性自检。
 - 结论：真实 CLI 自由对话压力测试已暴露任务遵循问题，未继续标记全量通过；失败现场临时目录 `tmp_stress_code/` 暂时保留。
+- `0.27.4` 后真实 CLI 复验案例 1：模型按步骤创建并修改 `tmp_stress_code/calc.py`，实现 `add/subtract/multiply/divide` 和除 0 自检，外部核对 `python3 tmp_stress_code/calc.py` 输出 `ok`。
+- 观察：`--max-turns 16` 下任务在总结阶段触发 stopped，需要用户说“继续”完成总结；后续可单独验收完成后停止体验。
 - 按 `docs/stress-test-cases.md` 执行全部 10 个压力案例，覆盖代码、写作、上下文、大文件、权限取消、项目问答、错误恢复和综合验收。
 - 结果：全部通过。案例 6 首轮因验证脚本虚拟环境路径写错失败，修正后重跑通过；临时目录已清理。
 - 说明：本轮是按案例内容做本地确定性验收，并用命令和内容断言核对正确性；真实 LLM CLI 自由对话仍可作为下一轮单独验收。

@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.27.3`
+当前版本：`0.27.4`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`178 tests`
+当前测试：`179 tests`
 
 ## LLM Provider
 
@@ -66,6 +66,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 空响应兜底
 - 伪工具调用标记兼容，解析逻辑独立在 `pseudo_tools.py`
 - 系统提示只保留高层运行原则，具体场景约束和工具选择策略由 intent prompt 注入
+- 用户给出编号步骤、清单或测试用例时，系统提示和 coding guidance 会要求按原步骤执行，不替换成其他 benchmark、demo 或压力测试
 - 模型输入按固定边界拼接：base system -> workspace -> intent -> historical summary -> live task state -> messages
 - Prompt / Context 0.16 主线已收尾，暂不增加 prompt 规则或模板系统
 - 当前用户请求内的工具轮次计数独立命名为 `current_turn_tool_rounds`
@@ -74,7 +75,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - micro-compact 和 full compact
 - 上下文压力测试覆盖 compact 后 WorkingState 仍可延续 pending task、TaskState 仍与 summary 分离
 
-普通寒暄、泛学习请求默认不读项目、不调用工具；泛学习默认保持 3-5 行，不主动给链接或 emoji。项目问题和编码任务才进入工具循环。中文“创建文件并给出内容”的请求会进入 coding task；“保存为文件 / 写成文件 / 输出到文件”等创作型文件请求也会进入 coding task。保存类请求缺少目标路径时会先澄清，不暴露写入工具，避免模型发明默认文件名后过早写入。“输出为文档 / 整理成文档”这类短 follow-up 会先参考 `ConversationFocus`：如果当前焦点是内容生成，就继承对话内容并写成 Markdown，不会误判成项目文档问答。明确给出目标路径和内容的 coding task 会隐藏 `list_files`，让模型直接创建或编辑文件；明确带文件路径的“继续写 / 追加 / 下一段”也会作为文件续写任务开放编辑工具。若上一轮 coding task 回复是在等待用户补充，下一轮补充参数会继承上一轮任务意图并恢复工具可用；只读预检工具不会打断 pending task。写作任务完成一批后，如果回复中明确提到继续或追加，下一轮“继续/追加”仍可继承任务意图。用户取消或切换到明确新任务时会清空该短期状态。超长内容生成会被提示分批写入文件，避免单轮硬写。
+普通寒暄、泛学习请求默认不读项目、不调用工具；泛学习默认保持 3-5 行，不主动给链接或 emoji。项目问题和编码任务才进入工具循环。中文“创建文件并给出内容”的请求会进入 coding task；“保存为文件 / 写成文件 / 输出到文件”等创作型文件请求也会进入 coding task。保存类请求缺少目标路径时会先澄清，不暴露写入工具，避免模型发明默认文件名后过早写入。“输出为文档 / 整理成文档”这类短 follow-up 会先参考 `ConversationFocus`：如果当前焦点是内容生成，就继承对话内容并写成 Markdown，不会误判成项目文档问答。明确给出目标路径和内容的 coding task 会隐藏 `list_files`，让模型直接创建或编辑文件；明确带文件路径的“继续写 / 追加 / 下一段”也会作为文件续写任务开放编辑工具。若用户给出编号步骤、清单或测试用例，coding guidance 会要求模型按原项目执行，不能把用例替换成自创压力脚本或其他 demo。若上一轮 coding task 回复是在等待用户补充，下一轮补充参数会继承上一轮任务意图并恢复工具可用；只读预检工具不会打断 pending task。写作任务完成一批后，如果回复中明确提到继续或追加，下一轮“继续/追加”仍可继承任务意图。用户取消或切换到明确新任务时会清空该短期状态。超长内容生成会被提示分批写入文件，避免单轮硬写。
 项目问题会按问题选择最相关文档入口：架构和 Agent Loop 问题读 `docs/architecture.md`，功能、版本、启动和用法问题读 `docs/current-features.md`，下一步/roadmap 问题读 `docs/roadmap.md`，宽泛项目概览再读 `README.md` 或 `docs/context-map.md`。项目结构、架构、Agent Loop、当前功能、当前版本、怎么启动、下一步这类问题会隐藏 `list_files` 和 `search_text`，直接读文档；即使问题没有显式出现“项目”二字，只要命中文档入口问题，也按项目问答处理。隐藏工具即使被模型输出，也会在执行层转成内部引导结果，不按普通未知工具错误展示。目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；默认用短段落或 3-6 条短要点，不主动使用 emoji、表格、目录树或额外学习链接。
 
 当前运行时事件包括：

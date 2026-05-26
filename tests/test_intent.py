@@ -169,6 +169,17 @@ def test_coding_task_prompt_guides_long_content_batches():
     assert "in batches" in guidance
 
 
+def test_coding_task_prompt_preserves_user_steps_and_test_cases():
+    decision = classify_intent("做一次长压力测试：1. 创建 tmp_stress_code/calc.py 2. 运行验证")
+
+    guidance = tool_choice_guidance(decision)
+
+    assert decision.intent == Intent.CODING_TASK
+    assert "numbered steps, a checklist, or a test case" in guidance
+    assert "execute those requested items as written" in guidance
+    assert "do not substitute a different benchmark" in guidance
+
+
 def test_create_keyword_without_file_path_does_not_hide_list_files():
     decision = classify_intent("创建一个简单的 Python 示例")
 

@@ -263,7 +263,9 @@ def tool_choice_guidance(decision: IntentDecision) -> str:
             "file path and exact content, create or edit that file directly; do not call list_files first unless "
             "the target path is ambiguous or you need to discover existing files. If the user asks for very long "
             "generated content, create or update a file in batches instead of trying to produce everything in one "
-            "response. Start with outline, metadata, or the first useful chunk, then explain how to continue."
+            "response. Start with outline, metadata, or the first useful chunk, then explain how to continue. "
+            "If the user gives numbered steps, a checklist, or a test case, execute those requested items as written; "
+            "do not substitute a different benchmark, demo, stress test, or project shape."
         ),
         Intent.DANGEROUS_REQUEST: "Do not use tools. Explain the safety concern and ask for a safer, more specific goal.",
     }[decision.intent]
