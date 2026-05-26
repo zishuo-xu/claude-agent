@@ -342,6 +342,28 @@ class ContinueAfterWriteClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class DocumentOutputFollowupClient:
+    def __init__(self):
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        yield FinalResponseEvent(
+            LLMResponse(
+                [
+                    ToolUseBlock(
+                        id="call_1",
+                        name="write_file",
+                        input={"path": "output.md", "content": "# 心动频率\n\n小说大纲"},
+                    )
+                ]
+            )
+        )
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 class ClarifyClient:
     def stream_complete(self, **_kwargs):
         yield FinalResponseEvent(LLMResponse([TextBlock("请确认文件名和内容风格？")]))
@@ -448,6 +470,25 @@ def test_runtime_allows_continue_after_completed_file_chunk(tmp_path: Path):
     assert "write_file" in client.tool_names_by_call[0]
     assert "edit_file" in client.tool_names_by_call[2]
     assert "第二批正文" in (tmp_path / "novel.md").read_text(encoding="utf-8")
+
+
+def test_runtime_document_output_followup_uses_conversation_not_project_reads(tmp_path: Path):
+    client = DocumentOutputFollowupClient()
+    runtime = make_silent_runtime_with_client(tmp_path, client)
+    runtime.permission_handler = lambda _name, _input, _reason: True
+    runtime.state.messages.append(
+        {
+            "role": "assistant",
+            "content": [{"type": "text", "text": "# 心动频率\n\n小说大纲"}],
+        }
+    )
+
+    runtime.run_user_turn("直接输出为文档")
+
+    assert "write_file" in client.tool_names_by_call[0]
+    assert "list_files" not in client.tool_names_by_call[0]
+    assert "read_file" not in client.tool_names_by_call[0]
+    assert "search_text" not in client.tool_names_by_call[0]
 
 
 def test_runtime_clears_pending_task_when_user_cancels(tmp_path: Path):

@@ -11,6 +11,26 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.26.3 - 2026-05-27
+
+当前学习阶段：Document Follow-up Intent Fix / 文档输出追问意图修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- “直接输出为文档 / 整理成文档”等短 follow-up 不再误判为项目文档问答
+- 文档输出 follow-up 会使用对话中已有内容，不暴露 `list_files`、`read_file`、`search_text`
+- 避免模型读取 `agent.py` 或项目文档，而忘记上一轮小说大纲、设定等内容
+
+### Verified
+
+- `tests/test_intent.py tests/test_runtime_intent.py` passed
+
+### Next
+
+- 下一步继续做 Tool Call Boundary Acceptance，重点观察短 follow-up 和工具可见性
+
 ## 0.26.2 - 2026-05-27
 
 当前学习阶段：Friendly Tool Display Fix / 工具展示友好化修复。
