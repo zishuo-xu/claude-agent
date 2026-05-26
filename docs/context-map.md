@@ -17,6 +17,7 @@
 | 版本规则 | `docs/versioning.md` |
 | 历史变化 | `CHANGELOG.md` |
 | 维护记录 | `docs/maintenance-log.md` |
+| 长压力测试案例 | `docs/stress-test-cases.md` |
 | LLM provider 适配 | `docs/01-llm-provider-adapter.md` |
 | Agent Loop | `mini_agent/runtime.py` |
 | 会话焦点 | `mini_agent/focus.py` |
