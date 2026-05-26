@@ -40,23 +40,23 @@ MAJOR.MINOR.PATCH
 
 ### PATCH
 
-小特性或用户可感知的能力增强。
+小特性、bugfix 或用户可感知的小体验增强。
 
 例子：
 
 - 工具输入校验
 - prompt 行为增强
 - 现有模块中的小能力补强
+- 用户可见 bugfix
+- 小范围 UX 修复
 
 以下情况默认不升版本：
 
-- bugfix
 - acceptance / review / 验收复查
 - docs-only
 - test-only
-- 小范围 UX 修复
 
-这些记录写入 `docs/maintenance-log.md`。如果修复明显改变用户可见行为，也可以在 `CHANGELOG.md` 的当前版本下补充说明，但不必自动提升 `VERSION`。
+这些记录写入 `docs/maintenance-log.md`。如果 review 或 acceptance 发现并修复了用户可见问题，修复本身归 PATCH。
 
 ## 大特性和小特性
 
@@ -79,7 +79,7 @@ MAJOR.MINOR.PATCH
 每次变更先判断：
 
 ```text
-这是能力边界变化，还是维护类变化？
+这是能力边界变化、PATCH 变化，还是维护类变化？
 ```
 
 再决定是否改版本。
@@ -90,13 +90,12 @@ MAJOR.MINOR.PATCH
 - 引入新的核心模块
 - 改变 Agent Loop、工具系统、权限、上下文、子 Agent 等关键路径
 - 当前能力清单需要明显更新
+- 用户可见 bugfix 或小体验修复
 
 不需要升版本的情况：
 
-- bugfix
 - review / acceptance
 - docs-only / test-only
-- 不改变能力边界的小体验修复
 
 版本变化至少更新：
 
@@ -137,7 +136,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.26.0`
+当前版本：`0.26.1`
 
 已完成学习主线：
 
@@ -224,5 +223,6 @@ MAJOR.MINOR.PATCH
 - `0.24.3`: Architecture Slim Review / 架构减重复查
 - `0.25.0`: Context Stress Acceptance / 上下文压力验收
 - `0.26.0`: Focused Streaming Review / 流式边界复查
+- `0.26.1`: File Generation Clarification Fix / 保存文件澄清修复
 
 详细说明以 `CHANGELOG.md` 为准。

@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.26.0`
+当前版本：`0.26.1`
 
 ## 当前进展
 
@@ -63,18 +63,23 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - 不因复查制造新层。
 - 不把 Claude 的重工程能力照搬进 mini-claude。
 - 新功能优先复用现有边界。
-- bugfix、acceptance、review、docs-only 和 test-only 默认写入 `docs/maintenance-log.md`，不自动提升正式版本。
+- 用户可见 bugfix 和小体验修复走 PATCH；acceptance、review、docs-only 和 test-only 默认写入 `docs/maintenance-log.md`。
 
 ## 下一步
 
-### P1 / `0.27.0`: Tool Call Boundary Acceptance / 工具调用边界验收
+### P1: Tool Call Boundary Acceptance / 工具调用边界验收
 
 目标：用真实 CLI 场景验收工具调用、权限提示、工具结果和最终回答是否仍然清楚。
 
 作用：
 
-- `0.26.0` 已修正文本 delta 的逐段输出。
+- `0.26.0` 已修正文本 delta 的逐段输出，`0.26.1` 已修复保存文件澄清边界。
 - 下一步更适合验收工具事件和用户体验，而不是直接实现完整 StreamingToolExecutor。
+
+版本策略：
+
+- 纯验收不升版本。
+- 如果验收发现并修复用户可见问题，按 PATCH 记录。
 
 ### 已完成 / `0.26.0`: Focused Streaming Review / 流式边界复查
 

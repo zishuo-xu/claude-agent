@@ -11,6 +11,27 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.26.1 - 2026-05-27
+
+当前学习阶段：File Generation Clarification Fix / 保存文件澄清修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 保存类文件生成请求缺少目标路径时，不再暴露写入工具
+- 用户下一轮补充路径和要求后，pending coding task 会恢复工具可用
+- 避免模型发明默认文件名后过早写入，导致用户补充失效
+
+### Verified
+
+- 真实 CLI 验收：先澄清 -> 写入指定文件 -> 继续追加 -> 切换项目问答
+- `164 passed`
+
+### Next
+
+- 下一步继续做 Tool Call Boundary Acceptance；验收本身不预设升版本
+
 ## 0.26.0 - 2026-05-26
 
 当前学习阶段：Focused Streaming Review / 流式边界复查。
@@ -33,7 +54,7 @@
 
 ### Next
 
-- 下一步建议 `0.27.0 Tool Call Boundary Acceptance / 工具调用边界验收`
+- 下一步建议 Tool Call Boundary Acceptance / 工具调用边界验收
 
 ## 0.25.0 - 2026-05-25
 
