@@ -246,5 +246,6 @@ deny -> allow -> ask -> mode fallback
 - `docs/current-features.md`: 当前能力
 - `docs/roadmap.md`: 下一步计划
 - `docs/versioning.md`: 版本规则
+- `docs/maintenance-log.md`: 不升版本的维护记录
 - `docs/learning-qa.md`: 独立学习沉淀，默认不参与日常上下文加载
 - `CHANGELOG.md`: 版本历史

@@ -16,6 +16,7 @@
 |---|---|
 | 版本规则 | `docs/versioning.md` |
 | 历史变化 | `CHANGELOG.md` |
+| 维护记录 | `docs/maintenance-log.md` |
 | LLM provider 适配 | `docs/01-llm-provider-adapter.md` |
 | Agent Loop | `mini_agent/runtime.py` |
 | 短期工作状态 | `mini_agent/working_state.py` |
@@ -38,6 +39,7 @@
 - 问“现在有什么”：读 `docs/current-features.md`。
 - 问“为什么这样设计”：读 `docs/architecture.md` 和 `docs/roadmap.md`。
 - 问“这次改了什么”：读 `CHANGELOG.md`。
+- 问“最近修了什么但没升版本”：读 `docs/maintenance-log.md`。
 - 问“下一步做什么”：读 `docs/roadmap.md`。
 
 原则：先读最小入口，只有需要细节时再打开对应代码或专题文档。

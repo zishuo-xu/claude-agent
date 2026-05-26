@@ -63,6 +63,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - 不因复查制造新层。
 - 不把 Claude 的重工程能力照搬进 mini-claude。
 - 新功能优先复用现有边界。
+- bugfix、acceptance、review、docs-only 和 test-only 默认写入 `docs/maintenance-log.md`，不自动提升正式版本。
 
 ## 下一步
 

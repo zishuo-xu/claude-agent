@@ -9,6 +9,7 @@
 - 统一项目定位为 `mini-claude`
 - 明确目标是轻量级工程化 Claude-style agent，不是玩具 demo，也不是完整 Claude Code 复刻
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
+- 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
 ## 0.25.0 - 2026-05-25
 

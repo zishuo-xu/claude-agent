@@ -1,6 +1,6 @@
 # Versioning
 
-这份文档只定义版本规则。版本历史写入 `CHANGELOG.md`，当前能力写入 `docs/current-features.md`。
+这份文档只定义版本规则。版本历史写入 `CHANGELOG.md`，维护记录写入 `docs/maintenance-log.md`，当前能力写入 `docs/current-features.md`。
 
 ## 格式
 
@@ -40,15 +40,23 @@ MAJOR.MINOR.PATCH
 
 ### PATCH
 
-小特性、修复、测试补充或文档维护。
+小特性或用户可感知的能力增强。
 
 例子：
 
-- provider 兼容修复
-- prompt 行为收敛
 - 工具输入校验
-- 新增边界测试
-- 文档同步
+- prompt 行为增强
+- 现有模块中的小能力补强
+
+以下情况默认不升版本：
+
+- bugfix
+- acceptance / review / 验收复查
+- docs-only
+- test-only
+- 小范围 UX 修复
+
+这些记录写入 `docs/maintenance-log.md`。如果修复明显改变用户可见行为，也可以在 `CHANGELOG.md` 的当前版本下补充说明，但不必自动提升 `VERSION`。
 
 ## 大特性和小特性
 
@@ -68,13 +76,27 @@ MAJOR.MINOR.PATCH
 
 ## 更新规则
 
-每次功能变化先判断：
+每次变更先判断：
 
 ```text
-这是大特性、小特性、修复，还是纯文档？
+这是能力边界变化，还是维护类变化？
 ```
 
 再决定是否改版本。
+
+需要升版本的情况：
+
+- 新增或改变核心能力边界
+- 引入新的核心模块
+- 改变 Agent Loop、工具系统、权限、上下文、子 Agent 等关键路径
+- 当前能力清单需要明显更新
+
+不需要升版本的情况：
+
+- bugfix
+- review / acceptance
+- docs-only / test-only
+- 不改变能力边界的小体验修复
 
 版本变化至少更新：
 
@@ -89,7 +111,29 @@ MAJOR.MINOR.PATCH
 - `docs/architecture.md`
 - `docs/learning-qa.md`
 
+维护类变化至少更新：
+
+- `docs/maintenance-log.md`
+
+必要时更新：
+
+- `CHANGELOG.md`
+- `docs/roadmap.md`
+- `docs/current-features.md`
+
 纯文档整理通常不改版本。
+
+## 维护记录
+
+`docs/maintenance-log.md` 记录不单独升版本的工作：
+
+- Bug Fix
+- Acceptance
+- Review
+- Docs
+- Test-only
+
+维护记录按日期倒序追加，保持简短。它不替代 `CHANGELOG.md`，只承接不值得单独升版本的项目维护活动。
 
 ## 当前阶段
 
