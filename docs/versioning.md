@@ -136,7 +136,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.26.1`
+当前版本：`0.26.2`
 
 已完成学习主线：
 
@@ -224,5 +224,6 @@ MAJOR.MINOR.PATCH
 - `0.25.0`: Context Stress Acceptance / 上下文压力验收
 - `0.26.0`: Focused Streaming Review / 流式边界复查
 - `0.26.1`: File Generation Clarification Fix / 保存文件澄清修复
+- `0.26.2`: Friendly Tool Display Fix / 工具展示友好化修复
 
 详细说明以 `CHANGELOG.md` 为准。

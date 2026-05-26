@@ -23,7 +23,7 @@ def print_runtime_event(event: RuntimeEvent) -> None:
     if event.type == "text_delta":
         print(event.payload.get("text", ""), end="", flush=True)
     elif event.type == "tool_start":
-        print(f"\n\n[tool] {event.payload['name']} {event.payload['input']}")
+        print(_format_tool_start_for_display(event.payload))
     elif event.type == "tool_result":
         print(_format_tool_result_for_display(event.payload))
     elif event.type == "permission_request":
@@ -69,6 +69,34 @@ def _permission_target(name: str, tool_input: dict[str, Any]) -> str:
     return json.dumps(tool_input, ensure_ascii=False)
 
 
+def _format_tool_start_for_display(payload: dict[str, Any]) -> str:
+    name = payload.get("name", "tool")
+    tool_input = payload.get("input") or {}
+    if name == "list_files":
+        return f"\n\n[agent] Checking files: {_tool_target(tool_input, default='.')}"
+    if name == "read_file":
+        return f"\n\n[agent] Reading file: {_tool_target(tool_input)}"
+    if name == "search_text":
+        return f"\n\n[agent] Searching text: {_tool_target(tool_input)}"
+    if name == "run_shell":
+        return f"\n\n[agent] Running command: {_tool_target(tool_input)}"
+    if name in {"write_file", "edit_file", "preview_edit", "apply_edit"}:
+        return f"\n\n[agent] Editing file: {_tool_target(tool_input)}"
+    if name in TASK_TOOL_RESULTS:
+        return f"\n\n[agent] Updating task state: {name}"
+    return f"\n\n[agent] Using tool: {name}"
+
+
+def _tool_target(tool_input: dict[str, Any], *, default: str = "") -> str:
+    if "path" in tool_input:
+        return str(tool_input["path"])
+    if "command" in tool_input:
+        return str(tool_input["command"])
+    if "pattern" in tool_input:
+        return str(tool_input["pattern"])
+    return default
+
+
 def _format_tool_result_for_display(payload: dict[str, Any]) -> str:
     content = str(payload.get("content", ""))
     name = payload.get("name", "tool")
@@ -90,7 +118,7 @@ def _format_tool_result_for_display(payload: dict[str, Any]) -> str:
     if len(content) <= MAX_DISPLAY_TOOL_RESULT_CHARS:
         return content
 
-    return f"[tool_result] {name} returned {len(content)} chars; hidden from display."
+    return f"[result] {name} returned {len(content)} chars; hidden from display."
 
 
 def _format_shell_result_for_display(content: str) -> str | None:
@@ -116,16 +144,20 @@ def _format_shell_result_for_display(content: str) -> str | None:
 def _format_list_files_result_for_display(content: str) -> str:
     entries = [line for line in content.splitlines() if line.strip()]
     if not entries:
-        return "[tool_result] list_files returned 0 entries."
+        return "[result] Found 0 entries."
     preview = ", ".join(entries[:5])
     suffix = "" if len(entries) <= 5 else f", ... +{len(entries) - 5} more"
-    return f"[tool_result] list_files returned {len(entries)} entries: {preview}{suffix}"
+    return f"[result] Found {len(entries)} entries: {preview}{suffix}"
 
 
 def _format_summary_only_tool_result(name: str, content: str) -> str:
     if name == "search_text" and content == "(no matches)":
-        return "[tool_result] search_text returned no matches."
-    return f"[tool_result] {name} returned {len(content)} chars; hidden from display."
+        return "[result] No text matches found."
+    if name == "read_file":
+        return f"[result] Read file ({len(content)} chars; content hidden from display)."
+    if name == "search_text":
+        return f"[result] Search returned {len(content)} chars; content hidden from display."
+    return f"[result] {name} returned {len(content)} chars; hidden from display."
 
 
 def _format_task_result_for_display(content: str) -> str:

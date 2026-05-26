@@ -25,6 +25,20 @@ def test_print_runtime_event_does_not_print_permission_request(capsys):
     assert captured.out == ""
 
 
+def test_print_runtime_event_formats_read_file_start(capsys):
+    print_runtime_event(RuntimeEvent("tool_start", {"name": "read_file", "input": {"path": "agent.py"}}))
+
+    captured = capsys.readouterr()
+    assert captured.out == "\n\n[agent] Reading file: agent.py\n"
+
+
+def test_print_runtime_event_formats_list_files_start(capsys):
+    print_runtime_event(RuntimeEvent("tool_start", {"name": "list_files", "input": {}}))
+
+    captured = capsys.readouterr()
+    assert captured.out == "\n\n[agent] Checking files: .\n"
+
+
 def test_format_permission_prompt_for_shell_command():
     prompt = _format_permission_prompt(
         name="run_shell",
@@ -55,14 +69,14 @@ def test_print_runtime_event_hides_long_successful_tool_result(capsys):
     print_runtime_event(RuntimeEvent("tool_result", {"name": "read_file", "content": "x" * 2_000, "is_error": False}))
 
     captured = capsys.readouterr()
-    assert captured.out == "[tool_result] read_file returned 2000 chars; hidden from display.\n"
+    assert captured.out == "[result] Read file (2000 chars; content hidden from display).\n"
 
 
 def test_print_runtime_event_hides_short_read_file_result(capsys):
     print_runtime_event(RuntimeEvent("tool_result", {"name": "read_file", "content": "short result", "is_error": False}))
 
     captured = capsys.readouterr()
-    assert captured.out == "[tool_result] read_file returned 12 chars; hidden from display.\n"
+    assert captured.out == "[result] Read file (12 chars; content hidden from display).\n"
 
 
 def test_print_runtime_event_keeps_short_write_file_result_visible(capsys):
@@ -81,14 +95,14 @@ def test_print_runtime_event_hides_search_text_matches(capsys):
     )
 
     captured = capsys.readouterr()
-    assert captured.out == "[tool_result] search_text returned 26 chars; hidden from display.\n"
+    assert captured.out == "[result] Search returned 26 chars; content hidden from display.\n"
 
 
 def test_print_runtime_event_summarizes_search_text_no_matches(capsys):
     print_runtime_event(RuntimeEvent("tool_result", {"name": "search_text", "content": "(no matches)", "is_error": False}))
 
     captured = capsys.readouterr()
-    assert captured.out == "[tool_result] search_text returned no matches.\n"
+    assert captured.out == "[result] No text matches found.\n"
 
 
 def test_print_runtime_event_formats_task_results(capsys):
@@ -170,4 +184,4 @@ def test_print_runtime_event_summarizes_list_files_result(capsys):
     )
 
     captured = capsys.readouterr()
-    assert captured.out == "[tool_result] list_files returned 6 entries: docs/, mini_agent/, tests/, README.md, VERSION, ... +1 more\n"
+    assert captured.out == "[result] Found 6 entries: docs/, mini_agent/, tests/, README.md, VERSION, ... +1 more\n"

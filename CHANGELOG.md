@@ -11,6 +11,26 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.26.2 - 2026-05-27
+
+当前学习阶段：Friendly Tool Display Fix / 工具展示友好化修复。
+
+变更级别：小体验修复。
+
+### Changed
+
+- CLI 工具开始事件不再直接打印原始参数字典
+- `list_files`、`read_file`、`search_text`、`run_shell` 等工具展示为面向用户的动作描述
+- `read_file`、`search_text`、`list_files` 的成功结果摘要改为更友好的 `[result]` 文案
+
+### Verified
+
+- `tests/test_events.py` passed
+
+### Next
+
+- 下一步继续做 Tool Call Boundary Acceptance；优先观察权限提示和最终回答是否还需要收敛
+
 ## 0.26.1 - 2026-05-27
 
 当前学习阶段：File Generation Clarification Fix / 保存文件澄清修复。
