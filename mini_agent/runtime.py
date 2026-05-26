@@ -204,6 +204,8 @@ class AgentRuntime:
     ) -> Any:
         final_response = None
         streamed_text = ""
+        emitted_stream_text = False
+        suppress_stream_text = False
         for event in self.client.stream_complete(
             model=model,
             max_tokens=max_tokens,
@@ -213,6 +215,12 @@ class AgentRuntime:
         ):
             if event.type == "text_delta":
                 streamed_text += event.text
+                if self._contains_pseudo_tool_call(streamed_text):
+                    suppress_stream_text = True
+                    continue
+                if not suppress_stream_text:
+                    self._emit("text_delta", text=event.text)
+                    emitted_stream_text = True
             elif isinstance(event, FinalResponseEvent):
                 final_response = event.response
         if final_response is None:
@@ -220,9 +228,7 @@ class AgentRuntime:
         if streamed_text and not final_response.content:
             final_response.content = [TextBlock(streamed_text)]
         final_text = self._content_text(final_response.content)
-        if streamed_text and not self._contains_pseudo_tool_call(final_text):
-            self._emit("text_delta", text=streamed_text)
-        elif final_text and not self._contains_pseudo_tool_call(final_text):
+        if final_text and not emitted_stream_text and not self._contains_pseudo_tool_call(final_text):
             self._emit("text_delta", text=final_text)
         return final_response
 

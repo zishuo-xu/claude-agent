@@ -11,6 +11,30 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.26.0 - 2026-05-26
+
+当前学习阶段：Focused Streaming Review / 流式边界复查。
+
+变更级别：小特性。
+
+### Changed
+
+- `AgentRuntime._stream_model_call()` 改为在模型流中逐段发出 `text_delta` 事件
+- 保留伪工具调用文本抑制，避免 `<tool_call>` 这类内部标记直接展示给用户
+- 仍保持“模型流结束后执行工具”的轻量边界，不实现完整 StreamingToolExecutor
+
+### Added
+
+- 新增 runtime 测试，验证多个文本 delta 会按分段事件发出
+
+### Verified
+
+- `tests/test_runtime_intent.py tests/test_events.py` passed
+
+### Next
+
+- 下一步建议 `0.27.0 Tool Call Boundary Acceptance / 工具调用边界验收`
+
 ## 0.25.0 - 2026-05-25
 
 当前学习阶段：Context Stress Acceptance / 上下文压力验收。

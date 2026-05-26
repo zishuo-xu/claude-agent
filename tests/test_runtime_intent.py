@@ -128,6 +128,16 @@ class StreamTextOnlyClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class SplitStreamTextClient:
+    def stream_complete(self, **_kwargs):
+        yield TextDeltaEvent("hello ")
+        yield TextDeltaEvent("stream")
+        yield FinalResponseEvent(LLMResponse([TextBlock("hello stream")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 class FinalTextWithoutDeltaClient:
     def stream_complete(self, **_kwargs):
         yield FinalResponseEvent(LLMResponse([TextBlock("final-only text")]))
@@ -522,6 +532,24 @@ def test_runtime_stream_model_call_returns_final_response(tmp_path: Path, capsys
     captured = capsys.readouterr()
     assert captured.out == "hello"
     assert response.content[0].text == "hello"
+
+
+def test_runtime_stream_model_call_emits_text_deltas_incrementally(tmp_path: Path):
+    runtime = make_silent_runtime_with_client(tmp_path, SplitStreamTextClient())
+
+    response = runtime._stream_model_call(
+        model="fake-model",
+        max_tokens=10,
+        system="system",
+        messages=[],
+        tools=[],
+    )
+
+    assert [event.payload["text"] for event in runtime.state.events if event.type == "text_delta"] == [
+        "hello ",
+        "stream",
+    ]
+    assert response.content[0].text == "hello stream"
 
 
 def test_runtime_stream_model_call_suppresses_pseudo_tool_markup(tmp_path: Path, capsys):

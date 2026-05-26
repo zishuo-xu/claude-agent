@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.25.0`
+当前版本：`0.26.0`
 
 ## 当前进展
 
@@ -67,14 +67,24 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1 / `0.26.0`: Focused Streaming Review / 流式边界复查
+### P1 / `0.27.0`: Tool Call Boundary Acceptance / 工具调用边界验收
 
-目标：复查当前“文本流式 + 工具整轮执行”的边界是否需要继续保持。
+目标：用真实 CLI 场景验收工具调用、权限提示、工具结果和最终回答是否仍然清楚。
 
 作用：
 
-- 当前不是完整 Claude StreamingToolExecutor，而是轻量半流式。
-- 下一步只做边界评估和测试，不急着实现流中工具执行。
+- `0.26.0` 已修正文本 delta 的逐段输出。
+- 下一步更适合验收工具事件和用户体验，而不是直接实现完整 StreamingToolExecutor。
+
+### 已完成 / `0.26.0`: Focused Streaming Review / 流式边界复查
+
+目标：复查当前“文本流式 + 工具整轮执行”的边界是否需要继续保持。
+
+结果：
+
+- 文本 delta 改为在模型流中逐段发出，不再等 final response 后一次性展示。
+- 保留伪工具调用文本抑制，避免 `<tool_call>` 这类内部标记直接展示给用户。
+- 仍然保持“模型流结束后执行工具”的轻量边界，不实现完整 StreamingToolExecutor。
 
 ### 已完成 / `0.25.0`: Context Stress Acceptance / 上下文压力验收
 

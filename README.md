@@ -2,7 +2,7 @@
 
 这是一个参考 Claude Code 设计思想实现的轻量级工程化 agent。它不复刻任何非公开源码，而是在较小代码量里保留 Claude-style agent 的核心架构边界。
 
-当前版本：`0.25.0`
+当前版本：`0.26.0`
 
 项目长期原则见 [PROJECT_PRINCIPLES.md](PROJECT_PRINCIPLES.md)。后续所有实现都应及时更新文档，方便学习者和其他 AI 工具理解项目进展。
 
@@ -31,7 +31,7 @@ user message -> model -> tool_use -> permission check -> local tool -> tool_resu
 - **Shell 输出友好化**：`run_shell` 结果按 exit/stdout/stderr 展示，避免原样输出 JSON
 - **明确文件任务直达**：用户给出明确路径和内容时，coding task 不暴露 `list_files`
 - **工具轮次执行器**：工具执行从 runtime 拆出，统一处理校验、权限、执行和错误结果
-- **流式输出**：主模型调用支持 text delta 接收，并会抑制伪工具调用文本
+- **流式输出**：主模型调用会逐段发出 text delta，并抑制伪工具调用文本
 - **伪工具调用兼容边界**：`mini_agent/pseudo_tools.py` 负责解析模型误输出的工具标记，runtime 只负责调用
 - **Task/Todo 状态**：`mini_agent/tasks.py` 保存多步骤任务进度，并通过工具更新
 - **意图识别 / 工具门控**：`mini_agent/intent.py` 先判断用户输入，再决定是否暴露工具
