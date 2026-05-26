@@ -11,6 +11,26 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.27.3 - 2026-05-27
+
+当前学习阶段：File Continuation After Topic Switch Fix / 切换主题后的文件续写修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 明确带文件路径的“继续写 / 追加 / 下一段”会识别为文件续写任务
+- 修复创作保存后切换到项目问答，再明确回到 `novel.md` 续写时不暴露编辑工具的问题
+
+### Verified
+
+- 新增长对话验收：保存小说 -> 继续追加 -> 切换项目架构问答 -> 回到 `novel.md` 继续写
+- `tests/test_intent.py tests/test_runtime_intent.py` focused selection passed
+
+### Next
+
+- 下一步继续做真实 CLI 验收，观察是否还存在“用户明确带回目标但工具不可用”的边界问题
+
 ## 0.27.2 - 2026-05-27
 
 当前学习阶段：Focus Acceptance Follow-up Fix / 会话焦点验收修复。

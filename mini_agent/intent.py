@@ -94,6 +94,17 @@ FILE_GENERATION_KEYWORDS = {
     "write to file",
 }
 
+FILE_CONTINUATION_KEYWORDS = {
+    "继续",
+    "追加",
+    "扩展",
+    "接着",
+    "下一段",
+    "写",
+    "continue",
+    "append",
+}
+
 DANGEROUS_KEYWORDS = {
     "删除所有",
     "清空",
@@ -153,6 +164,14 @@ def classify_intent(user_input: str) -> IntentDecision:
             return IntentDecision(Intent.CODING_TASK, "file generation task needs clarification", allow_tools=False)
         return IntentDecision(Intent.CODING_TASK, "file generation task", allow_tools=True)
 
+    if _looks_like_file_continuation_task(lowered):
+        return IntentDecision(
+            Intent.CODING_TASK,
+            "file continuation task with explicit path",
+            allow_tools=True,
+            hidden_tools=frozenset({"list_files"}),
+        )
+
     if any(keyword in lowered for keyword in CODING_KEYWORDS):
         if _looks_like_direct_file_task(lowered):
             return IntentDecision(
@@ -176,6 +195,10 @@ def _looks_like_direct_file_task(text: str) -> bool:
     has_content = any(keyword in text for keyword in ["内容", "content"])
     has_create_or_edit = any(keyword in text for keyword in ["创建", "新增", "写入", "生成", "create", "write", "add"])
     return has_path and has_content and has_create_or_edit
+
+
+def _looks_like_file_continuation_task(text: str) -> bool:
+    return _has_file_path(text) and any(keyword in text for keyword in FILE_CONTINUATION_KEYWORDS)
 
 
 def _has_file_path(text: str) -> bool:

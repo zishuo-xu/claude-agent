@@ -145,6 +145,14 @@ def test_classifies_save_to_path_as_file_generation_task():
     assert decision.allow_tools
 
 
+def test_classifies_file_continuation_with_path_as_coding_task():
+    decision = classify_intent("继续写 novel.md 的下一段")
+
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools
+    assert decision.hidden_tools == frozenset({"list_files"})
+
+
 def test_document_output_without_focus_is_not_project_question():
     decision = classify_intent("直接输出为文档")
 

@@ -365,6 +365,75 @@ class DocumentOutputFollowupClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class LongConversationFocusClient:
+    def __init__(self):
+        self.stream_calls = 0
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls += 1
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        if self.stream_calls == 1:
+            yield FinalResponseEvent(
+                LLMResponse(
+                    [
+                        ToolUseBlock(
+                            id="call_1",
+                            name="write_file",
+                            input={"path": "novel.md", "content": "# 第一批\n"},
+                        )
+                    ]
+                )
+            )
+        elif self.stream_calls == 2:
+            yield FinalResponseEvent(LLMResponse([TextBlock("已创建 novel.md，后续可以继续追加。")]))
+        elif self.stream_calls == 3:
+            yield FinalResponseEvent(
+                LLMResponse(
+                    [
+                        ToolUseBlock(
+                            id="call_2",
+                            name="edit_file",
+                            input={
+                                "path": "novel.md",
+                                "old": "# 第一批\n",
+                                "new": "# 第一批\n\n第二批正文。\n",
+                            },
+                        )
+                    ]
+                )
+            )
+        elif self.stream_calls == 4:
+            yield FinalResponseEvent(LLMResponse([TextBlock("已追加第二批。后续可以继续追加。")]))
+        elif self.stream_calls == 5:
+            yield FinalResponseEvent(
+                LLMResponse([ToolUseBlock(id="call_3", name="read_file", input={"path": "docs/architecture.md"})])
+            )
+        elif self.stream_calls == 6:
+            yield FinalResponseEvent(LLMResponse([TextBlock("architecture summary")]))
+        elif self.stream_calls == 7:
+            yield FinalResponseEvent(
+                LLMResponse(
+                    [
+                        ToolUseBlock(
+                            id="call_4",
+                            name="edit_file",
+                            input={
+                                "path": "novel.md",
+                                "old": "第二批正文。\n",
+                                "new": "第二批正文。\n\n第三批正文。\n",
+                            },
+                        )
+                    ]
+                )
+            )
+        else:
+            yield FinalResponseEvent(LLMResponse([TextBlock("已追加第三批。")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 class ClarifyClient:
     def stream_complete(self, **_kwargs):
         yield FinalResponseEvent(LLMResponse([TextBlock("请确认文件名和内容风格？")]))
@@ -507,6 +576,30 @@ def test_runtime_save_followup_uses_focus_without_project_reads(tmp_path: Path):
     assert "list_files" not in client.tool_names_by_call[0]
     assert "read_file" not in client.tool_names_by_call[0]
     assert "search_text" not in client.tool_names_by_call[0]
+
+
+def test_runtime_long_conversation_can_switch_project_then_return_to_file_task(tmp_path: Path):
+    client = LongConversationFocusClient()
+    runtime = make_silent_runtime_with_client(tmp_path, client)
+    runtime.config.max_turns = 2
+    runtime.permission_handler = lambda _name, _input, _reason: True
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "architecture.md").write_text("# Architecture\n", encoding="utf-8")
+
+    first = runtime.run_user_turn("写一个校园小说开头，保存到 novel.md")
+    second = runtime.run_user_turn("继续")
+    project = runtime.run_user_turn("解释当前项目架构")
+    third = runtime.run_user_turn("继续写 novel.md 的下一段")
+
+    assert first == "已创建 novel.md，后续可以继续追加。"
+    assert second == "已追加第二批。后续可以继续追加。"
+    assert project == "architecture summary"
+    assert third == "已追加第三批。"
+    assert "write_file" in client.tool_names_by_call[0]
+    assert "edit_file" in client.tool_names_by_call[2]
+    assert client.tool_names_by_call[4] == ["read_file"]
+    assert "edit_file" in client.tool_names_by_call[6]
+    assert "第三批正文" in (tmp_path / "novel.md").read_text(encoding="utf-8")
 
 
 def test_runtime_clears_pending_task_when_user_cancels(tmp_path: Path):

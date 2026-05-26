@@ -136,7 +136,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.27.2`
+当前版本：`0.27.3`
 
 已完成学习主线：
 
@@ -229,5 +229,6 @@ MAJOR.MINOR.PATCH
 - `0.27.0`: Conversation Focus Boundary / 会话焦点边界
 - `0.27.1`: Short Follow-up Acceptance Fix / 短追问验收修复
 - `0.27.2`: Focus Acceptance Follow-up Fix / 会话焦点验收修复
+- `0.27.3`: File Continuation After Topic Switch Fix / 切换主题后的文件续写修复
 
 详细说明以 `CHANGELOG.md` 为准。
