@@ -127,6 +127,14 @@ def test_classifies_save_as_file_request_as_coding_task():
     decision = classify_intent("可以，并且保持为文件，要求至少5个女主角")
 
     assert decision.intent == Intent.CODING_TASK
+    assert not decision.allow_tools
+    assert "needs clarification" in decision.reason
+
+
+def test_classifies_save_as_file_request_with_path_as_tool_task():
+    decision = classify_intent("保存为文件，文件名 novel.md，先写一小段")
+
+    assert decision.intent == Intent.CODING_TASK
     assert decision.allow_tools
 
 

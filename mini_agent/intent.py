@@ -149,6 +149,8 @@ def classify_intent(user_input: str) -> IntentDecision:
         return IntentDecision(Intent.PROJECT_QUESTION, "project-specific question", allow_tools=True)
 
     if any(keyword in lowered for keyword in FILE_GENERATION_KEYWORDS):
+        if not _has_file_path(lowered):
+            return IntentDecision(Intent.CODING_TASK, "file generation task needs clarification", allow_tools=False)
         return IntentDecision(Intent.CODING_TASK, "file generation task", allow_tools=True)
 
     if any(keyword in lowered for keyword in CODING_KEYWORDS):
@@ -170,10 +172,14 @@ def classify_intent(user_input: str) -> IntentDecision:
 
 
 def _looks_like_direct_file_task(text: str) -> bool:
-    has_path = bool(re.search(r"[\w./-]+\.[a-z0-9_]+", text))
+    has_path = _has_file_path(text)
     has_content = any(keyword in text for keyword in ["内容", "content"])
     has_create_or_edit = any(keyword in text for keyword in ["创建", "新增", "写入", "生成", "create", "write", "add"])
     return has_path and has_content and has_create_or_edit
+
+
+def _has_file_path(text: str) -> bool:
+    return bool(re.search(r"[\w./-]+\.[a-z0-9_]+", text))
 
 
 def _looks_like_documented_project_question(text: str) -> bool:
@@ -225,7 +231,9 @@ def tool_choice_guidance(decision: IntentDecision) -> str:
             "unless the user asks for them. Always provide a visible final answer."
         ),
         Intent.CODING_TASK: (
-            "You may use tools to inspect, edit, run tests, and verify changes. If the user gives an explicit "
+            "You may use tools to inspect, edit, run tests, and verify changes. If tools are not available for "
+            "a file generation request, ask for the missing file path, scope, or content constraints; do not "
+            "invent a default file path or write the file yet. If the user gives an explicit "
             "file path and exact content, create or edit that file directly; do not call list_files first unless "
             "the target path is ambiguous or you need to discover existing files. If the user asks for very long "
             "generated content, create or update a file in batches instead of trying to produce everything in one "

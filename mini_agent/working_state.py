@@ -64,9 +64,9 @@ class WorkingState:
             return IntentDecision(
                 intent=pending.intent,
                 reason=f"{pending.reason}; continued from pending task",
-                allow_tools=pending.allow_tools,
-                requested_tool=pending.requested_tool,
-                hidden_tools=pending.hidden_tools,
+                allow_tools=True,
+                requested_tool=None,
+                hidden_tools=frozenset(),
             )
         return current
 

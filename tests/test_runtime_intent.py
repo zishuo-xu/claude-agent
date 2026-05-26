@@ -413,12 +413,12 @@ def test_runtime_inherits_pending_coding_task_for_supplemental_reply(tmp_path: P
     assert first == "请确认风格、设定、长度和文件名？"
     assert second == "已创建 novel.md，后续可以继续追加。"
     assert runtime.working_state.waiting_for_user is True
-    assert client.tool_names_by_call[0]
+    assert client.tool_names_by_call[0] == []
     assert "write_file" in client.tool_names_by_call[1]
     assert (tmp_path / "novel.md").exists()
 
 
-def test_runtime_keeps_pending_task_after_read_only_precheck_then_clarification(tmp_path: Path):
+def test_runtime_keeps_pending_task_after_clarification_without_tools(tmp_path: Path):
     client = ReadOnlyThenClarifyThenWriteClient()
     runtime = make_silent_runtime_with_client(tmp_path, client)
     runtime.config.max_turns = 3
@@ -429,7 +429,7 @@ def test_runtime_keeps_pending_task_after_read_only_precheck_then_clarification(
 
     assert first == "请确认风格、设定、长度和文件名？"
     assert second == "已创建 novel.md，后续可以继续追加。"
-    assert "list_files" in client.tool_names_by_call[0]
+    assert client.tool_names_by_call[0] == []
     assert "write_file" in client.tool_names_by_call[2]
     assert (tmp_path / "novel.md").exists()
 
