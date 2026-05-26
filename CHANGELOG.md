@@ -11,6 +11,29 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.27.1 - 2026-05-27
+
+当前学习阶段：Short Follow-up Acceptance Fix / 短追问验收修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- “写第一章，保存到 xxx.md” 会识别为文件生成任务
+- 项目问答后的“整理成文档 / 输出为文档”会基于当前对话内容落盘
+- `ConversationFocus` 不再只对内容生成焦点处理文档输出 follow-up，已有项目焦点也可整理成文档
+
+### Verified
+
+- 真实 CLI 验收：内容大纲 -> 输出为文档
+- 真实 CLI 验收：项目架构问答 -> 整理成文档
+- 真实 CLI 验收：写第一章保存 -> 继续追加第二章
+- `tests/test_focus.py tests/test_intent.py tests/test_runtime_intent.py` passed
+
+### Next
+
+- 下一步继续观察短 follow-up 是否还会误读无关工作区文件
+
 ## 0.27.0 - 2026-05-27
 
 当前学习阶段：Conversation Focus Boundary / 会话焦点边界。

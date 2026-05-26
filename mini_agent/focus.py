@@ -46,7 +46,7 @@ class ConversationFocus:
             return None
 
         lowered = user_input.strip().lower()
-        if any(marker in lowered for marker in DOCUMENT_OUTPUT_FOLLOWUPS) and self.kind == FocusKind.CONTENT:
+        if any(marker in lowered for marker in DOCUMENT_OUTPUT_FOLLOWUPS) and self.kind != FocusKind.NONE:
             return IntentDecision(
                 Intent.CODING_TASK,
                 "document output follow-up from conversation focus",

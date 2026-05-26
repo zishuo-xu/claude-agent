@@ -84,6 +84,7 @@ CODING_KEYWORDS = {
 FILE_GENERATION_KEYWORDS = {
     "保存为文件",
     "保持为文件",
+    "保存到",
     "写成文件",
     "生成文件",
     "输出到文件",

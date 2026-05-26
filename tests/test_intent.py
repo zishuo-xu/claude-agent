@@ -138,6 +138,13 @@ def test_classifies_save_as_file_request_with_path_as_tool_task():
     assert decision.allow_tools
 
 
+def test_classifies_save_to_path_as_file_generation_task():
+    decision = classify_intent("写第一章，保存到 story_followup.md")
+
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools
+
+
 def test_document_output_without_focus_is_not_project_question():
     decision = classify_intent("直接输出为文档")
 

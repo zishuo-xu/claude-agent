@@ -28,8 +28,19 @@ def test_focus_resolves_document_output_followup_from_content():
     assert "relevant content already present in the conversation" in tool_choice_guidance(decision)
 
 
-def test_focus_does_not_rewrite_document_output_without_content_focus():
+def test_focus_resolves_document_output_followup_from_project_focus():
     focus = ConversationFocus(kind=FocusKind.PROJECT, topic="project")
+    current = classify_intent("直接输出为文档")
+
+    decision = focus.resolve_followup("直接输出为文档", current)
+
+    assert decision is not None
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.hidden_tools == frozenset({"list_files", "read_file", "search_text"})
+
+
+def test_focus_does_not_rewrite_document_output_without_focus():
+    focus = ConversationFocus(kind=FocusKind.NONE)
     current = classify_intent("直接输出为文档")
 
     assert focus.resolve_followup("直接输出为文档", current) is None
