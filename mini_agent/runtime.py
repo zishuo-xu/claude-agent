@@ -21,7 +21,7 @@ from .tasks import TaskState
 from .tool_core import Tool
 from .tool_executor import ToolTurnExecutor
 from .tool_registry import ToolRegistry
-from .working_state import WorkingState, should_keep_pending_task
+from .working_state import CANCELLED_INTENT_REASON, WorkingState, should_keep_pending_task
 
 
 SYSTEM_PROMPT = """You are a Claude Code inspired learning agent.
@@ -156,6 +156,10 @@ class AgentRuntime:
             user_input=user_input,
             final_text=text,
         )
+        if self.state.current_intent and self.state.current_intent.reason == CANCELLED_INTENT_REASON:
+            self.working_state.clear()
+            self.focus.clear()
+            return
         if should_keep_pending_task(self.state.current_intent, text, self.state.current_turn_mutating_tools):
             self.working_state.mark_waiting(intent=self.state.current_intent, goal=user_input)
             return

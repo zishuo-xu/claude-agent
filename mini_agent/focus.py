@@ -22,6 +22,12 @@ DOCUMENT_OUTPUT_FOLLOWUPS = {
     "生成文档",
 }
 
+SAVE_FOLLOWUPS = {
+    "保存一下",
+    "存一下",
+    "保存下",
+}
+
 CONTENT_MARKERS = {
     "小说",
     "故事",
@@ -46,7 +52,10 @@ class ConversationFocus:
             return None
 
         lowered = user_input.strip().lower()
-        if any(marker in lowered for marker in DOCUMENT_OUTPUT_FOLLOWUPS) and self.kind != FocusKind.NONE:
+        if (
+            any(marker in lowered for marker in DOCUMENT_OUTPUT_FOLLOWUPS)
+            or lowered in SAVE_FOLLOWUPS
+        ) and self.kind != FocusKind.NONE:
             return IntentDecision(
                 Intent.CODING_TASK,
                 "document output follow-up from conversation focus",
@@ -54,6 +63,10 @@ class ConversationFocus:
                 hidden_tools=frozenset({"list_files", "read_file", "search_text"}),
             )
         return None
+
+    def clear(self) -> None:
+        self.kind = FocusKind.NONE
+        self.topic = None
 
     def update_after_final_answer(self, *, intent: IntentDecision | None, user_input: str, final_text: str) -> None:
         if not intent:

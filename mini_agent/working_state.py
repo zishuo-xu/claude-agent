@@ -46,6 +46,8 @@ CANCEL_MARKERS = {
     "never mind",
 }
 
+CANCELLED_INTENT_REASON = "user cancelled pending task"
+
 
 @dataclass
 class WorkingState:
@@ -62,7 +64,9 @@ class WorkingState:
             return current
         if _is_cancel(user_input):
             self.clear()
-            return current
+            if focus:
+                focus.clear()
+            return IntentDecision(current.intent, CANCELLED_INTENT_REASON, allow_tools=False)
         if _is_supplemental_response(user_input, current):
             pending = self.pending_intent
             return IntentDecision(
@@ -104,6 +108,8 @@ def _is_cancel(user_input: str) -> bool:
 
 
 def _is_supplemental_response(user_input: str, current: IntentDecision) -> bool:
+    if current.intent == Intent.CASUAL_CHAT and current.reason == "empty input":
+        return False
     if current.intent != Intent.CASUAL_CHAT or current.reason != "no project or coding action requested":
         return False
     text = user_input.strip()

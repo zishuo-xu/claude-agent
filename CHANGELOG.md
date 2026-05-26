@@ -11,6 +11,28 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.27.2 - 2026-05-27
+
+当前学习阶段：Focus Acceptance Follow-up Fix / 会话焦点验收修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 有会话焦点时，“保存一下 / 存一下 / 保存下”会基于当前对话内容落盘
+- 用户取消 pending task 后，final answer 不会重新进入 waiting 状态
+- 取消后再说“继续”会澄清当前意图，而不是恢复已取消任务
+
+### Verified
+
+- 真实 CLI 验收：内容大纲 -> 保存一下
+- 真实 CLI 验收：保存请求 -> 算了 -> 继续
+- `tests/test_focus.py tests/test_intent.py tests/test_runtime_intent.py` passed
+
+### Next
+
+- 下一步继续观察无明确焦点时的短句是否都能澄清而不是误动工具
+
 ## 0.27.1 - 2026-05-27
 
 当前学习阶段：Short Follow-up Acceptance Fix / 短追问验收修复。

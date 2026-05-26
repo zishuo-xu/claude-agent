@@ -494,14 +494,32 @@ def test_runtime_document_output_followup_uses_conversation_not_project_reads(tm
     assert "search_text" not in client.tool_names_by_call[0]
 
 
+def test_runtime_save_followup_uses_focus_without_project_reads(tmp_path: Path):
+    client = DocumentOutputFollowupClient()
+    runtime = make_silent_runtime_with_client(tmp_path, client)
+    runtime.permission_handler = lambda _name, _input, _reason: True
+    runtime.focus.kind = FocusKind.CONTENT
+    runtime.focus.topic = "小说"
+
+    runtime.run_user_turn("保存一下")
+
+    assert "write_file" in client.tool_names_by_call[0]
+    assert "list_files" not in client.tool_names_by_call[0]
+    assert "read_file" not in client.tool_names_by_call[0]
+    assert "search_text" not in client.tool_names_by_call[0]
+
+
 def test_runtime_clears_pending_task_when_user_cancels(tmp_path: Path):
     runtime = make_silent_runtime_with_client(tmp_path, ClarifyClient())
 
     runtime.run_user_turn("保存为文件，要求至少5个女主角")
-    decision = runtime.working_state.resolve_intent("算了")
+    result = runtime.run_user_turn("算了")
+    decision = runtime.working_state.resolve_intent("继续", runtime.focus)
 
-    assert decision.intent == classify_intent("算了").intent
+    assert result == "请确认文件名和内容风格？"
+    assert decision.intent == classify_intent("继续").intent
     assert runtime.working_state.waiting_for_user is False
+    assert runtime.focus.kind == FocusKind.NONE
 
 
 def test_runtime_exposes_tools_for_project_question(tmp_path: Path):
