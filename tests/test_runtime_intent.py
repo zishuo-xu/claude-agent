@@ -53,6 +53,32 @@ class WriteFileToolClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class FinalSummaryWithExtraToolClient:
+    def stream_complete(self, **_kwargs):
+        yield FinalResponseEvent(
+            LLMResponse(
+                [
+                    TextBlock("压力测试结果：通过\n\n通过标准对照：全部通过\n\n是否需要修复：不需要"),
+                    ToolUseBlock(id="call_1", name="write_file", input={"path": "x.txt", "content": "oops"}),
+                ]
+            )
+        )
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
+class StreamedFinalSummaryWithExtraToolClient:
+    def stream_complete(self, **_kwargs):
+        yield TextDeltaEvent("压力测试结果：通过\n\n通过标准对照：全部通过\n\n是否需要修复：不需要")
+        yield FinalResponseEvent(
+            LLMResponse([ToolUseBlock(id="call_1", name="write_file", input={"path": "x.txt", "content": "oops"})])
+        )
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
 class PermissionDeniedThenAnswerClient:
     def __init__(self):
         self.stream_calls = 0
@@ -230,6 +256,37 @@ class HiddenProjectListFilesClient:
             yield FinalResponseEvent(LLMResponse([ToolUseBlock(id="call_1", name="list_files", input={"path": "."})]))
         else:
             yield FinalResponseEvent(LLMResponse([TextBlock("done")]))
+
+    def complete(self, **_kwargs):
+        return LLMResponse([TextBlock("summary")])
+
+
+class ProjectQAAcceptanceMultiReadClient:
+    def __init__(self):
+        self.stream_calls = 0
+        self.tool_names_by_call = []
+
+    def stream_complete(self, **kwargs):
+        self.stream_calls += 1
+        self.tool_names_by_call.append([tool["name"] for tool in kwargs["tools"]])
+        if self.stream_calls == 1:
+            yield FinalResponseEvent(
+                LLMResponse([ToolUseBlock(id="call_1", name="read_file", input={"path": "docs/architecture.md"})])
+            )
+        elif self.stream_calls == 2:
+            yield FinalResponseEvent(
+                LLMResponse([ToolUseBlock(id="call_2", name="read_file", input={"path": "docs/current-features.md"})])
+            )
+        elif self.stream_calls == 3:
+            yield FinalResponseEvent(
+                LLMResponse([ToolUseBlock(id="call_3", name="read_file", input={"path": "docs/roadmap.md"})])
+            )
+        elif self.stream_calls == 4:
+            yield FinalResponseEvent(
+                LLMResponse([ToolUseBlock(id="call_4", name="read_file", input={"path": "docs/context-map.md"})])
+            )
+        else:
+            yield FinalResponseEvent(LLMResponse([TextBlock("项目问答验收总结")]))
 
     def complete(self, **_kwargs):
         return LLMResponse([TextBlock("summary")])
@@ -613,6 +670,28 @@ def test_runtime_clears_pending_task_when_user_cancels(tmp_path: Path):
     assert decision.intent == classify_intent("继续").intent
     assert runtime.working_state.waiting_for_user is False
     assert runtime.focus.kind == FocusKind.NONE
+
+
+def test_runtime_does_not_run_tools_after_final_verification_summary(tmp_path: Path):
+    runtime = make_silent_runtime_with_client(tmp_path, FinalSummaryWithExtraToolClient())
+    runtime.config.max_turns = 2
+
+    result = runtime.run_user_turn("执行压力测试并报告结果")
+
+    assert "压力测试结果：通过" in result
+    assert not (tmp_path / "x.txt").exists()
+    assert not any(event.type == "tool_start" for event in runtime.state.events)
+
+
+def test_runtime_does_not_run_tools_after_streamed_final_verification_summary(tmp_path: Path):
+    runtime = make_silent_runtime_with_client(tmp_path, StreamedFinalSummaryWithExtraToolClient())
+    runtime.config.max_turns = 2
+
+    result = runtime.run_user_turn("执行压力测试并报告结果")
+
+    assert "压力测试结果：通过" in result
+    assert not (tmp_path / "x.txt").exists()
+    assert not any(event.type == "tool_start" for event in runtime.state.events)
 
 
 def test_runtime_exposes_tools_for_project_question(tmp_path: Path):
@@ -1374,3 +1453,23 @@ def test_runtime_allows_project_question_to_read_after_listing_files(tmp_path: P
     assert client.tool_names_by_call[0] == ["list_files", "read_file", "search_text"]
     assert client.tool_names_by_call[1] == ["list_files", "read_file", "search_text"]
     assert client.tool_names_by_call[2] == []
+
+
+def test_runtime_allows_project_qa_acceptance_to_read_multiple_docs(tmp_path: Path):
+    client = ProjectQAAcceptanceMultiReadClient()
+    runtime = make_runtime_with_client(tmp_path, client)
+    runtime.config.max_turns = 5
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "architecture.md").write_text("architecture", encoding="utf-8")
+    (tmp_path / "docs" / "current-features.md").write_text("features", encoding="utf-8")
+    (tmp_path / "docs" / "roadmap.md").write_text("roadmap", encoding="utf-8")
+    (tmp_path / "docs" / "context-map.md").write_text("context", encoding="utf-8")
+
+    result = runtime.run_user_turn("做一次项目问答压力测试：1. 问当前项目架构是什么 2. 问怎么启动 3. 问下一步")
+
+    assert result == "项目问答验收总结"
+    assert client.tool_names_by_call[0] == ["read_file"]
+    assert client.tool_names_by_call[1] == ["read_file"]
+    assert client.tool_names_by_call[2] == ["read_file"]
+    assert client.tool_names_by_call[3] == ["read_file"]
+    assert client.tool_names_by_call[4] == []

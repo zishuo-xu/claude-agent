@@ -8,6 +8,10 @@ def test_system_prompt_keeps_high_level_runtime_principles():
     assert "Work in a tight observe-think-act loop" in SYSTEM_PROMPT
     assert "Inspect before editing" in SYSTEM_PROMPT
     assert "When you finish, summarize what changed and how it was verified" in SYSTEM_PROMPT
+    assert "stop and wait for the next user message" in SYSTEM_PROMPT
+    assert "Do not combine that final summary with more tool calls" in SYSTEM_PROMPT
+    assert ".venv/bin/python" in SYSTEM_PROMPT
+    assert "--break-system-packages" in SYSTEM_PROMPT
 
 
 def test_system_prompt_requires_real_tool_calls():

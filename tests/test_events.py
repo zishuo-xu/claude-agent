@@ -1,3 +1,5 @@
+import json
+
 from mini_agent.events import RuntimeEvent, _format_permission_prompt, print_runtime_event
 
 
@@ -152,6 +154,15 @@ def test_print_runtime_event_formats_shell_success_result(capsys):
     assert captured.out == "[shell] exit 0: python3 hello.py\nstdout:\nhello agent\n"
 
 
+def test_print_runtime_event_summarizes_multiline_shell_command(capsys):
+    command = "cat >> story.md << 'EOF'\n" + ("body\n" * 40) + "EOF"
+    print_runtime_event(RuntimeEvent("tool_start", {"name": "run_shell", "input": {"command": command}}))
+
+    captured = capsys.readouterr()
+    assert "body" not in captured.out
+    assert "chars hidden" in captured.out
+
+
 def test_print_runtime_event_formats_shell_failure_result(capsys):
     print_runtime_event(
         RuntimeEvent(
@@ -169,6 +180,25 @@ def test_print_runtime_event_formats_shell_failure_result(capsys):
 
     captured = capsys.readouterr()
     assert captured.out == "[shell] exit 127: python hello.py\nstderr:\n/bin/sh: python: command not found\n"
+
+
+def test_print_runtime_event_summarizes_long_shell_stdout(capsys):
+    stdout = "\n".join(f"line {index}" for index in range(1, 101))
+    print_runtime_event(
+        RuntimeEvent(
+            "tool_result",
+            {
+                "name": "run_shell",
+                "content": json.dumps({"command": "generate", "exit_code": 0, "stdout": stdout, "stderr": ""}),
+                "is_error": False,
+            },
+        )
+    )
+
+    captured = capsys.readouterr()
+    assert "line 30" in captured.out
+    assert "line 31" not in captured.out
+    assert "shell output hidden" in captured.out
 
 
 def test_print_runtime_event_summarizes_list_files_result(capsys):

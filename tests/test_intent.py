@@ -153,6 +153,23 @@ def test_classifies_file_continuation_with_path_as_coding_task():
     assert decision.hidden_tools == frozenset({"list_files"})
 
 
+def test_mixed_project_question_with_file_action_is_coding_task():
+    decision = classify_intent("解释当前项目架构，然后回到 tmp_stress_story/story.md 追加第二章")
+
+    assert decision.intent == Intent.CODING_TASK
+    assert decision.allow_tools
+
+
+def test_project_qa_acceptance_stays_project_question():
+    decision = classify_intent("做一次项目问答压力测试：1. 问当前项目架构是什么 2. 问怎么启动")
+
+    assert decision.intent == Intent.PROJECT_QUESTION
+    assert decision.allow_tools
+    assert decision.hidden_tools == frozenset({"list_files", "search_text"})
+    assert "project Q&A acceptance" in tool_choice_guidance(decision)
+    assert "answer every requested step visibly" in tool_choice_guidance(decision)
+
+
 def test_document_output_without_focus_is_not_project_question():
     decision = classify_intent("直接输出为文档")
 
@@ -178,6 +195,8 @@ def test_coding_task_prompt_preserves_user_steps_and_test_cases():
     assert "numbered steps, a checklist, or a test case" in guidance
     assert "execute those requested items as written" in guidance
     assert "do not substitute a different benchmark" in guidance
+    assert "Once the requested verification passes" in guidance
+    assert "do not call more tools or rewrite files" in guidance
 
 
 def test_create_keyword_without_file_path_does_not_hide_list_files():

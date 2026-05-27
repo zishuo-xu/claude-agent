@@ -136,7 +136,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.27.4`
+当前版本：`0.27.14`
 
 已完成学习主线：
 
@@ -231,5 +231,15 @@ MAJOR.MINOR.PATCH
 - `0.27.2`: Focus Acceptance Follow-up Fix / 会话焦点验收修复
 - `0.27.3`: File Continuation After Topic Switch Fix / 切换主题后的文件续写修复
 - `0.27.4`: Strict Step Following Fix / 严格步骤遵循修复
+- `0.27.5`: Final Summary Stop Fix / 最终总结后停止修复
+- `0.27.6`: Multiline Paste Input Fix / 多行粘贴输入修复
+- `0.27.7`: Mixed Action Intent Fix / 混合任务意图修复
+- `0.27.8`: CLI Model Error Surface Fix / CLI 模型错误展示修复
+- `0.27.9`: Python Command Safety Fix / Python 命令安全修复
+- `0.27.10`: Workspace Python Command Fix / 工作区 Python 命令修复
+- `0.27.11`: Project QA Acceptance Intent Fix / 项目问答验收意图修复
+- `0.27.12`: Thinking Markup File Sanitizer / 文件 thinking 标记清理
+- `0.27.13`: Shell File Write Boundary Fix / Shell 写文件边界修复
+- `0.27.14`: Shell Output Display Budget Fix / Shell 输出展示预算修复
 
 详细说明以 `CHANGELOG.md` 为准。

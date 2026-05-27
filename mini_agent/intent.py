@@ -147,8 +147,17 @@ def classify_intent(user_input: str) -> IntentDecision:
 
     mentions_project = any(keyword in lowered for keyword in PROJECT_KEYWORDS)
     asks_to_use_project = any(phrase in lowered for phrase in ["用这个项目", "结合当前代码", "结合这个项目", "use this project"])
+    has_action_request = _looks_like_action_request(lowered)
 
-    if _looks_like_documented_project_question(lowered):
+    if _looks_like_project_qa_acceptance(lowered):
+        return IntentDecision(
+            Intent.PROJECT_QUESTION,
+            "project Q&A acceptance request",
+            allow_tools=True,
+            hidden_tools=frozenset({"list_files", "search_text"}),
+        )
+
+    if _looks_like_documented_project_question(lowered) and not has_action_request:
         return IntentDecision(
             Intent.PROJECT_QUESTION,
             "project question with clear documentation entrypoint",
@@ -156,7 +165,7 @@ def classify_intent(user_input: str) -> IntentDecision:
             hidden_tools=frozenset({"list_files", "search_text"}),
         )
 
-    if mentions_project:
+    if mentions_project and not has_action_request:
         return IntentDecision(Intent.PROJECT_QUESTION, "project-specific question", allow_tools=True)
 
     if any(keyword in lowered for keyword in FILE_GENERATION_KEYWORDS):
@@ -195,6 +204,19 @@ def _looks_like_direct_file_task(text: str) -> bool:
     has_content = any(keyword in text for keyword in ["内容", "content"])
     has_create_or_edit = any(keyword in text for keyword in ["创建", "新增", "写入", "生成", "create", "write", "add"])
     return has_path and has_content and has_create_or_edit
+
+
+def _looks_like_action_request(text: str) -> bool:
+    return (
+        any(keyword in text for keyword in FILE_GENERATION_KEYWORDS)
+        or any(keyword in text for keyword in CODING_KEYWORDS)
+        or _looks_like_file_continuation_task(text)
+        or _looks_like_direct_file_task(text)
+    )
+
+
+def _looks_like_project_qa_acceptance(text: str) -> bool:
+    return "项目问答" in text and not _has_file_path(text)
 
 
 def _looks_like_file_continuation_task(text: str) -> bool:
@@ -247,7 +269,10 @@ def tool_choice_guidance(decision: IntentDecision) -> str:
             "README.md or docs/context-map.md. Use list_files only when the "
             "target file is unclear, and stop using tools once enough context is available. Answer the user's "
             "specific question directly and concisely. Do not restate whole documents, long histories, or broad "
-            "feature lists unless the user explicitly asks for detail. When the document states an explicit "
+            "feature lists unless the user explicitly asks for detail. "
+            "For project Q&A acceptance or stress tests, read documentation entrypoints as needed, do not use "
+            "subagents or source files unless the docs are insufficient, then answer every requested step visibly. "
+            "When the document states an explicit "
             "count or ordered list, preserve that count and list exactly; do not estimate counts. "
             "Keep the final answer to 3-6 short bullets "
             "or a short paragraph by default. Do not use emoji, tables, directory trees, or extra learning links "
@@ -261,11 +286,13 @@ def tool_choice_guidance(decision: IntentDecision) -> str:
             "conversation and write it as a Markdown document; if no path is provided, choose a concise safe "
             "filename from the topic or use output.md, and do not inspect project files. If the user gives an explicit "
             "file path and exact content, create or edit that file directly; do not call list_files first unless "
-            "the target path is ambiguous or you need to discover existing files. If the user asks for very long "
+            "the target path is ambiguous or you need to discover existing files. Use write_file or edit_file for "
+            "file content changes; do not use shell heredocs or redirection to write file bodies. If the user asks for very long "
             "generated content, create or update a file in batches instead of trying to produce everything in one "
             "response. Start with outline, metadata, or the first useful chunk, then explain how to continue. "
             "If the user gives numbered steps, a checklist, or a test case, execute those requested items as written; "
-            "do not substitute a different benchmark, demo, stress test, or project shape."
+            "do not substitute a different benchmark, demo, stress test, or project shape. Once the requested "
+            "verification passes and you have reported the result, stop; do not call more tools or rewrite files."
         ),
         Intent.DANGEROUS_REQUEST: "Do not use tools. Explain the safety concern and ask for a safer, more specific goal.",
     }[decision.intent]

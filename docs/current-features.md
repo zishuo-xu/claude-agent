@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.27.4`
+当前版本：`0.27.14`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`179 tests`
+当前测试：`193 tests`
 
 ## LLM Provider
 
@@ -66,7 +66,14 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 空响应兜底
 - 伪工具调用标记兼容，解析逻辑独立在 `pseudo_tools.py`
 - 系统提示只保留高层运行原则，具体场景约束和工具选择策略由 intent prompt 注入
+- CLI 会把一次粘贴进来的多行输入合并为同一轮用户请求，避免编号步骤被拆成多轮误执行
+- CLI 会捕获单轮运行中的模型或网络异常，用一行错误信息返回提示符，避免 traceback 直接打断会话
+- Python 测试或脚本优先使用项目 `.venv/bin/python`；`run_shell` 会拒绝系统级 Python 包安装、`--break-system-packages`，以及 workspace 有 `.venv` 时的裸 `python -m ...` / `python3 -m ...`
+- `run_shell` 拒绝 shell redirection 写文件正文，文件内容变更应走 `write_file` / `edit_file`
+- CLI 展示多行 shell 命令时只显示首行和隐藏长度；shell stdout/stderr 也有展示预算，避免大输出刷屏
+- 文件写入和编辑工具会清理 `<think>` / `</think>` 标记，避免模型内部标记污染用户文件
 - 用户给出编号步骤、清单或测试用例时，系统提示和 coding guidance 会要求按原步骤执行，不替换成其他 benchmark、demo 或压力测试
+- 模型如果在最终验证总结同批次继续给出工具调用，runtime 会保留最终文本并阻止后续工具执行
 - 模型输入按固定边界拼接：base system -> workspace -> intent -> historical summary -> live task state -> messages
 - Prompt / Context 0.16 主线已收尾，暂不增加 prompt 规则或模板系统
 - 当前用户请求内的工具轮次计数独立命名为 `current_turn_tool_rounds`
@@ -75,8 +82,8 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - micro-compact 和 full compact
 - 上下文压力测试覆盖 compact 后 WorkingState 仍可延续 pending task、TaskState 仍与 summary 分离
 
-普通寒暄、泛学习请求默认不读项目、不调用工具；泛学习默认保持 3-5 行，不主动给链接或 emoji。项目问题和编码任务才进入工具循环。中文“创建文件并给出内容”的请求会进入 coding task；“保存为文件 / 写成文件 / 输出到文件”等创作型文件请求也会进入 coding task。保存类请求缺少目标路径时会先澄清，不暴露写入工具，避免模型发明默认文件名后过早写入。“输出为文档 / 整理成文档”这类短 follow-up 会先参考 `ConversationFocus`：如果当前焦点是内容生成，就继承对话内容并写成 Markdown，不会误判成项目文档问答。明确给出目标路径和内容的 coding task 会隐藏 `list_files`，让模型直接创建或编辑文件；明确带文件路径的“继续写 / 追加 / 下一段”也会作为文件续写任务开放编辑工具。若用户给出编号步骤、清单或测试用例，coding guidance 会要求模型按原项目执行，不能把用例替换成自创压力脚本或其他 demo。若上一轮 coding task 回复是在等待用户补充，下一轮补充参数会继承上一轮任务意图并恢复工具可用；只读预检工具不会打断 pending task。写作任务完成一批后，如果回复中明确提到继续或追加，下一轮“继续/追加”仍可继承任务意图。用户取消或切换到明确新任务时会清空该短期状态。超长内容生成会被提示分批写入文件，避免单轮硬写。
-项目问题会按问题选择最相关文档入口：架构和 Agent Loop 问题读 `docs/architecture.md`，功能、版本、启动和用法问题读 `docs/current-features.md`，下一步/roadmap 问题读 `docs/roadmap.md`，宽泛项目概览再读 `README.md` 或 `docs/context-map.md`。项目结构、架构、Agent Loop、当前功能、当前版本、怎么启动、下一步这类问题会隐藏 `list_files` 和 `search_text`，直接读文档；即使问题没有显式出现“项目”二字，只要命中文档入口问题，也按项目问答处理。隐藏工具即使被模型输出，也会在执行层转成内部引导结果，不按普通未知工具错误展示。目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；默认用短段落或 3-6 条短要点，不主动使用 emoji、表格、目录树或额外学习链接。
+普通寒暄、泛学习请求默认不读项目、不调用工具；泛学习默认保持 3-5 行，不主动给链接或 emoji。项目问题和编码任务才进入工具循环。中文“创建文件并给出内容”的请求会进入 coding task；“保存为文件 / 写成文件 / 输出到文件”等创作型文件请求也会进入 coding task。保存类请求缺少目标路径时会先澄清，不暴露写入工具，避免模型发明默认文件名后过早写入。“输出为文档 / 整理成文档”这类短 follow-up 会先参考 `ConversationFocus`：如果当前焦点是内容生成，就继承对话内容并写成 Markdown，不会误判成项目文档问答。明确给出目标路径和内容的 coding task 会隐藏 `list_files`，让模型直接创建或编辑文件；明确带文件路径的“继续写 / 追加 / 下一段”也会作为文件续写任务开放编辑工具。混合任务中即使包含项目架构问答，只要同时有明确文件创建、编辑或续写动作，也会保留为 coding task，避免只暴露只读项目工具。若用户给出编号步骤、清单或测试用例，coding guidance 会要求模型按原项目执行，不能把用例替换成自创压力脚本或其他 demo；验证通过并报告结果后应停止等待用户，不继续调用工具或重写文件，runtime 也会阻止最终验证总结同批次后的工具调用。若上一轮 coding task 回复是在等待用户补充，下一轮补充参数会继承上一轮任务意图并恢复工具可用；只读预检工具不会打断 pending task。写作任务完成一批后，如果回复中明确提到继续或追加，下一轮“继续/追加”仍可继承任务意图。用户取消或切换到明确新任务时会清空该短期状态。超长内容生成会被提示分批写入文件，避免单轮硬写。
+项目问题会按问题选择最相关文档入口：架构和 Agent Loop 问题读 `docs/architecture.md`，功能、版本、启动和用法问题读 `docs/current-features.md`，下一步/roadmap 问题读 `docs/roadmap.md`，宽泛项目概览再读 `README.md` 或 `docs/context-map.md`。项目结构、架构、Agent Loop、当前功能、当前版本、怎么启动、下一步这类问题会隐藏 `list_files` 和 `search_text`，直接读文档；即使问题没有显式出现“项目”二字，只要命中文档入口问题，也按项目问答处理。项目问答验收/压力测试也会作为 project question 处理，优先读少量文档入口，避免子 Agent 和源码探索，并要求可见回答每个步骤。隐藏工具即使被模型输出，也会在执行层转成内部引导结果，不按普通未知工具错误展示。目标文件不清楚时才列目录或搜索。项目问答默认简洁回答，不复述整份文档或长历史；默认用短段落或 3-6 条短要点，不主动使用 emoji、表格、目录树或额外学习链接。
 
 当前运行时事件包括：
 

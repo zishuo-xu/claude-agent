@@ -1,7 +1,17 @@
 from pathlib import Path
 
+import pytest
+
 from mini_agent.tool_core import truncate_tool_result
-from mini_agent.tools import default_tools, is_read_only_shell_command, validate_shell_input
+from mini_agent.tools import (
+    default_tools,
+    is_denied_shell_command,
+    is_read_only_shell_command,
+    strip_thinking_markup,
+    uses_bare_python_module_command,
+    uses_shell_file_write,
+    validate_shell_input,
+)
 from mini_agent.tasks import TaskState
 
 
@@ -84,6 +94,53 @@ def test_run_shell_input_validator_rejects_empty_command():
     assert validate_shell_input({"command": ""}) == "command must be a non-empty string"
     assert validate_shell_input({"command": "   "}) == "command must be a non-empty string"
     assert validate_shell_input({"command": "pwd"}) is None
+
+
+def test_run_shell_denies_system_python_package_install(tmp_path: Path):
+    run_shell = default_tools(tmp_path)["run_shell"]
+
+    assert is_denied_shell_command("pip3 install pytest")
+    assert is_denied_shell_command("python3 -m pip install pytest")
+    assert is_denied_shell_command("pip3 install pytest --break-system-packages")
+
+    with pytest.raises(ValueError, match="refusing system Python package install"):
+        run_shell.run({"command": "pip3 install pytest --break-system-packages"})
+
+
+def test_run_shell_prefers_workspace_venv_for_python_module_commands(tmp_path: Path):
+    (tmp_path / ".venv" / "bin").mkdir(parents=True)
+    (tmp_path / ".venv" / "bin" / "python").write_text("", encoding="utf-8")
+    run_shell = default_tools(tmp_path)["run_shell"]
+
+    assert uses_bare_python_module_command("python3 -m pytest tests/test_core.py")
+    assert uses_bare_python_module_command("cd tmp && python3 -m pytest tests/test_core.py")
+    assert not uses_bare_python_module_command("python3 script.py")
+    assert not uses_bare_python_module_command(".venv/bin/python -m pytest")
+    assert not uses_bare_python_module_command("/tmp/work/.venv/bin/python -m pytest")
+
+    with pytest.raises(ValueError, match="workspace has .venv"):
+        run_shell.run({"command": "python3 -m pytest tests/test_core.py"})
+
+
+def test_file_tools_strip_thinking_markup(tmp_path: Path):
+    tools = default_tools(tmp_path)
+
+    tools["write_file"].run({"path": "story.md", "content": "开头</think>## 第二章\n正文"})
+    content = (tmp_path / "story.md").read_text(encoding="utf-8")
+
+    assert "</think>" not in content
+    assert "开头\n\n## 第二章" in content
+    assert strip_thinking_markup("<think>internal</think>正文") == "正文"
+
+
+def test_run_shell_rejects_shell_file_writes(tmp_path: Path):
+    run_shell = default_tools(tmp_path)["run_shell"]
+
+    assert uses_shell_file_write("cat >> story.md << 'EOF'\nbody\nEOF")
+    assert uses_shell_file_write("echo hi > story.md")
+
+    with pytest.raises(ValueError, match="use write_file or edit_file"):
+        run_shell.run({"command": "cat >> story.md << 'EOF'\nbody\nEOF"})
 
 
 def test_tool_result_budget_keeps_head_tail_and_marker():

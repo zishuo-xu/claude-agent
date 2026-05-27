@@ -15,6 +15,8 @@ class RuntimeEvent:
 EventHandler = Callable[[RuntimeEvent], None]
 PermissionRequestHandler = Callable[[str, dict[str, Any], str], bool]
 MAX_DISPLAY_TOOL_RESULT_CHARS = 1_200
+MAX_DISPLAY_SHELL_STREAM_CHARS = 1_200
+MAX_DISPLAY_SHELL_STREAM_LINES = 30
 SUMMARY_ONLY_TOOL_RESULTS = {"read_file", "search_text"}
 TASK_TOOL_RESULTS = {"set_tasks", "update_task", "list_tasks"}
 
@@ -79,7 +81,7 @@ def _format_tool_start_for_display(payload: dict[str, Any]) -> str:
     if name == "search_text":
         return f"\n\n[agent] Searching text: {_tool_target(tool_input)}"
     if name == "run_shell":
-        return f"\n\n[agent] Running command: {_tool_target(tool_input)}"
+        return f"\n\n[agent] Running command: {_display_command(_tool_target(tool_input))}"
     if name in {"write_file", "edit_file", "preview_edit", "apply_edit"}:
         return f"\n\n[agent] Editing file: {_tool_target(tool_input)}"
     if name in TASK_TOOL_RESULTS:
@@ -129,13 +131,13 @@ def _format_shell_result_for_display(content: str) -> str | None:
     if not isinstance(result, dict) or "command" not in result or "exit_code" not in result:
         return None
 
-    lines = [f"[shell] exit {result['exit_code']}: {result['command']}"]
+    lines = [f"[shell] exit {result['exit_code']}: {_display_command(str(result['command']))}"]
     stdout = str(result.get("stdout") or "").rstrip()
     stderr = str(result.get("stderr") or "").rstrip()
     if stdout:
-        lines.extend(["stdout:", stdout])
+        lines.extend(["stdout:", _format_shell_stream(stdout)])
     if stderr:
-        lines.extend(["stderr:", stderr])
+        lines.extend(["stderr:", _format_shell_stream(stderr)])
     if not stdout and not stderr:
         lines.append("[no output]")
     return "\n".join(lines)
@@ -148,6 +150,25 @@ def _format_list_files_result_for_display(content: str) -> str:
     preview = ", ".join(entries[:5])
     suffix = "" if len(entries) <= 5 else f", ... +{len(entries) - 5} more"
     return f"[result] Found {len(entries)} entries: {preview}{suffix}"
+
+
+def _display_command(command: str) -> str:
+    if "\n" not in command and len(command) <= 160:
+        return command
+    first_line = command.splitlines()[0] if command.splitlines() else command[:80]
+    return f"{first_line[:120]} ... ({len(command)} chars hidden)"
+
+
+def _format_shell_stream(content: str) -> str:
+    content_lines = content.splitlines()
+    if len(content) <= MAX_DISPLAY_SHELL_STREAM_CHARS and len(content_lines) <= MAX_DISPLAY_SHELL_STREAM_LINES:
+        return content
+    preview = "\n".join(content_lines[:MAX_DISPLAY_SHELL_STREAM_LINES])
+    return (
+        f"{preview}\n"
+        f"...[shell output hidden: {len(content)} chars, {len(content_lines)} lines; showing first "
+        f"{MAX_DISPLAY_SHELL_STREAM_LINES} lines]..."
+    )
 
 
 def _format_summary_only_tool_result(name: str, content: str) -> str:

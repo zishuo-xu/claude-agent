@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import select
 import sys
 from pathlib import Path
 
@@ -52,6 +53,37 @@ def make_llm_client(provider: str, base_url: str | None) -> LLMClient:
     return AnthropicLLM()
 
 
+def read_user_input(prompt: str = "\n你 > ") -> str:
+    first_line = input(prompt)
+    return _join_input_lines(first_line, _drain_pending_stdin())
+
+
+def _join_input_lines(first_line: str, extra_lines: list[str]) -> str:
+    lines = [first_line, *extra_lines]
+    return "\n".join(line.rstrip("\n") for line in lines).strip()
+
+
+def _drain_pending_stdin() -> list[str]:
+    if not sys.stdin.isatty():
+        return []
+    lines: list[str] = []
+    while True:
+        try:
+            ready, _, _ = select.select([sys.stdin], [], [], 0.02)
+        except (OSError, ValueError):
+            return lines
+        if not ready:
+            return lines
+        line = sys.stdin.readline()
+        if not line:
+            return lines
+        lines.append(line)
+
+
+def format_cli_error(exc: Exception) -> str:
+    return f"[error] {type(exc).__name__}: {exc}"
+
+
 def main() -> int:
     load_dotenv(ROOT / ".env")
     args = parse_args()
@@ -94,7 +126,7 @@ def main() -> int:
     print(f"Claude-style learning agent ({provider}, {model}). Type /exit to quit, /mode to see permission mode.")
     while True:
         try:
-            user_input = input("\n你 > ").strip()
+            user_input = read_user_input()
         except (EOFError, KeyboardInterrupt):
             print()
             return 0
@@ -108,7 +140,10 @@ def main() -> int:
             continue
 
         print("\nagent > ", end="", flush=True)
-        runtime.run_user_turn(user_input)
+        try:
+            runtime.run_user_turn(user_input)
+        except Exception as exc:
+            print(f"\n{format_cli_error(exc)}")
 
 
 if __name__ == "__main__":

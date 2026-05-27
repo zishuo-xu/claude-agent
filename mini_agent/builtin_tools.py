@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import re
 import shlex
 import subprocess
 from pathlib import Path
@@ -18,6 +19,7 @@ DENIED_SHELL_FRAGMENTS = [
     "git clean -fd",
     "mkfs",
     ":(){",
+    "--break-system-packages",
 ]
 
 
@@ -91,11 +93,44 @@ def replace_text(content: str, old: str, new: str, replace_all: bool = False) ->
     return updated, occurrences
 
 
+def strip_thinking_markup(content: str) -> str:
+    without_blocks = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL | re.IGNORECASE)
+    return re.sub(r"</?think>", "\n\n", without_blocks, flags=re.IGNORECASE)
+
+
 def validate_shell_input(args: dict) -> str | None:
     command = args.get("command")
     if not isinstance(command, str) or not command.strip():
         return "command must be a non-empty string"
     return None
+
+
+def is_denied_shell_command(command: str) -> bool:
+    if any(fragment in command for fragment in DENIED_SHELL_FRAGMENTS):
+        return True
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return False
+    if not parts:
+        return False
+    if parts[0] in {"pip", "pip3"} and "install" in parts[1:]:
+        return True
+    if len(parts) >= 4 and parts[0] in {"python", "python3"} and parts[1:3] == ["-m", "pip"] and "install" in parts[3:]:
+        return True
+    return False
+
+
+def uses_bare_python_module_command(command: str) -> bool:
+    return re.search(r"(^|[;&|]\s*|\s)(python3?|python)\s+-m\s+", command) is not None
+
+
+def uses_shell_file_write(command: str) -> bool:
+    return (
+        re.search(r"(^|[;&|]\s*)cat\s+>>?\s+", command) is not None
+        or re.search(r"(^|[;&|]\s*)echo\s+.+\s>>?\s+", command, flags=re.DOTALL) is not None
+        or re.search(r"(^|[;&|]\s*)printf\s+.+\s>>?\s+", command, flags=re.DOTALL) is not None
+    )
 
 
 def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict[str, Tool]:
@@ -125,7 +160,7 @@ def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict
 
     def write_file(args: dict) -> str:
         path = workspace.resolve(args["path"])
-        content = args["content"]
+        content = strip_thinking_markup(args["content"])
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
         return f"wrote {path.relative_to(workspace.root)} ({len(content)} bytes)"
@@ -133,7 +168,7 @@ def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict
     def edit_file(args: dict) -> str:
         path = workspace.resolve(args["path"])
         content = path.read_text(encoding="utf-8")
-        updated, occurrences = replace_text(content, args["old"], args["new"], args.get("replace_all", False))
+        updated, occurrences = replace_text(content, args["old"], strip_thinking_markup(args["new"]), args.get("replace_all", False))
         path.write_text(updated, encoding="utf-8")
         diff = unified_diff(str(path.relative_to(workspace.root)), content, updated)
         return f"edited {path.relative_to(workspace.root)} ({occurrences} match{'es' if occurrences != 1 else ''})\n\n{diff}"
@@ -141,14 +176,14 @@ def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict
     def preview_edit(args: dict) -> str:
         path = workspace.resolve(args["path"])
         content = path.read_text(encoding="utf-8")
-        updated, occurrences = replace_text(content, args["old"], args["new"], args.get("replace_all", False))
+        updated, occurrences = replace_text(content, args["old"], strip_thinking_markup(args["new"]), args.get("replace_all", False))
         diff = unified_diff(str(path.relative_to(workspace.root)), content, updated)
         return f"preview {path.relative_to(workspace.root)} ({occurrences} match{'es' if occurrences != 1 else ''})\n\n{diff}"
 
     def apply_edit(args: dict) -> str:
         path = workspace.resolve(args["path"])
         content = path.read_text(encoding="utf-8")
-        updated, occurrences = replace_text(content, args["old"], args["new"], args.get("replace_all", False))
+        updated, occurrences = replace_text(content, args["old"], strip_thinking_markup(args["new"]), args.get("replace_all", False))
         diff = unified_diff(str(path.relative_to(workspace.root)), content, updated)
         path.write_text(updated, encoding="utf-8")
         return f"applied {path.relative_to(workspace.root)} ({occurrences} match{'es' if occurrences != 1 else ''})\n\n{diff}"
@@ -171,8 +206,15 @@ def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict
 
     def run_shell(args: dict) -> str:
         command = args["command"]
-        if any(fragment in command for fragment in DENIED_SHELL_FRAGMENTS):
-            raise ValueError(f"refusing dangerous command: {command}")
+        if is_denied_shell_command(command):
+            raise ValueError(
+                "refusing system Python package install or dangerous command; "
+                "prefer existing project commands such as .venv/bin/python -m pytest"
+            )
+        if (workspace.root / ".venv" / "bin" / "python").exists() and uses_bare_python_module_command(command):
+            raise ValueError("workspace has .venv; use .venv/bin/python -m ... instead of bare python -m")
+        if uses_shell_file_write(command):
+            raise ValueError("use write_file or edit_file for file content changes instead of shell redirection")
         completed = subprocess.run(
             command,
             cwd=workspace.root,

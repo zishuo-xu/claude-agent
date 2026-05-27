@@ -37,11 +37,14 @@ Operating principles:
 - When a tool is needed, use the actual tool call interface. Do not print XML, JSON, or markdown pseudo tool calls as plain text.
 - Only explain architecture, tools, permissions, or implementation details when the user asks for them or when they are necessary to complete the task.
 - Keep file operations inside the workspace.
-- Prefer python3 over python when running Python scripts unless the user specifically requests python.
+- Prefer the project virtualenv command `.venv/bin/python` for Python tests or project scripts when it exists.
+- Do not install packages into system Python or use `--break-system-packages`; ask before adding dependencies.
 - For multi-step coding tasks, create a short 3-6 item todo list with task tools before substantial work, then update it as phases start or finish.
 - Do not use task tools for casual chat, general learning questions, or simple one-step requests.
 - If a command or edit is risky, ask for confirmation through the permission system.
 - When you finish, summarize what changed and how it was verified.
+- After giving a final result or pass/fail verification summary, stop and wait for the next user message.
+  Do not combine that final summary with more tool calls.
 """
 
 
@@ -91,6 +94,10 @@ class AgentRuntime:
             self._begin_turn()
             response = self._call_model(self.config.model)
             response.content = self._normalize_pseudo_tool_call(response.content)
+            if self._should_treat_as_final_text(response.content):
+                final_content = self._without_tool_uses(response.content)
+                self._record_assistant_response(final_content)
+                return self._handle_final_answer(final_content, user_input)
             self._record_assistant_response(response.content)
 
             tool_uses = [block for block in response.content if getattr(block, "type", None) == "tool_use"]
@@ -176,6 +183,27 @@ class AgentRuntime:
                 return True
         return False
 
+    def _should_treat_as_final_text(self, content: list[Any]) -> bool:
+        has_tool_use = any(getattr(block, "type", None) == "tool_use" for block in content)
+        if not has_tool_use:
+            return False
+        text = self._content_text(content)
+        if not text:
+            return False
+        return self._looks_like_final_verification_text(text)
+
+    def _looks_like_final_verification_text(self, text: str) -> bool:
+        lowered = text.lower()
+        return (
+            ("压力测试结果" in text and ("通过" in text or "未通过" in text))
+            or ("通过标准对照" in text and "是否需要修复" in text)
+            or ("verification result" in lowered and ("passed" in lowered or "failed" in lowered))
+            or ("result:" in lowered and ("passed" in lowered or "failed" in lowered))
+        )
+
+    def _without_tool_uses(self, content: list[Any]) -> list[Any]:
+        return [block for block in content if getattr(block, "type", None) != "tool_use"]
+
     def _call_model(self, model: str) -> Any:
         tools = self._available_tool_specs()
         self._emit("model_start", model=model, visible_tools=len(tools))
@@ -238,6 +266,12 @@ class AgentRuntime:
                 final_response = event.response
         if final_response is None:
             raise RuntimeError("stream completed without final response")
+        if (
+            streamed_text
+            and any(getattr(block, "type", None) == "tool_use" for block in final_response.content)
+            and self._looks_like_final_verification_text(streamed_text)
+        ):
+            final_response.content = [TextBlock(streamed_text)]
         if streamed_text and not final_response.content:
             final_response.content = [TextBlock(streamed_text)]
         final_text = self._content_text(final_response.content)
@@ -275,6 +309,12 @@ class AgentRuntime:
         self.state.current_turn_tool_rounds += 1
         used_names = {tool_use.name for tool_use in tool_uses}
         if not decision.requested_tool and used_names <= {"list_files"} and self.state.current_turn_tool_rounds < 2:
+            return
+        if (
+            decision.reason == "project Q&A acceptance request"
+            and used_names <= {"read_file"}
+            and self.state.current_turn_tool_rounds < 4
+        ):
             return
         self.state.current_intent = IntentDecision(
             intent=decision.intent,

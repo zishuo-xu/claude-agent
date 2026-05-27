@@ -11,6 +11,208 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.27.14 - 2026-05-27
+
+当前学习阶段：Shell Output Display Budget Fix / Shell 输出展示预算修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- CLI 展示 shell stdout/stderr 时设置行数和字符预算
+- 修复真实 CLI 大文件压力测试中 shell 生成 100 行日志直接刷屏的问题
+
+### Verified
+
+- `tests/test_events.py::test_print_runtime_event_summarizes_long_shell_stdout` passed
+
+### Next
+
+- 重新跑 Stress Test Cases 案例 8，确认大输出不会刷屏
+
+## 0.27.13 - 2026-05-27
+
+当前学习阶段：Shell File Write Boundary Fix / Shell 写文件边界修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- `run_shell` 拒绝 `cat >` / `cat >>` / `echo >` / `printf >` 这类写文件正文的命令
+- coding guidance 明确要求文件内容变更使用 `write_file` / `edit_file`
+- CLI 展示多行 shell 命令时只显示首行和隐藏长度，避免 here-doc 正文刷屏
+
+### Verified
+
+- `tests/test_tools.py::test_run_shell_rejects_shell_file_writes` passed
+- `tests/test_events.py::test_print_runtime_event_summarizes_multiline_shell_command` passed
+
+### Next
+
+- 重新跑 Stress Test Cases 案例 7，确认文件追加改用文件工具且终端不刷屏
+
+## 0.27.12 - 2026-05-27
+
+当前学习阶段：Thinking Markup File Sanitizer / 文件 thinking 标记清理。
+
+变更级别：bugfix。
+
+### Fixed
+
+- `write_file` / `edit_file` / `preview_edit` / `apply_edit` 会清理 `<think>` / `</think>` 标记
+- 修复真实 CLI 多主题压力测试中 `</think>` 混入 `novel.md` 的问题
+
+### Verified
+
+- `tests/test_tools.py::test_file_tools_strip_thinking_markup` passed
+
+### Next
+
+- 重新跑 Stress Test Cases 案例 7，确认写作文件不再混入 thinking 标记
+
+## 0.27.11 - 2026-05-27
+
+当前学习阶段：Project QA Acceptance Intent Fix / 项目问答验收意图修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- “项目问答压力测试”归类为 project question，而不是 coding task
+- 项目问答验收场景隐藏 `list_files` / `search_text`，优先从文档入口回答
+- 项目问答提示要求避免子 Agent 和源码文件，除非文档不足，并要求可见回答每个步骤
+- 项目问答验收场景允许连续读取少量文档入口后再关闭工具，避免只读一个文档就过早停下
+
+### Verified
+
+- `tests/test_intent.py::test_project_qa_acceptance_stays_project_question` passed
+- `tests/test_runtime_intent.py::test_runtime_allows_project_qa_acceptance_to_read_multiple_docs` passed
+
+### Next
+
+- 重新跑 Stress Test Cases 案例 5，确认项目问答输出收敛
+
+## 0.27.10 - 2026-05-27
+
+当前学习阶段：Workspace Python Command Fix / 工作区 Python 命令修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 当 workspace 存在 `.venv/bin/python` 时，`run_shell` 拒绝裸 `python -m ...` / `python3 -m ...`
+- 引导模型使用 `.venv/bin/python -m ...` 运行 pytest 或模块命令，避免依赖系统 Python 环境
+
+### Verified
+
+- `tests/test_tools.py::test_run_shell_prefers_workspace_venv_for_python_module_commands` passed
+
+### Next
+
+- 重新跑 Stress Test Cases 高压案例 6，确认裸 Python module 命令会被纠正
+
+## 0.27.9 - 2026-05-27
+
+当前学习阶段：Python Command Safety Fix / Python 命令安全修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 系统提示要求优先使用项目已有 `.venv/bin/python` 运行 Python 测试或脚本
+- `run_shell` 拒绝系统级 Python 包安装命令和 `--break-system-packages`
+- 修复真实 CLI 压力验收中模型尝试修改系统 Python 环境的问题
+
+### Verified
+
+- `tests/test_tools.py::test_run_shell_denies_system_python_package_install` passed
+- `tests/test_runtime_prompt.py::test_system_prompt_keeps_high_level_runtime_principles` passed
+
+### Next
+
+- 重新跑 Stress Test Cases 高压案例 6，确认模型改用项目虚拟环境命令
+
+## 0.27.8 - 2026-05-27
+
+当前学习阶段：CLI Model Error Surface Fix / CLI 模型错误展示修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- CLI 捕获单轮运行中的模型或网络异常，用一行错误信息返回提示符
+- 修复真实 CLI 压力验收中 provider 流式连接中断时直接打印 traceback 并退出的问题
+
+### Verified
+
+- `tests/test_cli_input.py` passed
+
+### Next
+
+- 继续用真实 CLI 跑 Stress Test Cases，优先复验案例 2
+
+## 0.27.7 - 2026-05-27
+
+当前学习阶段：Mixed Action Intent Fix / 混合任务意图修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 混合任务中即使包含项目架构问答，只要同时有明确文件创建、编辑或续写动作，就保留为 coding task
+- 修复 Stress Test Cases 案例 2 中“解释当前项目架构 + 回到 story.md 追加第二章”被误判为只读项目问答的问题
+
+### Verified
+
+- `tests/test_intent.py::test_mixed_project_question_with_file_action_is_coding_task` passed
+
+### Next
+
+- 下一步重新用真实 CLI 跑 Stress Test Cases 案例 2
+
+## 0.27.6 - 2026-05-27
+
+当前学习阶段：Multiline Paste Input Fix / 多行粘贴输入修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- CLI 会把一次粘贴进来的多行输入合并成同一轮用户请求
+- 修复 Stress Test Cases 这类多行编号步骤被 `input()` 拆成多轮消息，导致最终总结后继续执行剩余行的问题
+
+### Verified
+
+- `tests/test_cli_input.py` passed
+
+### Next
+
+- 下一步重新用真实 CLI 跑 Stress Test Cases 案例 1，确认多行粘贴作为一轮请求处理
+
+## 0.27.5 - 2026-05-27
+
+当前学习阶段：Final Summary Stop Fix / 最终总结后停止修复。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 系统提示要求给出最终结果或通过/失败验证总结后停止等待用户
+- coding task guidance 要求验证通过并报告结果后不再调用工具或重写文件
+- runtime 对“最终验证总结 + 同批工具调用”做窄保护：保留最终文本，不执行后续工具
+- 修复真实 CLI 压力验收中模型已报告案例通过后继续调用工具、覆盖 `calc.py` 的问题
+
+### Verified
+
+- `tests/test_runtime_prompt.py tests/test_intent.py` focused selection passed
+- `tests/test_runtime_intent.py::test_runtime_does_not_run_tools_after_final_verification_summary` passed
+- `tests/test_runtime_intent.py::test_runtime_does_not_run_tools_after_streamed_final_verification_summary` passed
+- 真实 `agent.py` CLI 仍需复验案例 1，确认最终总结后不再继续改文件
+
+### Next
+
+- 下一步重新跑 Stress Test Cases 案例 1，再继续跑后续案例
+
 ## 0.27.4 - 2026-05-27
 
 当前学习阶段：Strict Step Following Fix / 严格步骤遵循修复。
