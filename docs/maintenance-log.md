@@ -30,6 +30,10 @@
 - 发现问题：模型运行脚本时使用裸 `python tmp_context_acceptance/mini_notes.py`，在当前环境不友好。
 - 修复记录为 `0.28.2`：workspace 有 `.venv` 时，`run_shell` 拒绝裸 Python 脚本命令并引导使用 `.venv/bin/python script.py`。
 - 复验通过：真实 CLI 中模型被拒绝后自动改用 `.venv/bin/python tmp_context_acceptance/mini_notes.py`，自检退出码 0。
+- 继续执行合理预算真实长任务验收：使用 `--context-char-budget 15000` 创建并多轮修改 `tmp_context_acceptance2/metrics.py`，新增 `MetricsTracker.add/average/summary/latest/reset`。
+- 验收中触发 `micro-compacted` 和 `compacted older conversation into summary`，随后仍能继续修复 `__main__` 边界、运行自检和 import 副作用检查。
+- 外部核对通过：直接运行脚本所有断言通过，动态 import 只输出 `import ok`；临时目录已清理。
+- 观察：一次长任务追问出现短暂空响应，用户继续后任务可恢复；先记录观察，不扩大修复范围。
 - 验收 `0.28.1` Context Preflight Token Guard。
 - 正常预算真实 CLI 冒烟受外部 LLM 配置阻断：当前 `.env` 返回 `401 invalid_key`，因此未能验证真实模型回复。
 - 极低预算真实 CLI 验收通过：使用 `--context-char-budget 50` 输入长文本，runtime 在模型调用前输出 `Context preflight stopped before the model call`，没有触发外部 API 401。
