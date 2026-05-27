@@ -9,6 +9,7 @@ from mini_agent.tools import (
     is_read_only_shell_command,
     strip_thinking_markup,
     uses_bare_python_module_command,
+    uses_bare_python_script_command,
     uses_shell_file_write,
     validate_shell_input,
 )
@@ -120,6 +121,22 @@ def test_run_shell_prefers_workspace_venv_for_python_module_commands(tmp_path: P
 
     with pytest.raises(ValueError, match="workspace has .venv"):
         run_shell.run({"command": "python3 -m pytest tests/test_core.py"})
+
+
+def test_run_shell_prefers_workspace_venv_for_python_script_commands(tmp_path: Path):
+    (tmp_path / ".venv" / "bin").mkdir(parents=True)
+    (tmp_path / ".venv" / "bin" / "python").write_text("", encoding="utf-8")
+    run_shell = default_tools(tmp_path)["run_shell"]
+
+    assert uses_bare_python_script_command("python script.py")
+    assert uses_bare_python_script_command("python3 tmp/app.py")
+    assert uses_bare_python_script_command("cd tmp && python3 app.py")
+    assert not uses_bare_python_script_command(".venv/bin/python script.py")
+    assert not uses_bare_python_script_command("/tmp/work/.venv/bin/python script.py")
+    assert not uses_bare_python_script_command("python3 -m pytest tests/test_core.py")
+
+    with pytest.raises(ValueError, match="use .venv/bin/python script.py"):
+        run_shell.run({"command": "python tmp_context_acceptance/mini_notes.py"})
 
 
 def test_file_tools_strip_thinking_markup(tmp_path: Path):

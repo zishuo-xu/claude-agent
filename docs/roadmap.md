@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.28.1`
+当前版本：`0.28.2`
 
 ## 当前进展
 
@@ -78,7 +78,8 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - `0.28.0` 已把预算检查、micro-compact 和 full compact 收进 `context_preflight.py`。
 - `0.28.1` 已补上压缩后仍超预算的阻断检查，避免继续发起注定失败的模型请求。
 - 下一步先验收边界，不急着新增 snip、context collapse 或复杂 token 预算器。
-- 如果发现用户可见问题，再按 PATCH 修复。
+- `0.28.2` 已修复验收中发现的裸 Python 脚本命令问题。
+- 如果继续发现用户可见问题，再按 PATCH 修复。
 
 ### 候选: Short Follow-up Acceptance / 短追问验收
 

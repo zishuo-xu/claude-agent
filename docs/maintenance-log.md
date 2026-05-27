@@ -26,6 +26,10 @@
 
 ### Acceptance
 
+- 真实 CLI 执行 Context Preflight 长任务验收：创建并修改 `tmp_context_acceptance/mini_notes.py`，验证 `NoteStore.add/list_titles/search/count` 和 `__main__` 自检。
+- 发现问题：模型运行脚本时使用裸 `python tmp_context_acceptance/mini_notes.py`，在当前环境不友好。
+- 修复记录为 `0.28.2`：workspace 有 `.venv` 时，`run_shell` 拒绝裸 Python 脚本命令并引导使用 `.venv/bin/python script.py`。
+- 复验通过：真实 CLI 中模型被拒绝后自动改用 `.venv/bin/python tmp_context_acceptance/mini_notes.py`，自检退出码 0。
 - 验收 `0.28.1` Context Preflight Token Guard。
 - 正常预算真实 CLI 冒烟受外部 LLM 配置阻断：当前 `.env` 返回 `401 invalid_key`，因此未能验证真实模型回复。
 - 极低预算真实 CLI 验收通过：使用 `--context-char-budget 50` 输入长文本，runtime 在模型调用前输出 `Context preflight stopped before the model call`，没有触发外部 API 401。

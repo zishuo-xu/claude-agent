@@ -136,7 +136,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.28.1`
+当前版本：`0.28.2`
 
 已完成学习主线：
 
@@ -243,5 +243,6 @@ MAJOR.MINOR.PATCH
 - `0.27.14`: Shell Output Display Budget Fix / Shell 输出展示预算修复
 - `0.28.0`: Context Preflight / 上下文预处理管线
 - `0.28.1`: Context Preflight Token Guard / 上下文预处理阻断检查
+- `0.28.2`: Python Script Command Guard / Python 脚本命令保护
 
 详细说明以 `CHANGELOG.md` 为准。

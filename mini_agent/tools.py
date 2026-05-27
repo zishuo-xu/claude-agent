@@ -10,6 +10,7 @@ from .builtin_tools import (
     strip_thinking_markup,
     unified_diff,
     uses_bare_python_module_command,
+    uses_bare_python_script_command,
     uses_shell_file_write,
     validate_shell_input,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "is_denied_shell_command",
     "is_read_only_shell_command",
     "uses_bare_python_module_command",
+    "uses_bare_python_script_command",
     "uses_shell_file_write",
     "replace_text",
     "strip_thinking_markup",

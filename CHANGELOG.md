@@ -11,6 +11,26 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.28.2 - 2026-05-27
+
+当前学习阶段：Python Script Command Guard / Python 脚本命令保护。
+
+变更级别：bugfix。
+
+### Fixed
+
+- 当 workspace 存在 `.venv/bin/python` 时，`run_shell` 会拒绝裸 `python script.py` / `python3 script.py`
+- 工具错误会引导模型改用 `.venv/bin/python script.py`，避免在没有 `python` 命令的环境里失败
+
+### Verified
+
+- `tests/test_tools.py::test_run_shell_prefers_workspace_venv_for_python_script_commands` passed
+- 真实 CLI 复验：模型先尝试裸 `python`，被工具拒绝后自动改用 `.venv/bin/python tmp_context_acceptance/mini_notes.py`，自检通过
+
+### Next
+
+- 继续做 Context Preflight 真实长任务验收，重点观察合理预算下是否能完成多轮修改和验证
+
 ## 0.28.1 - 2026-05-27
 
 当前学习阶段：Context Preflight Token Guard / 上下文预处理阻断检查。

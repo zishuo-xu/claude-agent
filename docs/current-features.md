@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.28.1`
+当前版本：`0.28.2`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`199 tests`
+当前测试：`200 tests`
 
 ## LLM Provider
 
@@ -69,7 +69,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 系统提示只保留高层运行原则，具体场景约束和工具选择策略由 intent prompt 注入
 - CLI 会把一次粘贴进来的多行输入合并为同一轮用户请求，避免编号步骤被拆成多轮误执行
 - CLI 会捕获单轮运行中的模型或网络异常，用一行错误信息返回提示符，避免 traceback 直接打断会话
-- Python 测试或脚本优先使用项目 `.venv/bin/python`；`run_shell` 会拒绝系统级 Python 包安装、`--break-system-packages`，以及 workspace 有 `.venv` 时的裸 `python -m ...` / `python3 -m ...`
+- Python 测试或脚本优先使用项目 `.venv/bin/python`；`run_shell` 会拒绝系统级 Python 包安装、`--break-system-packages`，以及 workspace 有 `.venv` 时的裸 `python -m ...` / `python3 -m ...` / `python script.py` / `python3 script.py`
 - `run_shell` 拒绝 shell redirection 写文件正文，文件内容变更应走 `write_file` / `edit_file`
 - CLI 展示多行 shell 命令时只显示首行和隐藏长度；shell stdout/stderr 也有展示预算，避免大输出刷屏
 - 文件写入和编辑工具会清理 `<think>` / `</think>` 标记，避免模型内部标记污染用户文件

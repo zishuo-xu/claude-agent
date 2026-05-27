@@ -125,6 +125,10 @@ def uses_bare_python_module_command(command: str) -> bool:
     return re.search(r"(^|[;&|]\s*|\s)(python3?|python)\s+-m\s+", command) is not None
 
 
+def uses_bare_python_script_command(command: str) -> bool:
+    return re.search(r"(^|[;&|]\s*|\s)(python3?|python)\s+(?!-m\s)([^;&|]+\.py)(\s|$)", command) is not None
+
+
 def uses_shell_file_write(command: str) -> bool:
     return (
         re.search(r"(^|[;&|]\s*)cat\s+>>?\s+", command) is not None
@@ -213,6 +217,8 @@ def build_builtin_tools(root: Path, task_state: TaskState | None = None) -> dict
             )
         if (workspace.root / ".venv" / "bin" / "python").exists() and uses_bare_python_module_command(command):
             raise ValueError("workspace has .venv; use .venv/bin/python -m ... instead of bare python -m")
+        if (workspace.root / ".venv" / "bin" / "python").exists() and uses_bare_python_script_command(command):
+            raise ValueError("workspace has .venv; use .venv/bin/python script.py instead of bare python script.py")
         if uses_shell_file_write(command):
             raise ValueError("use write_file or edit_file for file content changes instead of shell redirection")
         completed = subprocess.run(
