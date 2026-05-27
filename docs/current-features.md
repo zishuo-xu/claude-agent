@@ -2,7 +2,7 @@
 
 这份文档只记录“当前能做什么”。历史变化见 `CHANGELOG.md`，设计解释见 `docs/architecture.md`。
 
-当前版本：`0.27.14`
+当前版本：`0.28.0`
 
 ## 启动
 
@@ -23,7 +23,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 .venv/bin/python -m pytest
 ```
 
-当前测试：`193 tests`
+当前测试：`197 tests`
 
 ## LLM Provider
 
@@ -54,6 +54,7 @@ cd /Users/xuzishuo/Documents/Codex/2026-05-20/claude-agent
 - 短期 working state：澄清问题后的用户补充、写作任务的继续追加可以继承上一轮任务意图
 - 文本 delta 逐段输出
 - 工具调用、工具执行、工具结果回传
+- 模型调用前的上下文预处理管线：统一处理预算检查、micro-compact、full compact 和运行提示
 - 工具轮次执行器
 - 工具批次分区：连续并发安全工具并发执行，不安全工具串行执行
 - 工具批次事件：`tool_batch_start` / `tool_batch_end`
@@ -195,6 +196,7 @@ deny -> allow -> ask -> mode fallback
 - full compact 保留最近 4 条原始消息
 - full compact 摘要会注入后续 system prompt
 - full compact 摘要提示会要求保留目标、决策、路径、命令和未完成事项，同时避免复制长工具输出、闲聊和重复细节
+- 上下文预处理结果会记录输入/输出字符数、micro-compact 数量、full compact 状态和 notice，runtime 只消费结果
 - `TaskState` 作为 live task state 独立注入；summary 作为 historical context 独立注入
 - system prompt 中 historical summary 先于 live task state 注入，二者标签清楚且不合并
 - 边界测试覆盖孤立 tool_result、旧目标摘要 prompt、最近消息保留
@@ -202,7 +204,7 @@ deny -> allow -> ask -> mode fallback
 
 可压缩工具结果由 `COMPACTABLE_TOOL_NAMES` 集中定义，包括文件、搜索、编辑、shell 等高噪音成功输出；默认保留数量由 `DEFAULT_KEEP_RECENT_TOOL_RESULTS` 定义。task/todo 工具结果和错误工具结果暂不压缩。`TaskState` 负责当前任务进度，summary 负责压缩后的历史上下文，二者不合并。
 
-相关文件：`mini_agent/context.py`
+相关文件：`mini_agent/context.py`、`mini_agent/context_preflight.py`
 
 ## 子 Agent
 

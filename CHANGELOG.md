@@ -11,6 +11,32 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.28.0 - 2026-05-27
+
+当前学习阶段：Context Preflight / 上下文预处理管线。
+
+变更级别：minor。
+
+### Added
+
+- 新增 `mini_agent/context_preflight.py`，集中表达模型调用前的上下文预处理流程
+- 新增 `ContextPreflightResult`，记录输入/输出字符数、micro-compact 数量、full compact 状态和运行提示
+
+### Changed
+
+- `AgentRuntime._compact_if_needed()` 改为委托上下文预处理管线，runtime 只消费预处理结果并发出事件
+- full compact 摘要 prompt 移到 context preflight 边界，后续可在同一位置扩展 token guard、snip 或 collapse
+
+### Verified
+
+- `tests/test_context.py` passed
+- `tests/test_context_preflight.py` passed
+- `tests/test_runtime_intent.py` context compact focused tests passed
+
+### Next
+
+- 做一次 Context Preflight Acceptance，用真实 CLI 长任务观察预处理边界是否足够稳定
+
 ## 0.27.14 - 2026-05-27
 
 当前学习阶段：Shell Output Display Budget Fix / Shell 输出展示预算修复。

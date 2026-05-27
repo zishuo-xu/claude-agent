@@ -48,6 +48,7 @@ Tool System
 
 Context / Task State
   -> context.py
+  -> context_preflight.py
   -> tasks.py
 
 Sub Agents
@@ -195,14 +196,16 @@ OpenAI-compatible 无效工具参数会降级为 `raw_arguments`，streaming 空
 
 当前是轻量权限管线，不追求 Claude 完整复杂度。
 
-### `mini_agent.context`
+### `mini_agent.context` / `context_preflight`
 
 上下文管理：
 
 - tool result budget：工具结果进入上下文前先截断
+- context preflight：模型调用前统一执行预算检查、micro-compact 和 full compact
 - micro-compact：不调用模型，只压缩旧工具结果
 - 可压缩工具集合集中在 `COMPACTABLE_TOOL_NAMES`，默认保留最近 `DEFAULT_KEEP_RECENT_TOOL_RESULTS` 个结果
 - full compact：仍超预算时让模型总结旧历史
+- preflight result：记录输入/输出字符数、micro-compact 数量、full compact 状态和运行提示
 - summary 注入：full compact 摘要会进入后续 system prompt
 - TaskState 注入：当前任务状态独立进入 system prompt，不合并进 summary
 - prompt/context 拼接顺序：historical summary 先于 live task state，避免把历史记忆当成当前任务清单

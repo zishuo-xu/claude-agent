@@ -33,6 +33,7 @@
 | 权限判断 | `mini_agent/permissions.py` |
 | 工作区边界 | `mini_agent/workspace.py` |
 | 上下文压缩 | `mini_agent/context.py` |
+| 上下文预处理 | `mini_agent/context_preflight.py` |
 | 子 Agent | `mini_agent/subagent.py` |
 | Task/Todo 状态 | `mini_agent/tasks.py` |
 

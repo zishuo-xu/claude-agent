@@ -2,7 +2,7 @@
 
 这份文档只记录方向、取舍和下一步。详细版本变化见 `CHANGELOG.md`，当前能力清单见 `docs/current-features.md`。
 
-当前版本：`0.27.14`
+当前版本：`0.28.0`
 
 ## 当前进展
 
@@ -15,7 +15,7 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 - Conversation Focus：短 follow-up 先参考当前会话焦点，减少硬编码语义词典。
 - Working State：澄清问题后的用户补充、写作任务继续追加可继承上一轮任务意图。
 - Permission Pipeline：工作区边界、权限模式、权限规则、危险操作确认和拒绝后防绕路。
-- Context：tool result budget、micro-compact、full compact、summary 注入。
+- Context：tool result budget、context preflight、micro-compact、full compact、summary 注入。
 - Sub Agents：固定内置的 `explore_agent`、`plan_agent`、`verify_agent`，只读隔离执行。
 - Task/Todo：轻量 `TaskState`，多步骤任务可用 todo 推进，CLI 显示 `[tasks]` 区块。
 - CLI Output：工具过程可见但收敛，读文件和搜索结果默认摘要展示。
@@ -69,7 +69,17 @@ mini-claude 当前已经具备一个可学习、可运行的 Claude-style agent 
 
 ## 下一步
 
-### P1: Short Follow-up Acceptance / 短追问验收
+### P1: Context Preflight Acceptance / 上下文预处理验收
+
+目标：用真实 CLI 长任务观察模型调用前的上下文预处理是否稳定，尤其是大工具输出、长对话、summary 和 live task state 共存。
+
+作用：
+
+- `0.28.0` 已把预算检查、micro-compact 和 full compact 收进 `context_preflight.py`。
+- 下一步先验收边界，不急着新增 snip、context collapse 或 token guard。
+- 如果发现用户可见问题，再按 PATCH 修复。
+
+### 候选: Short Follow-up Acceptance / 短追问验收
 
 目标：用真实 CLI 场景验收“保存一下 / 继续 / 输出为文档 / 就按这个来”等短 follow-up 是否正确继承当前会话焦点。
 

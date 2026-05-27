@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .config import AgentConfig
-from .context import count_message_chars, micro_compact_messages
+from .context_preflight import build_full_compact_summary_prompt, run_context_preflight
 from .events import (
     EventHandler,
     PermissionRequestHandler,
@@ -355,40 +355,25 @@ class AgentRuntime:
         )
 
     def _compact_if_needed(self) -> None:
-        total_chars = count_message_chars(self.state.messages)
-        if total_chars <= self.config.context_char_budget:
-            return
-
-        micro_result = micro_compact_messages(self.state.messages)
-        if micro_result.changed:
-            self.state.messages = micro_result.messages
-            self._emit("context_notice", message=f"micro-compacted {micro_result.compacted_count} old tool result(s)")
-            total_chars = count_message_chars(self.state.messages)
-            if total_chars <= self.config.context_char_budget:
-                return
-
-        if len(self.state.messages) < 8:
-            return
-
-        old_messages = self.state.messages[:-4]
-        recent_messages = self.state.messages[-4:]
-        summary_prompt = (
-            "Summarize this conversation for continuing a coding task. "
-            "Preserve user goals, decisions, file paths, commands, and unresolved work. "
-            "Do not copy long tool outputs, casual chatter, or repeated details.\n\n"
-            f"{old_messages}"
+        result = run_context_preflight(
+            self.state.messages,
+            char_budget=self.config.context_char_budget,
+            summarize=self._summarize_old_messages,
         )
+        self.state.messages = result.messages
+        if result.summary is not None:
+            self.state.summary = result.summary
+        for notice in result.notices:
+            self._emit("context_notice", message=notice)
+
+    def _summarize_old_messages(self, old_messages: list[dict[str, Any]]) -> str:
         response = self.client.complete(
             model=self.config.model,
             max_tokens=1024,
             system="You summarize agent transcripts accurately and concisely.",
-            messages=[{"role": "user", "content": summary_prompt}],
+            messages=[{"role": "user", "content": build_full_compact_summary_prompt(old_messages)}],
         )
-        self.state.summary = "\n".join(
-            block.text for block in response.content if getattr(block, "type", None) == "text"
-        )
-        self.state.messages = recent_messages
-        self._emit("context_notice", message="compacted older conversation into summary")
+        return "\n".join(block.text for block in response.content if getattr(block, "type", None) == "text")
 
     def _execute_tool_uses(self, tool_uses: list[Any]) -> list[dict[str, Any]]:
         available_tools = self._available_tools()
