@@ -29,7 +29,8 @@
 - 验收 `0.28.1` Context Preflight Token Guard。
 - 正常预算真实 CLI 冒烟受外部 LLM 配置阻断：当前 `.env` 返回 `401 invalid_key`，因此未能验证真实模型回复。
 - 极低预算真实 CLI 验收通过：使用 `--context-char-budget 50` 输入长文本，runtime 在模型调用前输出 `Context preflight stopped before the model call`，没有触发外部 API 401。
-- 结论：超预算阻断路径符合预期；常规真实模型路径需在 API key 恢复后继续验收。
+- 更新本地 `.env` 的 `LLM_API_KEY` 后复验正常预算真实 CLI：寒暄可直接回复，项目架构问题会读取 `docs/architecture.md` 后简洁回答。
+- 结论：常规模型闭环和超预算阻断路径均符合预期；本次不改代码、不升版本。
 - 真实 `agent.py` CLI 压力验收开始执行 `docs/stress-test-cases.md`。案例 1 未通过：模型把“长压力测试”发散成系统压力脚本 `stress_test.py`，没有严格完成 `calc.py` 的 `add/subtract/multiply/divide` 和 `__main__` 正确性自检。
 - 结论：真实 CLI 自由对话压力测试已暴露任务遵循问题，未继续标记全量通过；失败现场临时目录 `tmp_stress_code/` 暂时保留。
 - `0.27.4` 后真实 CLI 复验案例 1：模型按步骤创建并修改 `tmp_stress_code/calc.py`，实现 `add/subtract/multiply/divide` 和除 0 自检，外部核对 `python3 tmp_stress_code/calc.py` 输出 `ok`。
