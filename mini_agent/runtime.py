@@ -91,7 +91,12 @@ class AgentRuntime:
         self.state.current_turn_mutating_tools = False
         self.state.messages.append({"role": "user", "content": user_input})
         for _ in range(self.config.max_turns):
-            self._begin_turn()
+            blocked_reason = self._begin_turn()
+            if blocked_reason is not None:
+                content = [TextBlock(blocked_reason)]
+                self._emit("text_delta", text=blocked_reason)
+                self._record_assistant_response(content)
+                return self._handle_final_answer(content, user_input)
             response = self._call_model(self.config.model)
             response.content = self._normalize_pseudo_tool_call(response.content)
             if self._should_treat_as_final_text(response.content):
@@ -110,14 +115,14 @@ class AgentRuntime:
         self._emit("stopped", max_turns=self.config.max_turns)
         return ""
 
-    def _begin_turn(self) -> None:
+    def _begin_turn(self) -> str | None:
         self.state.turn_count += 1
         self._emit(
             "turn_start",
             turn=self.state.turn_count,
             intent=self.state.current_intent.intent.value if self.state.current_intent else None,
         )
-        self._compact_if_needed()
+        return self._compact_if_needed()
 
     def _record_assistant_response(self, content: list[Any]) -> None:
         self.state.messages.append(
@@ -354,7 +359,7 @@ class AgentRuntime:
             tool_use_id=f"pseudo_tool_{self.state.turn_count}",
         )
 
-    def _compact_if_needed(self) -> None:
+    def _compact_if_needed(self) -> str | None:
         result = run_context_preflight(
             self.state.messages,
             char_budget=self.config.context_char_budget,
@@ -365,6 +370,15 @@ class AgentRuntime:
             self.state.summary = result.summary
         for notice in result.notices:
             self._emit("context_notice", message=notice)
+        if result.blocked_reason is not None:
+            self._emit("context_notice", message=result.blocked_reason)
+            self._emit("turn_transition", reason="context_blocked", turn=self.state.turn_count)
+            return (
+                "上下文太长，已经尝试压缩但仍超过当前预算，所以这次没有继续调用模型。\n"
+                f"{result.blocked_reason}\n"
+                "你可以让我先总结当前任务、清理大输出，或提高 --context-char-budget 后再继续。"
+            )
+        return None
 
     def _summarize_old_messages(self, old_messages: list[dict[str, Any]]) -> str:
         response = self.client.complete(

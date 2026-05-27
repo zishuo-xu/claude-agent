@@ -64,6 +64,17 @@ def test_preflight_full_compacts_when_micro_compact_is_not_enough():
     assert result.notices == ["compacted older conversation into summary"]
 
 
+def test_preflight_blocks_when_full_compact_still_exceeds_budget():
+    messages = [{"role": "user", "content": f"message {index} " + ("x" * 200)} for index in range(10)]
+
+    result = run_context_preflight(messages, char_budget=50, summarize=lambda _messages: "summary")
+
+    assert result.full_compacted
+    assert result.blocked
+    assert result.blocked_reason is not None
+    assert "over the 50 char budget" in result.blocked_reason
+
+
 def test_full_compact_summary_prompt_preserves_current_contract():
     prompt = build_full_compact_summary_prompt([{"role": "user", "content": "edit app.py"}])
 

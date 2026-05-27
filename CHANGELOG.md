@@ -11,6 +11,26 @@
 - 将 `docs/learning-qa.md` 定位为独立学习沉淀文档，默认不参与日常上下文加载
 - 明确维护类工作记录在 `docs/maintenance-log.md`，不再默认提升正式版本
 
+## 0.28.1 - 2026-05-27
+
+当前学习阶段：Context Preflight Token Guard / 上下文预处理阻断检查。
+
+变更级别：patch。
+
+### Added
+
+- `ContextPreflightResult` 增加 `blocked_reason` / `blocked`，表达压缩后仍超预算的阻断状态
+- Runtime 在模型调用前发现上下文仍超预算时，直接返回清晰提示，不再发起注定失败的模型请求
+
+### Verified
+
+- `tests/test_context_preflight.py` passed
+- `tests/test_runtime_intent.py::test_runtime_blocks_model_call_when_preflight_still_exceeds_budget` passed
+
+### Next
+
+- 用真实 CLI 做 Context Preflight Acceptance，观察长任务、大输出和 summary 共存是否稳定
+
 ## 0.28.0 - 2026-05-27
 
 当前学习阶段：Context Preflight / 上下文预处理管线。

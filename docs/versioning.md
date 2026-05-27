@@ -136,7 +136,7 @@ MAJOR.MINOR.PATCH
 
 ## 当前阶段
 
-当前版本：`0.28.0`
+当前版本：`0.28.1`
 
 已完成学习主线：
 
@@ -242,5 +242,6 @@ MAJOR.MINOR.PATCH
 - `0.27.13`: Shell File Write Boundary Fix / Shell 写文件边界修复
 - `0.27.14`: Shell Output Display Budget Fix / Shell 输出展示预算修复
 - `0.28.0`: Context Preflight / 上下文预处理管线
+- `0.28.1`: Context Preflight Token Guard / 上下文预处理阻断检查
 
 详细说明以 `CHANGELOG.md` 为准。

@@ -206,6 +206,7 @@ OpenAI-compatible 无效工具参数会降级为 `raw_arguments`，streaming 空
 - 可压缩工具集合集中在 `COMPACTABLE_TOOL_NAMES`，默认保留最近 `DEFAULT_KEEP_RECENT_TOOL_RESULTS` 个结果
 - full compact：仍超预算时让模型总结旧历史
 - preflight result：记录输入/输出字符数、micro-compact 数量、full compact 状态和运行提示
+- token guard：压缩后仍超过当前预算时，在模型调用前快速阻断
 - summary 注入：full compact 摘要会进入后续 system prompt
 - TaskState 注入：当前任务状态独立进入 system prompt，不合并进 summary
 - prompt/context 拼接顺序：historical summary 先于 live task state，避免把历史记忆当成当前任务清单

@@ -18,11 +18,16 @@ class ContextPreflightResult:
     output_chars: int = 0
     micro_compacted_count: int = 0
     full_compacted: bool = False
+    blocked_reason: str | None = None
     notices: list[str] = field(default_factory=list)
 
     @property
     def changed(self) -> bool:
         return self.micro_compacted_count > 0 or self.full_compacted
+
+    @property
+    def blocked(self) -> bool:
+        return self.blocked_reason is not None
 
 
 SummaryFn = Callable[[list[dict[str, Any]]], str]
@@ -59,11 +64,13 @@ def run_context_preflight(
             )
 
     if summarize is None or len(current_messages) < keep_recent_messages * 2:
+        current_chars = count_message_chars(current_messages)
         return ContextPreflightResult(
             messages=current_messages,
             input_chars=input_chars,
-            output_chars=count_message_chars(current_messages),
+            output_chars=current_chars,
             micro_compacted_count=micro_compacted_count,
+            blocked_reason=_blocked_reason(current_chars, char_budget) if current_chars > char_budget else None,
             notices=notices,
         )
 
@@ -72,14 +79,23 @@ def run_context_preflight(
     summary = summarize(old_messages)
     notices.append("compacted older conversation into summary")
 
+    output_chars = count_message_chars(recent_messages)
     return ContextPreflightResult(
         messages=recent_messages,
         summary=summary,
         input_chars=input_chars,
-        output_chars=count_message_chars(recent_messages),
+        output_chars=output_chars,
         micro_compacted_count=micro_compacted_count,
         full_compacted=True,
+        blocked_reason=_blocked_reason(output_chars, char_budget) if output_chars > char_budget else None,
         notices=notices,
+    )
+
+
+def _blocked_reason(output_chars: int, char_budget: int) -> str:
+    return (
+        "Context preflight stopped before the model call: "
+        f"compacted context is still {output_chars} chars, over the {char_budget} char budget."
     )
 
 

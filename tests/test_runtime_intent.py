@@ -24,6 +24,16 @@ class FakeClient:
         return LLMResponse([TextBlock("summary")])
 
 
+class PreflightBlockedClient(FakeClient):
+    def __init__(self):
+        super().__init__()
+        self.stream_calls = 0
+
+    def stream_complete(self, **_kwargs):
+        self.stream_calls += 1
+        yield FinalResponseEvent(LLMResponse([TextBlock("should not be called")]))
+
+
 class RecordingCompactClient(FakeClient):
     def __init__(self):
         super().__init__()
@@ -1121,6 +1131,24 @@ def test_runtime_full_compact_still_runs_when_micro_compact_is_not_enough(tmp_pa
     assert runtime.client.complete_calls == 1  # type: ignore[attr-defined]
     assert runtime.state.summary == "summary"
     assert len(runtime.state.messages) == 4
+
+
+def test_runtime_blocks_model_call_when_preflight_still_exceeds_budget(tmp_path: Path):
+    client = PreflightBlockedClient()
+    runtime = make_runtime_with_client(tmp_path, client)
+    runtime.config.context_char_budget = 50
+    runtime.state.messages = [
+        {"role": "user", "content": f"old message {index} " + ("x" * 200)}
+        for index in range(7)
+    ]
+
+    text = runtime.run_user_turn("继续")
+
+    assert client.complete_calls == 1
+    assert client.stream_calls == 0
+    assert "上下文太长" in text
+    assert any(event.type == "context_notice" for event in runtime.state.events)
+    assert any(event.type == "turn_transition" and event.payload["reason"] == "context_blocked" for event in runtime.state.events)
 
 
 def test_runtime_full_compact_preserves_old_goal_in_summary_prompt_and_recent_messages(tmp_path: Path):
